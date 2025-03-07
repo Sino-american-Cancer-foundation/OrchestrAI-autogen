@@ -22,10 +22,10 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "fastapi[standard]",
-    "typer", 
+    "typer",
     "aiofiles",
     "python-dotenv",
-    "websockets", 
+    "websockets",
     "sqlmodel",
     "psycopg",
     "alembic",
@@ -35,7 +35,8 @@ dependencies = [
     "autogen-core>=0.4.9.2,<0.5",
     "autogen-agentchat>=0.4.9.2,<0.5",
     "autogen-ext[magentic-one, openai, azure]>=0.4.2,<0.5",
-    "anthropic",
+    "anthropic",,
+    "mcp>=1.3.0",
 ]
 optional-dependencies = {web = ["fastapi", "uvicorn"], database = ["psycopg"]}
 

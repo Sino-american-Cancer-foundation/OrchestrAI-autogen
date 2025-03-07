@@ -23,7 +23,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-python/probill/
+./python/probill/
+./python/packages/probill/
+./python/packages/autogen-studio/probill/
 build/
 develop-eggs/
 dist/
@@ -203,3 +205,5 @@ registry.json
 
 # files created by the gitty agent in python/samples/gitty
 .gitty/
+python/packages/autogen-studio/probill/
+python/packages/probill/tests/
