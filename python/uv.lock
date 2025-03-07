@@ -813,6 +813,8 @@ dependencies = [
     { name = "autogen-ext", extra = ["azure", "magentic-one", "openai"] },
     { name = "fastapi", extra = ["standard"] },
     { name = "html2text" },
+    { name = "langchain-ollama" },
+    { name = "langgraph" },
     { name = "loguru" },
     { name = "mcp" },
     { name = "psycopg" },
@@ -845,6 +847,8 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'web'" },
     { name = "fastapi", extras = ["standard"] },
     { name = "html2text" },
+    { name = "langchain-ollama", specifier = "==0.2.3" },
+    { name = "langgraph", specifier = "==0.3.5" },
     { name = "loguru" },
     { name = "mcp", specifier = ">=1.3.0" },
     { name = "psycopg" },
@@ -3325,7 +3329,7 @@ wheels = [
 
 [[package]]
 name = "langchain-core"
-version = "0.3.32"
+version = "0.3.41"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonpatch" },
@@ -3336,9 +3340,9 @@ dependencies = [
     { name = "tenacity" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/96/5ac1277e4e7bb0e134ae3c91a970556458fa6a54bd9c4a2ac9d13b098697/langchain_core-0.3.32.tar.gz", hash = "sha256:4eb85d8428585e67a1766e29c6aa2f246c6329d97cb486e8d6f564ab0bd94a4f", size = 331235 }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/0a/aa5167a1a46094024b8fe50917e37f1df5bcd0034adb25452e121dae60e6/langchain_core-0.3.41.tar.gz", hash = "sha256:d3ee9f3616ebbe7943470ade23d4a04e1729b1512c0ec55a4a07bd2ac64dedb4", size = 528826 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/bb/f4a7a98ae965acacd75dcbc85a714589a20e910906691b3ebc03089e6962/langchain_core-0.3.32-py3-none-any.whl", hash = "sha256:c050bd1e6dd556ae49073d338aca9dca08b7b55f4778ddce881a12224bc82a7e", size = 412416 },
+    { url = "https://files.pythonhosted.org/packages/bc/a6/551de93e02b1ef4ec031f6e1c0ff31a70790096c1e7066168a7693e4efe5/langchain_core-0.3.41-py3-none-any.whl", hash = "sha256:1a27cca5333bae7597de4004fb634b5f3e71667a3da6493b94ce83bcf15a23bd", size = 415149 },
 ]
 
 [[package]]
@@ -3352,6 +3356,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/27/56/a8acbb08a03383c28875b3b151e4cefea5612266917fbd6fc3c14c21e172/langchain_experimental-0.3.4.tar.gz", hash = "sha256:937c4259ee4a639c618d19acf0e2c5c2898ef127050346edc5655259aa281a21", size = 140532 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/27/fe8caa4884611286b1f7d6c5cfd76e1fef188faaa946db4fde6daa1cd2cd/langchain_experimental-0.3.4-py3-none-any.whl", hash = "sha256:2e587306aea36b60fa5e5fc05dc7281bee9f60a806f0bf9d30916e0ee096af80", size = 209154 },
+]
+
+[[package]]
+name = "langchain-ollama"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "ollama" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/47/76/dfcf5f09ba2f7651161110ba5ddb621e92634f9fb34e4ad919ae0428205a/langchain_ollama-0.2.3.tar.gz", hash = "sha256:d13fe8735176b652ca6e6656d7902c1265e8c0601097569f7c95433f3d034b38", size = 17231 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/72/f7301340a544fea1c139c64590044f0beb5bfba889b8f6e50766b933e660/langchain_ollama-0.2.3-py3-none-any.whl", hash = "sha256:c47700ca68b013358b1e954493ecafb3bd10fa2cda71a9f15ba7897587a9aab2", size = 19543 },
 ]
 
 [[package]]
@@ -3382,16 +3399,17 @@ wheels = [
 
 [[package]]
 name = "langgraph"
-version = "0.2.68"
+version = "0.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
     { name = "langgraph-checkpoint" },
+    { name = "langgraph-prebuilt" },
     { name = "langgraph-sdk" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/19/766473a91b670c76d0fffbcb1e6a7e954edb8b39b76892b7f0bf223f2d78/langgraph-0.2.68.tar.gz", hash = "sha256:decbeaa889590c69d47be9631a3b727f60c66360810beb9784eca0f211255612", size = 126086 }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/fa/b1ecc95a2464bc7dbe5e67fbd21096013829119899c33236090b98c75508/langgraph-0.3.5.tar.gz", hash = "sha256:7c0d8e61aa02578b41036c9f7a599ccba2562d269f66ef76bacbba47a99a7eca", size = 114020 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/6b/2a97cd8593c45298156f220741297238f9726b2cb9c690d2ce01a1e0fb52/langgraph-0.2.68-py3-none-any.whl", hash = "sha256:abd0e163aa9fa3228d742ae83cd74ee68ccdd169528a29132a96e526abd4ed01", size = 145837 },
+    { url = "https://files.pythonhosted.org/packages/a4/5f/1e1d9173b5c41eff54f88d9f4ee82c38eb4928120ab6a21a68a78d1c499e/langgraph-0.3.5-py3-none-any.whl", hash = "sha256:be313ec300633c857873ea3e44aece4dd7d0b11f131d385108b359d377a85bf7", size = 131527 },
 ]
 
 [[package]]
@@ -3405,6 +3423,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/26/96/378e06c60d8c8cf44e1d6a2b669e9d5d87236bdee6bf7cfc9125ef5b5d0e/langgraph_checkpoint-2.0.10.tar.gz", hash = "sha256:2dcc04e09091d588bb6209e49d83ff5406d7231c2590d6ff18fb29ab8b140129", size = 33431 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/ef/c320b52035e29081f2693377602289a00545016b4adcc963d5e202ac0c92/langgraph_checkpoint-2.0.10-py3-none-any.whl", hash = "sha256:0d592cfda2df93844c6ea44d142170a8f7e5ba5320274e0e5e60e27f2749392c", size = 37476 },
+]
+
+[[package]]
+name = "langgraph-prebuilt"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "langchain-core" },
+    { name = "langgraph-checkpoint" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/99/68/e1e692dbaeb4e9159b60a585fbfc26fbf073b3bb061caa2ff3153f85121a/langgraph_prebuilt-0.1.2.tar.gz", hash = "sha256:cfa7e54006d45e8f3d034ee88fa1d457c381bf6a2a0de0e64c5d3a776659e6d0", size = 23310 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/2c/2fd70d557b7343f766f79dc8184b391f3417fc85b34dd04439cdd12dc2e1/langgraph_prebuilt-0.1.2-py3-none-any.whl", hash = "sha256:32028c4c4370576748e6c2e075cab1e13b5e3f2c196a390d71cacfb455212311", size = 24684 },
 ]
 
 [[package]]
