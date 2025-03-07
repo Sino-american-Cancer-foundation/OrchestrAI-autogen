@@ -12,6 +12,7 @@ from autogen_core._component_config import (
 from autogen_ext.auth.azure import AzureTokenProvider
 from autogen_ext.models.openai import AzureOpenAIChatCompletionClient, OpenAIChatCompletionClient
 from pydantic import BaseModel
+from autogen_ext.tools.mcp import SseMcpToolAdapter
 
 all_defs: Dict[str, Any] = {}
 
@@ -97,6 +98,7 @@ def main() -> None:
     add_type(OpenAIChatCompletionClient)
     add_type(AzureOpenAIChatCompletionClient)
     add_type(AzureTokenProvider)
+    add_type(SseMcpToolAdapter)
 
     print(json.dumps(outer_model_schema, indent=2))
 
