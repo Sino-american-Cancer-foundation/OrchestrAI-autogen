@@ -203,3 +203,7 @@ artifacts
 # project data
 registry.json
 python/packages/autogen-studio/autogenstudio/mcp_tools/test.ipynb
+
+
+# files created by the gitty agent in python/samples/gitty
+.gitty/
