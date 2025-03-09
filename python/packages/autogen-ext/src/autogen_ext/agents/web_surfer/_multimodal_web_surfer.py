@@ -83,6 +83,7 @@ class MultimodalWebSurferConfig(BaseModel):
     browser_channel: str | None = None
     browser_data_dir: str | None = None
     to_resize_viewport: bool = True
+    test_value: str ="test_value 1"
 
 
 class MultimodalWebSurfer(BaseChatAgent, Component[MultimodalWebSurferConfig]):
@@ -223,6 +224,7 @@ class MultimodalWebSurfer(BaseChatAgent, Component[MultimodalWebSurferConfig]):
         to_resize_viewport: bool = True,
         playwright: Playwright | None = None,
         context: BrowserContext | None = None,
+        test_value: str = "test value 1"
     ):
         """
         Initialize the MultimodalWebSurfer.
@@ -248,7 +250,8 @@ class MultimodalWebSurfer(BaseChatAgent, Component[MultimodalWebSurferConfig]):
         self.use_ocr = use_ocr
         self.to_resize_viewport = to_resize_viewport
         self.animate_actions = animate_actions
-
+        self.test_value = test_value
+        
         # Call init to set these in case not set
         self._playwright: Playwright | None = playwright
         self._context: BrowserContext | None = context
