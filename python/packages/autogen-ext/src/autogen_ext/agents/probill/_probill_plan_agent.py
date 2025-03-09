@@ -56,6 +56,8 @@ from autogen_agentchat.agents import BaseChatAgent
 from autogen_agentchat.state import AssistantAgentState
 from autogen_agentchat.utils import remove_images
 from autogen_agentchat import EVENT_LOGGER_NAME
+from ._model import qwq_answer
+
 MAGENTIC_ONE_CODER_DESCRIPTION = "A helpful and general-purpose AI assistant that has strong language skills, Python skills, and Linux command line skills."
 
 MAGENTIC_ONE_CODER_SYSTEM_MESSAGE = """You are a helpful AI assistant.
@@ -89,9 +91,9 @@ class ProbillPlanAgent(BaseChatAgent,  Component[ProbillPlanAgentConfig]):
 
     The prompts and description are sealed, to replicate the original MagenticOne configuration. See ProbillPlanAgent if you wish to modify these values.
     """
-
+    component_type = "agent"
     component_config_schema = ProbillPlanAgentConfig
-    # component_provider_override = "autogen_ext.agents.probill.ProbillPlanAgent"
+    component_provider_override = "autogen_ext.agents.probill.ProbillPlanAgent"
 
     def __init__(
         self,

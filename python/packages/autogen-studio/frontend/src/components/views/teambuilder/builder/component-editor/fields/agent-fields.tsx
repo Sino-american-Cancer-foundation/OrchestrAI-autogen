@@ -503,6 +503,16 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </InputWithTooltip>
+              <InputWithTooltip
+                label="Test Value"
+                tooltip="a test for customized value"
+              >
+                <Input
+                  value={component.config.test_value || ""}
+                  onChange={(e) =>
+                    handleConfigUpdate("test_value", e.target.value)
+                  }
+                />
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary">
                   Resize Viewport

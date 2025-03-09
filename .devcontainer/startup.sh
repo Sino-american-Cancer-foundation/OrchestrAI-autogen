@@ -7,7 +7,7 @@ dotnet dev-certs https --trust
 # python setup
 pushd python
 pip install uv
-uv sync
+uv sync --python=3.12
 source .venv/bin/activate
 echo "export PATH=$PATH" >> ~/.bashrc
 popd

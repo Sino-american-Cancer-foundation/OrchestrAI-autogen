@@ -167,6 +167,12 @@ export const AgentFields: React.FC<NodeEditorFieldsProps> = ({
         >
           <Switch />
         </Form.Item>
+        <Form.Item
+          label="Test Value"
+          name={["config", "test_value"]}
+        >
+          <Input />
+        </Form.Item>        
         {component.config.model_client && (
           <NestedComponentButton
             label="Model Client"

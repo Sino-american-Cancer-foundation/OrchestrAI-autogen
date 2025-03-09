@@ -10,6 +10,7 @@ from autogen_ext.agents.web_surfer import MultimodalWebSurfer
 from autogen_ext.code_executors.local import LocalCommandLineCodeExecutor
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.models.openai._openai_client import AzureOpenAIChatCompletionClient
+from autogen_ext.models.ollama._ollama_client import OllamaChatCompletionClient
 from autogen_ext.tools.code_execution import PythonCodeExecutionTool
 
 from autogenstudio.datamodel import GalleryComponents, GalleryConfig, GalleryMetadata
@@ -133,18 +134,28 @@ def create_default_gallery() -> GalleryConfig:
     """Create a default gallery with all components including calculator and web surfer teams."""
 
     # url = "https://raw.githubusercontent.com/microsoft/autogen/refs/heads/main/python/packages/autogen-studio/autogenstudio/gallery/default.json"
-    builder = GalleryBuilder(id="gallery_default", name="Default Component Gallery")
+    builder = GalleryBuilder(id="gallery_probill", name="Probill Default Component Gallery")
 
     # Set metadata
     builder.set_metadata(
-        description="A default gallery containing basic components for human-in-loop conversations",
+        description="A default gallery containing basic components probill",
         tags=["human-in-loop", "assistant", "web agents"],
         category="conversation",
     )
 
+    base_model = OllamaChatCompletionClient(
+        model="qwen2.5-coder:32b-instruct-q5_0",
+        host="http://10.0.40.49:11434",
+    )
+    builder.add_model(
+        base_model.dump_component(),
+        label="qwen2.5-coder:32b-instruct Local",
+        description="Local qwen2.5-coder:32b-instruct model client for instruction-based generation (Ollama, LMStudio).",
+    )
+
     # Create base model client
-    base_model = OpenAIChatCompletionClient(model="gpt-4o-mini")
-    builder.add_model(base_model.dump_component(), label="OpenAI GPT-4o Mini", description="OpenAI GPT-4o-mini")
+    openai_model = OpenAIChatCompletionClient(model="gpt-4o-mini")
+    builder.add_model(openai_model.dump_component(), label="OpenAI GPT-4o Mini", description="OpenAI GPT-4o-mini")
     # Create Mistral vllm model
     mistral_vllm_model = OpenAIChatCompletionClient(
         model="TheBloke/Mistral-7B-Instruct-v0.2-GGUF",
@@ -156,7 +167,7 @@ def create_default_gallery() -> GalleryConfig:
         label="Mistral-7B Local",
         description="Local Mistral-7B model client for instruction-based generation (Ollama, LMStudio).",
     )
-
+    
     # create an azure mode
     az_model_client = AzureOpenAIChatCompletionClient(
         azure_deployment="{your-azure-deployment}",

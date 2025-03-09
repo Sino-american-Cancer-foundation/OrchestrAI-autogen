@@ -132,6 +132,7 @@ export interface MultimodalWebSurferConfig {
   browser_channel?: string;
   browser_data_dir?: string;
   to_resize_viewport?: boolean;
+  test_value?: string;
 }
 
 export interface AssistantAgentConfig {
