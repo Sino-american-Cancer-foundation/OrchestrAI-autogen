@@ -106,10 +106,10 @@ class TeamManager:
         team = None
 
         # Setup logger correctly
-        logger = logging.getLogger(EVENT_LOGGER_NAME)
-        logger.setLevel(logging.INFO)
-        llm_event_logger = RunEventLogger()
-        logger.handlers = [llm_event_logger]  # Replace all handlers
+        # logger = logging.getLogger(EVENT_LOGGER_NAME)
+        # logger.setLevel(logging.ERROR)
+        # llm_event_logger = RunEventLogger()
+        # logger.handlers = [llm_event_logger]  # Replace all handlers
 
         try:
             team = await self._create_team(team_config, input_func, env_vars)
