@@ -3,8 +3,8 @@
   "component_type": "team",
   "version": 1,
   "component_version": 1,
-  "description": "A single AssistantAgent (with a calculator tool) in a RoundRobinGroupChat team. ",
-  "label": "default_team17",
+  "description": "Three AssistantAgent (with KG tools) in a RoundRobinGroupChat team. ",
+  "label": "KG Team",
   "config": {
     "participants": [
       {
@@ -12,39 +12,30 @@
         "component_type": "agent",
         "version": 1,
         "component_version": 1,
-        "description": "An agent that provides assistance with tool use.",
-        "label": "AssistantAgent",
+        "description": "An agent that creates a treatment plan suggestion for the physician.",
+        "label": "Task Agent",
         "config": {
-          "name": "assistant_agent",
+          "name": "task_agent",
           "model_client": {
             "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
             "component_type": "model",
             "version": 1,
             "component_version": 1,
-            "description": "Chat completion client for OpenAI hosted models.",
-            "label": "OpenAIChatCompletionClient",
+            "description": "Local qwen2.5-coder:32b-instruct client for instruction-based generation (Ollama, LMStudio).",
+            "label": "qwen2.5-coder@10.0.40.49",
             "config": {
-              "model": "gpt-4o-mini"
+              "model": "qwen2.5-coder:32b-instruct-q5_0",
+              "model_info": {
+                "vision": false,
+                "function_calling": true,
+                "json_output": true,
+                "family": "unknown"
+              },
+              "base_url": "http://10.0.40.49:11434/v1",
+              "api_key": "sk-xxx"
             }
           },
-          "tools": [
-            {
-              "provider": "autogen_core.tools.FunctionTool",
-              "component_type": "tool",
-              "version": 1,
-              "component_version": 1,
-              "description": "Create custom tools by wrapping standard Python functions.",
-              "label": "FunctionTool",
-              "config": {
-                "source_code": "def calculator(a: float, b: float, operator: str) -> str:\n    try:\n        if operator == \"+\":\n            return str(a + b)\n        elif operator == \"-\":\n            return str(a - b)\n        elif operator == \"*\":\n            return str(a * b)\n        elif operator == \"/\":\n            if b == 0:\n                return \"Error: Division by zero\"\n            return str(a / b)\n        else:\n            return \"Error: Invalid operator. Please use +, -, *, or /\"\n    except Exception as e:\n        return f\"Error: {str(e)}\"\n",
-                "name": "calculator",
-                "description": "A simple calculator that performs basic arithmetic operations",
-                "global_imports": [],
-                "has_cancellation_support": false
-              }
-            }
-          ],
-          "handoffs": [],
+          "tools": [],
           "model_context": {
             "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
             "component_type": "chat_completion_context",
@@ -55,8 +46,227 @@
             "config": {}
           },
           "description": "An agent that provides assistance with ability to use tools.",
-          "system_message": "You are a helpful assistant. Solve tasks carefully. When done, say TERMINATE.",
-          "model_client_stream": false,
+          "system_message": "You are a helpful medical assistant. Read the medical record carefully, consider the latest treatments, therapies, and conditions of the patient, and provide the physician with an evidence-based treatment plan suggestion. ",
+          "model_client_stream": true,
+          "reflect_on_tool_use": false,
+          "tool_call_summary_format": "{result}"
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "description": "An agent that provides assistance with ability to use tools.",
+        "label": "Conceptual Knowledge Designer",
+        "config": {
+          "name": "conceptual_knowledge_designer",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "description": "Local qwen2.5-coder:32b-instruct client for instruction-based generation (Ollama, LMStudio).",
+            "label": "qwen2.5-coder@10.0.40.49",
+            "config": {
+              "model": "qwen2.5-coder:32b-instruct-q5_0",
+              "api_key": "sk-xxx",
+              "model_info": {
+                "vision": false,
+                "function_calling": true,
+                "json_output": true,
+                "family": "unknown"
+              },
+              "base_url": "http://10.0.40.49:11434/v1"
+            }
+          },
+          "tools": [
+            {
+              "provider": "autogen_ext.tools.mcp.StdioMcpToolAdapter",
+              "component_type": "tool",
+              "version": 1,
+              "component_version": 1,
+              "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen.",
+              "label": "ne4j.get-neo4j-schema",
+              "config": {
+                "server_params": {
+                  "command": "uv",
+                  "args": [
+                    "--directory",
+                    "/workspaces/OrchestrAI-autogen/python/packages/probill/src/mcp-neo4j/servers/mcp-neo4j-cypher/src",
+                    "run",
+                    "mcp-neo4j-cypher",
+                    "--db-url",
+                    "bolt://10.0.40.100:7687",
+                    "--username",
+                    "neo4j",
+                    "--password",
+                    "sacf_sacf"
+                  ],
+                  "encoding": "utf-8",
+                  "encoding_error_handler": "strict"
+                },
+                "tool": {
+                  "name": "get-neo4j-schema",
+                  "description": "List all node types, their attributes and their relationships TO other node-types in the neo4j database",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "name": "ne4j_get_neo4j_schema",
+                "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen."
+              }
+            },
+            {
+              "provider": "autogen_ext.tools.mcp.StdioMcpToolAdapter",
+              "component_type": "tool",
+              "version": 1,
+              "component_version": 1,
+              "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen.",
+              "label": "ne4j.read-neo4j-cypher",
+              "config": {
+                "server_params": {
+                  "command": "uv",
+                  "args": [
+                    "--directory",
+                    "/workspaces/OrchestrAI-autogen/python/packages/probill/src/mcp-neo4j/servers/mcp-neo4j-cypher/src",
+                    "run",
+                    "mcp-neo4j-cypher",
+                    "--db-url",
+                    "bolt://10.0.40.100:7687",
+                    "--username",
+                    "neo4j",
+                    "--password",
+                    "sacf_sacf"
+                  ],
+                  "encoding": "utf-8",
+                  "encoding_error_handler": "strict"
+                },
+                "tool": {
+                  "name": "read-neo4j-cypher",
+                  "description": "Execute a Cypher query on the neo4j database",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "description": "Cypher read query to execute"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                "name": "ne4j_read_neo4j_cypher",
+                "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen."
+              }
+            }
+          ],
+          "model_context": {
+            "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+            "component_type": "chat_completion_context",
+            "version": 1,
+            "component_version": 1,
+            "description": "An unbounded chat completion context that keeps a view of the all the messages.",
+            "label": "UnboundedChatCompletionContext",
+            "config": {}
+          },
+          "description": "An agent that provides assistance with ability to use tools.",
+          "system_message": "You are a “Conceptual Knowledge Designer”. Your purpose is to interpret clinical conversations, extract relevant entities (e.g., diseases, symptoms, medications, lab results), and define the relationships among them. You then design the structural plan for the knowledge graph that will be stored in Neo4j.\n\nResponsibilities\n\nExtract and Classify Entities\n\nIdentify all significant clinical concepts (e.g., disease, symptom, medication).\nProvide a short description or properties for each entity if available (e.g., name, dosage, status).\nIdentify Relationships\n\nDetermine how these entities connect: “treats,” “manifests,” “contraindicated-by,” “supports-diagnosis,” etc.\nClearly describe each relationship (which entities are linked, plus the relationship type).\nDesign Node and Relationship Structure\n\nSuggest node labels and property keys (e.g., :Medication, :Disease, properties like name, onsetDate).\nPropose relationship types (e.g., TREATS, CAUSES, INDICATES).\nCheck (and Possibly Ignore) Existing Neo4j Schema\n\nYou may use the tool get-neo4j-schema to see if there is an existing database structure.\nIf the existing schema is empty or irrelevant, disregard it and propose your own design as needed.\nDocument Uncertainty\n\nIf parts of the conversation are unclear or contradictory, note them.\nDo not invent or assume facts. Represent uncertain information as placeholders or annotations.\nOutput\nA list of entities (with labels and properties) and relationships (with types and directions).\nAny notes regarding ambiguities or special considerations.\nExample:\n{'nodes': [{'identifier': 'Patient', 'labels': ['Person'], 'properties': {'age': 67, 'sex': 'Male'}}, {'identifier': 'Disease', 'labels': ['LungCancer'], 'properties': {'type': 'NSCLC', 'stage': 'Stage IIIA'}}, {'identifier': 'Symptom', 'labels': ['Symptom'], 'properties': {'name': 'Cough'}}, {'identifier': 'Biopsy', 'labels': ['Biopsy'], 'properties': {'result': 'NSCLC Adenocarcinoma'}}, {'identifier': 'Mutation', 'labels': ['Mutation'], 'properties': {'type': 'EGFR', 'status': 'Negative'}}, {'identifier': 'Treatment', 'labels': ['Chemotherapy'], 'properties': {'name': 'Cisplatin + Pemetrexed'}}, {'identifier': 'DiagnosticTest', 'labels': ['DiagnosticTest'], 'properties': {'name': 'CT Scan', 'finding': 'Right upper lobe mass'}}], 'relationships': [{'startNode': 'Patient', 'type': 'HAS_CONDITION', 'endNode': 'Disease'}, {'startNode': 'Disease', 'type': 'PRESENTS_WITH', 'endNode': 'Symptom'}, {'startNode': 'Disease', 'type': 'DIAGNOSED_BY', 'endNode': 'Biopsy'}, {'startNode': 'Biopsy', 'type': 'HAS_MUTATION', 'endNode': 'Mutation'}, {'startNode': 'Disease', 'type': 'TREATED_WITH', 'endNode': 'Treatment'}, {'startNode': 'Patient', 'type': 'UNDERGOES', 'endNode': 'DiagnosticTest'}]}",
+          "model_client_stream": true,
+          "reflect_on_tool_use": false,
+          "tool_call_summary_format": "{result}"
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "description": "An agent that provides assistance with ability to use tools.",
+        "label": "Cypher Converter & Neo4j Writer",
+        "config": {
+          "name": "cypher_converter_neo4j_writer",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "description": "Local qwen2.5-coder:32b-instruct client for instruction-based generation (Ollama, LMStudio).",
+            "label": "qwen2.5-coder@10.0.40.49",
+            "config": {
+              "model": "qwen2.5-coder:32b-instruct-q5_0",
+              "api_key": "sk-xxx",
+              "model_info": {
+                "vision": false,
+                "function_calling": true,
+                "json_output": true,
+                "family": "unknown"
+              },
+              "base_url": "http://10.0.40.49:11434/v1"
+            }
+          },
+          "tools": [
+            {
+              "provider": "autogen_ext.tools.mcp.StdioMcpToolAdapter",
+              "component_type": "tool",
+              "version": 1,
+              "component_version": 1,
+              "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen.",
+              "label": "ne4j.write-neo4j-cypher",
+              "config": {
+                "server_params": {
+                  "command": "uv",
+                  "args": [
+                    "--directory",
+                    "/workspaces/OrchestrAI-autogen/python/packages/probill/src/mcp-neo4j/servers/mcp-neo4j-cypher/src",
+                    "run",
+                    "mcp-neo4j-cypher",
+                    "--db-url",
+                    "bolt://10.0.40.100:7687",
+                    "--username",
+                    "neo4j",
+                    "--password",
+                    "sacf_sacf"
+                  ],
+                  "encoding": "utf-8",
+                  "encoding_error_handler": "strict"
+                },
+                "tool": {
+                  "name": "write-neo4j-cypher",
+                  "description": "Execute a write Cypher query on the neo4j database",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "description": "Cypher write query to execute"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                "name": "ne4j_write_neo4j_cypher",
+                "description": "Allows you to wrap an MCP tool running over STDIO and make it available to AutoGen."
+              }
+            }
+          ],
+          "model_context": {
+            "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+            "component_type": "chat_completion_context",
+            "version": 1,
+            "component_version": 1,
+            "description": "An unbounded chat completion context that keeps a view of the all the messages.",
+            "label": "UnboundedChatCompletionContext",
+            "config": {}
+          },
+          "description": "An agent that provides assistance with ability to use tools.",
+          "system_message": "You are a “Cypher Coder”. Your job is to take the design and entity-relationship plan and store it in Neo4j using valid Cypher queries.\n\nResponsibilities\nConvert to Cypher\nReceive the entities, relationships, properties.\nTranslate them into Cypher statements using CREATE, MERGE, MATCH, etc.\nUse Neo4j Tool write-neo4j-cypher: Execute final statements to insert or update nodes and relationships in Neo4j.\nMaintain Data Integrity\nUse consistent labels, relationship types, property names that align with Agent 1’s design (or the existing schema if relevant).\nEnsure no conflicts with existing data, constraints, or indexes.\nUse MERGE or MATCH if you need to reference existing nodes or relationships.\nSummarize the Changes\n\nProvide a list or log of all Cypher queries executed.\nConfirm that nodes and relationships have been created or updated successfully.\nOutput:\nA function call to execute the cypher script you created.",
+          "model_client_stream": true,
           "reflect_on_tool_use": false,
           "tool_call_summary_format": "{result}"
         }
@@ -89,7 +299,8 @@
             "description": "Terminate the conversation after a maximum number of messages have been exchanged.",
             "label": "MaxMessageTermination",
             "config": {
-              "max_messages": 10
+              "max_messages": 10,
+              "include_agent_event": false
             }
           }
         ]
