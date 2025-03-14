@@ -5,7 +5,8 @@ export type ComponentTypes =
   | "agent"
   | "model"
   | "tool"
-  | "termination";
+  | "termination"
+  | "mcpserver";
 export interface Component<T extends ComponentConfig> {
   provider: string;
   component_type: ComponentTypes;
@@ -93,6 +94,41 @@ export interface FromModuleImport {
 // Import can be either a string (direct import) or a FromModuleImport
 export type Import = string | FromModuleImport;
 
+// MCP Tool Types
+export interface StdioServerParams {
+  command: string;
+  args?: string[];
+  encoding?: string;
+  encoding_error_handler?: string;
+}
+
+export interface SseServerParams {
+  url: string;
+  headers?: Record<string, string> | null;
+  timeout?: number;
+  sse_read_timeout?: number;
+}
+
+export interface Tool {
+  name: string;
+  description?: string | null;
+  inputSchema: Record<string, any>;
+}
+
+export interface StdioMcpToolAdapterConfig {
+  server_params: StdioServerParams;
+  tool: Tool;
+  name: string;
+  description: string;
+}
+
+export interface SseMcpToolAdapterConfig {
+  server_params: SseServerParams;
+  tool: Tool;
+  name: string;
+  description: string;
+}
+
 // Code Executor Base Config
 export interface CodeExecutorBaseConfig {
   timeout?: number;
@@ -159,6 +195,15 @@ export interface RoundRobinGroupChatConfig {
   participants: Component<AgentConfig>[];
   termination_condition?: Component<TerminationConfig>;
   max_turns?: number;
+}
+
+export interface MagenticOneGroupChatConfig {
+  participants: Component<AgentConfig>[];
+  model_client: Component<ModelConfig>;
+  termination_condition?: Component<TerminationConfig>;
+  max_turns?: number;
+  max_stalls: number;
+  final_answer_prompt: string;
 }
 
 export interface MultimodalWebSurferConfig {
@@ -284,7 +329,10 @@ export interface TextMentionTerminationConfig {
 }
 
 // Config type unions based on provider
-export type TeamConfig = SelectorGroupChatConfig | RoundRobinGroupChatConfig;
+export type TeamConfig = 
+  | SelectorGroupChatConfig 
+  | RoundRobinGroupChatConfig
+  | MagenticOneGroupChatConfig;
 
 export type AgentConfig =
   | MultimodalWebSurferConfig
@@ -296,7 +344,10 @@ export type ModelConfig =
   | AzureOpenAIClientConfig
   | AnthropicClientConfig;
 
-export type ToolConfig = FunctionToolConfig | PythonCodeExecutionToolConfig;
+export type ToolConfig = 
+  | FunctionToolConfig
+  | StdioMcpToolAdapterConfig
+  | SseMcpToolAdapterConfig;
 
 export type ChatCompletionContextConfig = UnboundedChatCompletionContextConfig;
 
@@ -306,13 +357,21 @@ export type TerminationConfig =
   | MaxMessageTerminationConfig
   | TextMentionTerminationConfig;
 
+export interface McpServerConfig {
+  name: string;
+  description: string;
+  url?: string;
+  port?: number;
+}
+
 export type ComponentConfig =
   | TeamConfig
   | AgentConfig
   | ModelConfig
   | ToolConfig
   | TerminationConfig
-  | ChatCompletionContextConfig;
+  | ChatCompletionContextConfig
+  | McpServerConfig;
 
 // DB Models
 export interface DBModel {
@@ -446,6 +505,7 @@ export interface GalleryConfig {
     models: Component<ModelConfig>[];
     tools: Component<ToolConfig>[];
     terminations: Component<TerminationConfig>[];
+    mcpservers: Component<ComponentConfig>[];
   };
 }
 

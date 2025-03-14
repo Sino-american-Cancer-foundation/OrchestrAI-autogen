@@ -155,6 +155,12 @@ def create_default_gallery() -> GalleryConfig:
     base_model = OllamaChatCompletionClient(
         model="qwen2.5-coder:32b-instruct-q5_0",
         host="http://10.0.40.49:11434",
+        model_info = {
+        "vision": False,
+        "function_calling": True,
+        "json_output": True,
+        "family": "unknown"
+        }        
     )
     builder.add_model(
         base_model.dump_component(),

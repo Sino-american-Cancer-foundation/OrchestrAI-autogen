@@ -306,27 +306,36 @@ $functions"""
         Execute the provided code blocks in the local command line without re-checking setup.
         Returns a CommandLineCodeResult indicating success or failure.
         """
+        """
+        Execute the provided code blocks in the local command line without re-checking setup.
+        Returns a CommandLineCodeResult indicating success or failure.
+        """
         logs_all: str = ""
         file_names: List[Path] = []
         exitcode = 0
+
 
         for code_block in code_blocks:
             lang, code = code_block.language, code_block.code
             lang = lang.lower()
 
             # Remove pip output where possible
+            # Remove pip output where possible
             code = silence_pip(code, lang)
 
+            # Normalize python variants to "python"
             # Normalize python variants to "python"
             if lang in PYTHON_VARIANTS:
                 lang = "python"
 
+            # Abort if not supported
             # Abort if not supported
             if lang not in self.SUPPORTED_LANGUAGES:
                 exitcode = 1
                 logs_all += "\n" + f"unknown language {lang}"
                 break
 
+            # Try extracting a filename (if present)
             # Try extracting a filename (if present)
             try:
                 filename = get_file_name_from_content(code, self._work_dir)
@@ -338,8 +347,17 @@ $functions"""
                 )
 
             # If no filename is found, create one
+            # If no filename is found, create one
             if filename is None:
                 code_hash = sha256(code.encode()).hexdigest()
+                if lang.startswith("python"):
+                    ext = "py"
+                elif lang in ["pwsh", "powershell", "ps1"]:
+                    ext = "ps1"
+                else:
+                    ext = lang
+
+                filename = f"tmp_code_{code_hash}.{ext}"
                 if lang.startswith("python"):
                     ext = "py"
                 elif lang in ["pwsh", "powershell", "ps1"]:
@@ -355,6 +373,7 @@ $functions"""
             file_names.append(written_file)
 
             # Build environment
+            # Build environment
             env = os.environ.copy()
             if self._virtual_env_context:
                 virtual_env_bin_abs_path = os.path.abspath(self._virtual_env_context.bin_path)
@@ -366,10 +385,32 @@ $functions"""
                     os.path.abspath(self._virtual_env_context.env_exe) if self._virtual_env_context else sys.executable
                 )
                 extra_args = [str(written_file.absolute())]
+            # Decide how to invoke the script
+            if lang == "python":
+                program = (
+                    os.path.abspath(self._virtual_env_context.env_exe) if self._virtual_env_context else sys.executable
+                )
+                extra_args = [str(written_file.absolute())]
             else:
                 # Get the appropriate command for the language
                 program = lang_to_cmd(lang)
+                # Get the appropriate command for the language
+                program = lang_to_cmd(lang)
 
+                # Special handling for PowerShell
+                if program == "pwsh":
+                    extra_args = [
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        str(written_file.absolute()),
+                    ]
+                else:
+                    # Shell commands (bash, sh, etc.)
+                    extra_args = [str(written_file.absolute())]
+
+            # Create a subprocess and run
                 # Special handling for PowerShell
                 if program == "pwsh":
                     extra_args = [
@@ -388,6 +429,7 @@ $functions"""
                 asyncio.create_subprocess_exec(
                     program,
                     *extra_args,
+                    *extra_args,
                     cwd=self._work_dir,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
@@ -396,12 +438,12 @@ $functions"""
             )
             cancellation_token.link_future(task)
 
-            proc = None  # Track the process
             try:
                 proc = await task
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), self._timeout)
                 exitcode = proc.returncode or 0
             except asyncio.TimeoutError:
+                logs_all += "\nTimeout"
                 logs_all += "\nTimeout"
                 exitcode = 124
                 if proc:
@@ -409,6 +451,7 @@ $functions"""
                     await proc.wait()  # Ensure process is fully dead
                 break
             except asyncio.CancelledError:
+                logs_all += "\nCancelled"
                 logs_all += "\nCancelled"
                 exitcode = 125
                 if proc:
@@ -422,6 +465,7 @@ $functions"""
             if exitcode != 0:
                 break
 
+        code_file = str(file_names[0]) if file_names else None
         code_file = str(file_names[0]) if file_names else None
         return CommandLineCodeResult(exit_code=exitcode, output=logs_all, code_file=code_file)
 

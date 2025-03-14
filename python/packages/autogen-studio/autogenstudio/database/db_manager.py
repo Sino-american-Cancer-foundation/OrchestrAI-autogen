@@ -37,9 +37,7 @@ class DatabaseManager:
         if base_dir is not None and isinstance(base_dir, str):
             base_dir = Path(base_dir)
 
-        self.engine = create_engine(
-            engine_uri, connect_args=connection_args, json_serializer=lambda obj: json.dumps(obj, cls=CustomJSONEncoder)
-        )
+        self.engine = create_engine(engine_uri, connect_args=connection_args)
         self.schema_manager = SchemaManager(
             engine=self.engine,
             base_dir=base_dir,

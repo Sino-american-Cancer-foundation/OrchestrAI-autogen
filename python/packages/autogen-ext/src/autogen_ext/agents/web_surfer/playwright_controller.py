@@ -5,6 +5,7 @@ import os
 import random
 import warnings
 from types import ModuleType
+from types import ModuleType
 from typing import Any, Callable, Dict, Optional, Tuple, Union, cast
 
 from playwright._impl._errors import Error as PlaywrightError
@@ -17,6 +18,14 @@ from ._types import (
     interactiveregion_from_dict,
     visualviewport_from_dict,
 )
+
+markitdown: ModuleType | None = None
+try:
+    # Suppress warnings from markitdown -- which is pretty chatty
+    warnings.filterwarnings(action="ignore", module="markitdown")
+    import markitdown
+except ImportError:
+    pass
 
 markitdown: ModuleType | None = None
 try:
@@ -565,7 +574,6 @@ class PlaywrightController:
         assert page is not None
         if self._markdown_converter is None and markitdown is not None:
             self._markdown_converter = markitdown.MarkItDown()
-            assert self._markdown_converter is not None
             html = await page.evaluate("document.documentElement.outerHTML;")
             res = self._markdown_converter.convert_stream(
                 io.BytesIO(html.encode("utf-8")), file_extension=".html", url=page.url

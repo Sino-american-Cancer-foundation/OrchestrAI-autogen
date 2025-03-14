@@ -246,35 +246,26 @@ class MarkdownFileBrowser:
         Arguments:
             path: The path of the file or directory to open.
         """
-
-        if not self._validate_path(path):
-            # Not robust to TOCTOU issues.
-            # Mitigate by running with limited permissions, or use a sandbox.
+        try:
+            if os.path.isdir(path):  # TODO: Fix markdown_converter types
+                res = self._markdown_converter.convert_stream(  # type: ignore
+                    io.BytesIO(self._fetch_local_dir(path).encode("utf-8")), file_extension=".txt"
+                )
+                self.page_title = res.title
+                self._set_page_content(res.text_content, split_pages=False)
+            else:
+                res = self._markdown_converter.convert_local(path)
+                self.page_title = res.title
+                self._set_page_content(res.text_content)
+        except UnsupportedFormatException:
+            self.page_title = "UnsupportedFormatException"
+            self._set_page_content(f"# Cannot preview '{path}' as Markdown.")
+        except FileConversionException:
+            self.page_title = "FileConversionException."
+            self._set_page_content(f"# Error converting '{path}' to Markdown.")
+        except FileNotFoundError:
             self.page_title = "FileNotFoundError"
-            self._set_page_content(f"# FileNotFoundError\n\nFile not found: {path}")
-        else:
-            try:
-                if os.path.isdir(path):  # TODO: Fix markdown_converter types
-                    res = self._markdown_converter.convert_stream(  # type: ignore
-                        io.BytesIO(self._fetch_local_dir(path).encode("utf-8")), file_extension=".txt"
-                    )
-                    assert self._validate_path(path)
-                    self.page_title = res.title
-                    self._set_page_content(res.text_content, split_pages=False)
-                else:
-                    res = self._markdown_converter.convert_local(path)
-                    assert self._validate_path(path)
-                    self.page_title = res.title
-                    self._set_page_content(res.text_content)
-            except UnsupportedFormatException:
-                self.page_title = "UnsupportedFormatException"
-                self._set_page_content(f"# UnsupportedFormatException\n\nCannot preview '{path}' as Markdown.")
-            except FileConversionException:
-                self.page_title = "FileConversionException."
-                self._set_page_content(f"# FileConversionException\n\nError converting '{path}' to Markdown.")
-            except FileNotFoundError:
-                self.page_title = "FileNotFoundError"
-                self._set_page_content(f"# FileNotFoundError\n\nFile not found: {path}")
+            self._set_page_content(f"# File not found: {path}")
 
     def _fetch_local_dir(self, local_path: str) -> str:
         """Render a local directory listing in HTML to assist with local file browsing via the "file://" protocol.
@@ -304,9 +295,21 @@ class MarkdownFileBrowser:
                 # Handles PermissionError, etc.
                 mtime = f"N/A: {type(e).__name__}"
 
+            mtime = ""
+            try:
+                mtime = datetime.datetime.fromtimestamp(os.path.getmtime(full_path)).strftime("%Y-%m-%d %H:%M")
+            except Exception as e:
+                # Handles PermissionError, etc.
+                mtime = f"N/A: {type(e).__name__}"
+
             if os.path.isdir(full_path):
                 entry = entry + os.path.sep
             else:
+                try:
+                    size = str(os.path.getsize(full_path))
+                except Exception as e:
+                    # Handles PermissionError, etc.
+                    size = f"N/A: {type(e).__name__}"
                 try:
                     size = str(os.path.getsize(full_path))
                 except Exception as e:

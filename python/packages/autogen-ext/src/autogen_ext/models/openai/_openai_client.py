@@ -747,7 +747,7 @@ class BaseOpenAIChatCompletionClient(ChatCompletionClient):
                 # Emit the start event.
                 logger.info(
                     LLMStreamStartEvent(
-                        messages=cast(List[Dict[str, Any]], create_params.messages),
+                        messages=cast(List[Dict[str, Any]], oai_messages),
                     )
                 )
             # Empty chunks has been observed when the endpoint is under heavy load.
