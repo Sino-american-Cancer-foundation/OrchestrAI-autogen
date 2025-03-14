@@ -14,6 +14,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="coverlet.collector" >
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="GitHubActionsTestLogger">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -59,7 +63,7 @@
     </PropertyGroup>
     <Message Importance="Normal" Text="Initializing virtual environment for $(PythonVenvRoot)" />
 
-    <Exec Command="$(UvPath) sync --all-extras --no-install-package llama-cpp-python" WorkingDirectory="$(PythonRoot)" Condition=" '$(CreateVenv)' == 'True' " />
+    <Exec Command="$(UvPath) sync --locked --all-extras --no-install-package llama-cpp-python" WorkingDirectory="$(PythonRoot)" Condition=" '$(CreateVenv)' == 'True' " />
       <!--Output TaskParameter="ConsoleOutput" PropertyName="OutputOfExec" />
     </Exec>
     <Message Importance="Normal" Text="$(OutputOfExec)" />-->
