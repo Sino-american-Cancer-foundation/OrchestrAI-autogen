@@ -1082,6 +1082,7 @@
           "max_selector_attempts": 3
         }
       }
-    ]
+    ],
+    "mcpservers": []
   }
 }

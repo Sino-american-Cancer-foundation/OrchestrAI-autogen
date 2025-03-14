@@ -12,6 +12,7 @@ import {
   Copy,
   Trash,
   Plus,
+  Server,
 } from "lucide-react";
 import { ComponentEditor } from "../teambuilder/builder/component-editor/component-editor";
 import { TruncatableText } from "../atoms";
@@ -22,7 +23,7 @@ import {
   Gallery,
 } from "../../types/datamodel";
 
-type CategoryKey = `${ComponentTypes}s`;
+type CategoryKey = `${ComponentTypes}s` | "mcpservers";
 
 interface CardActions {
   onEdit: (component: Component<ComponentConfig>, index: number) => void;
@@ -122,6 +123,7 @@ const iconMap = {
   tool: Wrench,
   model: Brain,
   termination: Timer,
+  mcpserver: Server,
 } as const;
 
 // Add default configurations for each component type
@@ -137,6 +139,18 @@ const defaultConfigs: Record<ComponentTypes, ComponentConfig> = {
     has_cancellation_support: false,
   },
   termination: { max_messages: 1 },
+  mcpserver: { name: "New MCP Server", description: "A new MCP Server" } as any,
+};
+
+// Define the explicit order of tabs
+const tabOrder: ComponentTypes[] = ["team", "agent", "tool", "mcpserver", "model", "termination"];
+
+// Helper function to get the category key safely
+const getCategoryKey = (componentType: ComponentTypes): CategoryKey => {
+  if (componentType === 'mcpserver') {
+    return 'mcpservers';
+  }
+  return `${componentType}s` as CategoryKey;
 };
 
 export const GalleryDetail: React.FC<{
@@ -147,6 +161,21 @@ export const GalleryDetail: React.FC<{
   if (!gallery.config.components) {
     return <div className="text-secondary">No components found</div>;
   }
+  
+  // Initialize all component arrays
+  const initializeGalleryComponents = () => {
+    // Make sure all component arrays exist
+    tabOrder.forEach(componentType => {
+      const category = getCategoryKey(componentType);
+      if (!gallery.config.components[category]) {
+        gallery.config.components[category] = [];
+      }
+    });
+  };
+  
+  // Initialize all component arrays
+  initializeGalleryComponents();
+  
   const [editingComponent, setEditingComponent] = useState<{
     component: Component<ComponentConfig>;
     category: CategoryKey;
@@ -160,6 +189,11 @@ export const GalleryDetail: React.FC<{
       components: Component<ComponentConfig>[]
     ) => Component<ComponentConfig>[]
   ) => {
+    // Ensure the category array exists
+    if (!gallery.config.components[category]) {
+      gallery.config.components[category] = [];
+    }
+
     const updatedGallery = {
       ...gallery,
       config: {
@@ -178,13 +212,13 @@ export const GalleryDetail: React.FC<{
     onEdit: (component: Component<ComponentConfig>, index: number) => {
       setEditingComponent({
         component,
-        category: `${activeTab}s` as CategoryKey,
+        category: getCategoryKey(activeTab),
         index,
       });
     },
 
     onDuplicate: (component: Component<ComponentConfig>, index: number) => {
-      const category = `${activeTab}s` as CategoryKey;
+      const category = getCategoryKey(activeTab);
       const baseLabel = component.label?.replace(/_\d+$/, "");
       const components = gallery.config.components[category];
 
@@ -208,7 +242,7 @@ export const GalleryDetail: React.FC<{
     },
 
     onDelete: (component: Component<ComponentConfig>, index: number) => {
-      const category = `${activeTab}s` as CategoryKey;
+      const category = getCategoryKey(activeTab);
       updateGallery(category, (components) =>
         components.filter((_, i) => i !== index)
       );
@@ -216,7 +250,13 @@ export const GalleryDetail: React.FC<{
   };
 
   const handleAdd = () => {
-    const category = `${activeTab}s` as CategoryKey;
+    const category = getCategoryKey(activeTab);
+    
+    // Ensure the category array exists
+    if (!gallery.config.components[category]) {
+      gallery.config.components[category] = [];
+    }
+    
     const components = gallery.config.components[category];
     let newComponent: Component<ComponentConfig>;
     const newLabel = `New ${
@@ -263,45 +303,57 @@ export const GalleryDetail: React.FC<{
     setEditingComponent(null);
   };
 
-  const tabItems = Object.entries(iconMap).map(([key, Icon]) => ({
-    key,
-    label: (
-      <span className="flex items-center gap-2">
-        <Icon className="w-5 h-5" />
-        {key.charAt(0).toUpperCase() + key.slice(1)}s
-        <span className="text-xs font-light text-secondary">
-          ({gallery.config.components[`${key}s` as CategoryKey].length})
+  // Build tabItems with the defined order
+  const validTabs = tabOrder.filter(key => {
+    const categoryKey = getCategoryKey(key);
+    return Boolean(gallery.config.components[categoryKey]);
+  });
+
+  const tabItems = validTabs.map(key => {
+    const Icon = iconMap[key as keyof typeof iconMap];
+    // Ensure that the component array exists with a default empty array
+    const componentArray = gallery.config.components[getCategoryKey(key)] || [];
+    
+    return {
+      key,
+      label: (
+        <span className="flex items-center gap-2">
+          <Icon className="w-5 h-5" />
+          {key.charAt(0).toUpperCase() + key.slice(1)}s
+          <span className="text-xs font-light text-secondary">
+            ({componentArray.length})
+          </span>
         </span>
-      </span>
-    ),
-    children: (
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-medium">
-            {gallery.config.components[`${key}s` as CategoryKey].length}{" "}
-            {gallery.config.components[`${key}s` as CategoryKey].length === 1
-              ? key.charAt(0).toUpperCase() + key.slice(1)
-              : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
-          </h3>
-          <Button
-            type="primary"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => {
-              setActiveTab(key as ComponentTypes);
-              handleAdd();
-            }}
-          >
-            {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
-          </Button>
+      ),
+      children: (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-medium">
+              {componentArray.length}{" "}
+              {componentArray.length === 1
+                ? key.charAt(0).toUpperCase() + key.slice(1)
+                : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
+            </h3>
+            <Button
+              type="primary"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => {
+                setActiveTab(key as ComponentTypes);
+                handleAdd();
+              }}
+            >
+              {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
+            </Button>
+          </div>
+          <ComponentGrid
+            items={componentArray}
+            title={key}
+            {...handlers}
+          />
         </div>
-        <ComponentGrid
-          items={gallery.config.components[`${key}s` as CategoryKey]}
-          title={key}
-          {...handlers}
-        />
-      </div>
-    ),
-  }));
+      ),
+    };
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4">

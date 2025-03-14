@@ -20,6 +20,9 @@ import type {
   TextMentionTerminationConfig,
   UnboundedChatCompletionContextConfig,
   AnthropicClientConfig,
+  MagenticOneGroupChatConfig,
+  StdioMcpToolAdapterConfig,
+  SseMcpToolAdapterConfig,
 } from "./datamodel";
 
 // Provider constants
@@ -27,6 +30,7 @@ const PROVIDERS = {
   // Teams
   ROUND_ROBIN_TEAM: "autogen_agentchat.teams.RoundRobinGroupChat",
   SELECTOR_TEAM: "autogen_agentchat.teams.SelectorGroupChat",
+  MAGENTIC_ONE_TEAM: "autogen_agentchat.teams.MagenticOneGroupChat",
 
   // Agents
   ASSISTANT_AGENT: "autogen_agentchat.agents.AssistantAgent",
@@ -40,6 +44,8 @@ const PROVIDERS = {
 
   // Tools
   FUNCTION_TOOL: "autogen_core.tools.FunctionTool",
+  STDIO_MCP_TOOL: "autogen_ext.tools.mcp.StdioMcpToolAdapter",
+  SSE_MCP_TOOL: "autogen_ext.tools.mcp.SseMcpToolAdapter",
 
   // Termination
   OR_TERMINATION: "autogen_agentchat.base.OrTerminationCondition",
@@ -58,6 +64,7 @@ type ProviderToConfig = {
   // Teams
   [PROVIDERS.SELECTOR_TEAM]: SelectorGroupChatConfig;
   [PROVIDERS.ROUND_ROBIN_TEAM]: RoundRobinGroupChatConfig;
+  [PROVIDERS.MAGENTIC_ONE_TEAM]: MagenticOneGroupChatConfig;
   [PROVIDERS.ANTHROPIC]: AnthropicClientConfig;
 
   // Agents
@@ -71,6 +78,8 @@ type ProviderToConfig = {
 
   // Tools
   [PROVIDERS.FUNCTION_TOOL]: FunctionToolConfig;
+  [PROVIDERS.STDIO_MCP_TOOL]: StdioMcpToolAdapterConfig;
+  [PROVIDERS.SSE_MCP_TOOL]: SseMcpToolAdapterConfig;
 
   // Termination
   [PROVIDERS.OR_TERMINATION]: OrTerminationConfig;
@@ -153,6 +162,12 @@ export function isSelectorTeam(
   return isComponentOfType(component, PROVIDERS.SELECTOR_TEAM);
 }
 
+export function isMagenticOneTeam(
+  component: Component<ComponentConfig>
+): component is Component<MagenticOneGroupChatConfig> {
+  return isComponentOfType(component, PROVIDERS.MAGENTIC_ONE_TEAM);
+}
+
 // Agent provider guards with proper type narrowing
 export function isAssistantAgent(
   component: Component<ComponentConfig>
@@ -195,6 +210,18 @@ export function isFunctionTool(
   component: Component<ComponentConfig>
 ): component is Component<FunctionToolConfig> {
   return isComponentOfType(component, PROVIDERS.FUNCTION_TOOL);
+}
+
+export function isStdioMcpTool(
+  component: Component<ComponentConfig>
+): component is Component<StdioMcpToolAdapterConfig> {
+  return isComponentOfType(component, PROVIDERS.STDIO_MCP_TOOL);
+}
+
+export function isSseMcpTool(
+  component: Component<ComponentConfig>
+): component is Component<SseMcpToolAdapterConfig> {
+  return isComponentOfType(component, PROVIDERS.SSE_MCP_TOOL);
 }
 
 // Termination provider guards with proper type narrowing
