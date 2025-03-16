@@ -17,8 +17,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["autogen-core",
-
+dependencies = [
+    "autogen-core",
+    "autogen-ext",
+    "autogen-test-utils",
+    "autogenstudio",
+    "component-schema-gen",
+    "magentic-one-cli",
 ]
 
 [dependency-groups]

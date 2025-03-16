@@ -5490,10 +5490,22 @@ version = "0.1.dev0"
 source = { editable = "packages/probill" }
 dependencies = [
     { name = "autogen-core" },
+    { name = "autogen-ext" },
+    { name = "autogen-test-utils" },
+    { name = "autogenstudio" },
+    { name = "component-schema-gen" },
+    { name = "magentic-one-cli" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "autogen-core", editable = "packages/autogen-core" }]
+requires-dist = [
+    { name = "autogen-core", editable = "packages/autogen-core" },
+    { name = "autogen-ext", editable = "packages/autogen-ext" },
+    { name = "autogen-test-utils", editable = "packages/autogen-test-utils" },
+    { name = "autogenstudio", editable = "packages/autogen-studio" },
+    { name = "component-schema-gen", editable = "packages/component-schema-gen" },
+    { name = "magentic-one-cli", editable = "packages/magentic-one-cli" },
+]
 
 [package.metadata.requires-dev]
 dev = []
