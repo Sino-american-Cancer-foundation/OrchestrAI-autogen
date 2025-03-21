@@ -33,11 +33,11 @@ export const GalleryManager: React.FC = () => {
   }, [isSidebarOpen]);
 
   const fetchGalleries = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
     try {
       setIsLoading(true);
-      const data = await galleryAPI.listGalleries(user.id);
+      const data = await galleryAPI.listGalleries(user.email);
       setGalleries(data);
       if (!currentGallery && data.length > 0) {
         setCurrentGallery(data[0]);
@@ -48,7 +48,7 @@ export const GalleryManager: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, currentGallery, messageApi]);
+  }, [user?.email, currentGallery, messageApi]);
 
   useEffect(() => {
     fetchGalleries();
@@ -79,7 +79,7 @@ export const GalleryManager: React.FC = () => {
   }, [currentGallery?.id]);
 
   const handleSelectGallery = async (galleryId: number) => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
     if (hasUnsavedChanges) {
       Modal.confirm({
@@ -98,11 +98,11 @@ export const GalleryManager: React.FC = () => {
   };
 
   const switchToGallery = async (galleryId: number) => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
     setIsLoading(true);
     try {
-      const data = await galleryAPI.getGallery(galleryId, user.id);
+      const data = await galleryAPI.getGallery(galleryId, user.email);
       setCurrentGallery(data);
     } catch (error) {
       console.error("Error loading gallery:", error);
@@ -113,11 +113,14 @@ export const GalleryManager: React.FC = () => {
   };
 
   const handleCreateGallery = async (galleryData: Gallery) => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
-    galleryData.user_id = user.id;
+    galleryData.user_id = user.email;
     try {
-      const savedGallery = await galleryAPI.createGallery(galleryData, user.id);
+      const savedGallery = await galleryAPI.createGallery(
+        galleryData,
+        user.email
+      );
       setGalleries([savedGallery, ...galleries]);
       setCurrentGallery(savedGallery);
       setIsCreateModalOpen(false);
@@ -129,7 +132,7 @@ export const GalleryManager: React.FC = () => {
   };
 
   const handleUpdateGallery = async (updates: Partial<Gallery>) => {
-    if (!user?.id || !currentGallery?.id) return;
+    if (!user?.email || !currentGallery?.id) return;
 
     try {
       const sanitizedUpdates = {
@@ -140,7 +143,7 @@ export const GalleryManager: React.FC = () => {
       const updatedGallery = await galleryAPI.updateGallery(
         currentGallery.id,
         sanitizedUpdates,
-        user.id
+        user.email
       );
       setGalleries(
         galleries.map((g) => (g.id === updatedGallery.id ? updatedGallery : g))
@@ -155,10 +158,10 @@ export const GalleryManager: React.FC = () => {
   };
 
   const handleDeleteGallery = async (galleryId: number) => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
     try {
-      await galleryAPI.deleteGallery(galleryId, user.id);
+      await galleryAPI.deleteGallery(galleryId, user.email);
       setGalleries(galleries.filter((g) => g.id !== galleryId));
       if (currentGallery?.id === galleryId) {
         setCurrentGallery(null);
@@ -171,7 +174,7 @@ export const GalleryManager: React.FC = () => {
   };
 
   const handleSyncGallery = async (galleryId: number) => {
-    if (!user?.id) return;
+    if (!user?.email) return;
 
     try {
       setIsLoading(true);
@@ -200,7 +203,7 @@ export const GalleryManager: React.FC = () => {
     }
   };
 
-  if (!user?.id) {
+  if (!user?.email) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-120px)] text-secondary">
         Please log in to view galleries

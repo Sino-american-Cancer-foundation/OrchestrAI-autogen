@@ -93,49 +93,6 @@ export interface FromModuleImport {
 // Import can be either a string (direct import) or a FromModuleImport
 export type Import = string | FromModuleImport;
 
-// Code Executor Base Config
-export interface CodeExecutorBaseConfig {
-  timeout?: number;
-  work_dir?: string;
-}
-
-// Local Command Line Code Executor Config
-export interface LocalCommandLineCodeExecutorConfig
-  extends CodeExecutorBaseConfig {
-  functions_module?: string;
-}
-
-// Docker Command Line Code Executor Config
-export interface DockerCommandLineCodeExecutorConfig
-  extends CodeExecutorBaseConfig {
-  image?: string;
-  container_name?: string;
-  bind_dir?: string;
-  auto_remove?: boolean;
-  stop_container?: boolean;
-  functions_module?: string;
-  extra_volumes?: Record<string, Record<string, string>>;
-  extra_hosts?: Record<string, string>;
-  init_command?: string;
-}
-
-// Jupyter Code Executor Config
-export interface JupyterCodeExecutorConfig extends CodeExecutorBaseConfig {
-  kernel_name?: string;
-  output_dir?: string;
-}
-
-// Python Code Execution Tool Config
-export interface PythonCodeExecutionToolConfig {
-  executor: Component<
-    | LocalCommandLineCodeExecutorConfig
-    | DockerCommandLineCodeExecutorConfig
-    | JupyterCodeExecutorConfig
-  >;
-  description?: string;
-  name?: string;
-}
-
 // The complete FunctionToolConfig interface
 export interface FunctionToolConfig {
   source_code: string;
@@ -239,38 +196,11 @@ export interface AzureOpenAIClientConfig extends BaseOpenAIClientConfig {
   azure_ad_token_provider?: Component<any>;
 }
 
-export interface BaseAnthropicClientConfig extends CreateArgumentsConfig {
-  model: string;
-  api_key?: string;
-  base_url?: string;
-  model_capabilities?: any; // ModelCapabilities equivalent
-  model_info?: ModelInfo;
-  timeout?: number;
-  max_retries?: number;
-  default_headers?: Record<string, string>;
-  max_tokens?: number;
-  temperature?: number;
-  top_p?: number;
-  top_k?: number;
-  stop_sequences?: string | string[];
-  response_format?: any; // ResponseFormat equivalent
-  metadata?: Record<string, string>;
-}
-
-export interface AnthropicClientConfig extends BaseAnthropicClientConfig {
-  tools?: Array<Record<string, any>>;
-  tool_choice?: "auto" | "any" | "none" | Record<string, any>;
-}
-
 export interface UnboundedChatCompletionContextConfig {
   // Empty in example but could have props
 }
 
 export interface OrTerminationConfig {
-  conditions: Component<TerminationConfig>[];
-}
-
-export interface AndTerminationConfig {
   conditions: Component<TerminationConfig>[];
 }
 
@@ -290,18 +220,14 @@ export type AgentConfig =
   | AssistantAgentConfig
   | UserProxyAgentConfig;
 
-export type ModelConfig =
-  | OpenAIClientConfig
-  | AzureOpenAIClientConfig
-  | AnthropicClientConfig;
+export type ModelConfig = OpenAIClientConfig | AzureOpenAIClientConfig;
 
-export type ToolConfig = FunctionToolConfig | PythonCodeExecutionToolConfig;
+export type ToolConfig = FunctionToolConfig;
 
 export type ChatCompletionContextConfig = UnboundedChatCompletionContextConfig;
 
 export type TerminationConfig =
   | OrTerminationConfig
-  | AndTerminationConfig
   | MaxMessageTerminationConfig
   | TextMentionTerminationConfig;
 
@@ -325,7 +251,7 @@ export interface DBModel {
 export interface Message extends DBModel {
   config: AgentMessageConfig;
   session_id: number;
-  run_id: number;
+  run_id: string;
 }
 
 export interface Team extends DBModel {
@@ -369,7 +295,7 @@ export interface TeamResult {
 }
 
 export interface Run {
-  id: number;
+  id: string;
   created_at: string;
   updated_at?: string;
   status: RunStatus;
@@ -404,17 +330,8 @@ export interface EnvironmentVariable {
   required: boolean;
 }
 
-export interface UISettings {
-  show_llm_call_events: boolean;
-  expanded_messages_by_default?: boolean;
-  show_agent_flow_by_default?: boolean;
-  // You can add more UI settings here as needed
-}
-
 export interface SettingsConfig {
   environment: EnvironmentVariable[];
-  default_model_client?: Component<ModelConfig>;
-  ui: UISettings;
 }
 
 export interface Settings extends DBModel {
