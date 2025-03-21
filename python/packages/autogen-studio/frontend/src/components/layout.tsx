@@ -8,8 +8,6 @@ import "antd/dist/reset.css";
 import SideBar from "./sidebar";
 import ContentHeader from "./contentheader";
 import { ConfigProvider, theme } from "antd";
-import { useAuth } from "../auth/context";
-import ProtectedRoute from "../auth/protected";
 
 const classNames = (...classes: (string | undefined | boolean)[]) => {
   return classes.filter(Boolean).join(" ");
@@ -30,13 +28,12 @@ const Layout = ({
   link,
   children,
   showHeader = true,
-  restricted = true, // Default to restricted for security
+  restricted = false,
 }: Props) => {
   const { darkMode } = React.useContext(appContext);
   const { sidebar } = useConfigStore();
   const { isExpanded } = sidebar;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const { authType } = useAuth();
 
   // Close mobile menu on route change
   React.useEffect(() => {
@@ -120,12 +117,20 @@ const Layout = ({
     </div>
   );
 
-  // If page is restricted and auth is not 'none', wrap with ProtectedRoute
-  if (restricted && authType !== "none") {
-    return <ProtectedRoute>{layoutContent}</ProtectedRoute>;
+  // Handle restricted content
+  if (restricted) {
+    return (
+      <appContext.Consumer>
+        {(context: any) => {
+          if (context.user) {
+            return layoutContent;
+          }
+          return null;
+        }}
+      </appContext.Consumer>
+    );
   }
 
-  // Otherwise, render without protection
   return layoutContent;
 };
 

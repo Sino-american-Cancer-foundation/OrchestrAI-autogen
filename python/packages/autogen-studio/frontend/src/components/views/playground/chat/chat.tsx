@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Button, message, Tooltip } from "antd";
-import { getServerUrl } from "../../../utils/utils";
+import { message } from "antd";
+import { getServerUrl } from "../../../utils";
 import { IStatus } from "../../../types/app";
 import {
   Run,
@@ -16,40 +16,18 @@ import {
 } from "../../../types/datamodel";
 import { appContext } from "../../../../hooks/provider";
 import ChatInput from "./chatinput";
-import { teamAPI } from "../../teambuilder/api";
+import { teamAPI } from "../../team/api";
 import { sessionAPI } from "../api";
 import RunView from "./runview";
 import { TIMEOUT_CONFIG } from "./types";
-import {
-  ChevronRight,
-  MessagesSquare,
-  SplitSquareHorizontal,
-  X,
-} from "lucide-react";
-import SessionDropdown from "./sessiondropdown";
+import { ChevronRight, MessagesSquare } from "lucide-react";
 const logo = require("../../../../images/landing/welcome.svg").default;
 
 interface ChatViewProps {
   session: Session | null;
-  isCompareMode?: boolean;
-  isSecondaryView?: boolean; // To know if this is the right panel
-  onCompareClick?: () => void;
-  onExitCompare?: () => void;
-  onSessionChange?: (session: Session) => void;
-  availableSessions?: Session[];
-  showCompareButton?: boolean;
 }
 
-export default function ChatView({
-  session,
-  isCompareMode = false,
-  isSecondaryView = false,
-  onCompareClick,
-  onExitCompare,
-  onSessionChange,
-  availableSessions = [],
-  showCompareButton = true,
-}: ChatViewProps) {
+export default function ChatView({ session }: ChatViewProps) {
   const serverUrl = getServerUrl();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<IStatus | null>({
@@ -64,7 +42,7 @@ export default function ChatView({
 
   const chatContainerRef = React.useRef<HTMLDivElement | null>(null);
   const [streamingContent, setStreamingContent] = React.useState<{
-    runId: number;
+    runId: string;
     content: string;
     source: string;
   } | null>(null);
@@ -84,7 +62,7 @@ export default function ChatView({
   // Create a Message object from AgentMessageConfig
   const createMessage = (
     config: AgentMessageConfig,
-    runId: number,
+    runId: string,
     sessionId: number
   ): Message => ({
     created_at: new Date().toISOString(),
@@ -92,15 +70,15 @@ export default function ChatView({
     config,
     session_id: sessionId,
     run_id: runId,
-    user_id: user?.id || undefined,
+    user_id: user?.email || undefined,
   });
 
   // Load existing runs when session changes
   const loadSessionRuns = async () => {
-    if (!session?.id || !user?.id) return;
+    if (!session?.id || !user?.email) return;
 
     try {
-      const response = await sessionAPI.getSessionRuns(session.id, user.id);
+      const response = await sessionAPI.getSessionRuns(session.id, user.email);
       setExistingRuns(response.runs);
     } catch (error) {
       console.error("Error loading session runs:", error);
@@ -120,9 +98,9 @@ export default function ChatView({
 
   // Load team config
   React.useEffect(() => {
-    if (session?.team_id && user?.id) {
+    if (session?.team_id && user?.email) {
       teamAPI
-        .getTeam(session.team_id, user.id)
+        .getTeam(session.team_id, user.email)
         .then((team) => {
           setTeamConfig(team.component);
         })
@@ -156,14 +134,25 @@ export default function ChatView({
     };
   }, [activeSocket]);
 
-  const createRun = async (sessionId: number): Promise<number> => {
-    return await sessionAPI.createRun(sessionId, user?.id || "");
+  const createRun = async (sessionId: number): Promise<string> => {
+    const payload = { session_id: sessionId, user_id: user?.email || "" };
+    const response = await fetch(`${serverUrl}/runs/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create run");
+    }
+
+    const data = await response.json();
+    return data.data.run_id;
   };
 
   const handleWebSocketMessage = (message: WebSocketMessage) => {
     setCurrentRun((current) => {
       if (!current || !session?.id) return null;
-      // console.log("WebSocket message:", message);
 
       switch (message.type) {
         case "error":
@@ -177,16 +166,6 @@ export default function ChatView({
             activeSocketRef.current = null;
           }
           console.log("Error: ", message.error);
-
-          const updatedErrorRun = {
-            ...current,
-            status: "error" as RunStatus,
-            error_message: message.error || "An error occurred",
-          };
-
-          // Add to existing runs
-          setExistingRuns((prev) => [...prev, updatedErrorRun]);
-          return null; // Clear current run
 
         case "message_chunk":
           if (!message.data) return current;
@@ -444,7 +423,7 @@ export default function ChatView({
     }
   };
 
-  const setupWebSocket = (runId: number, query: string): WebSocket => {
+  const setupWebSocket = (runId: string, query: string): WebSocket => {
     if (!session || !session.id) {
       throw new Error("Invalid session configuration");
     }
@@ -455,8 +434,7 @@ export default function ChatView({
 
     const baseUrl = getBaseUrl(serverUrl);
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const auth_token = localStorage.getItem("auth_token");
-    const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/runs/${runId}?token=${auth_token}`;
+    const wsUrl = `${wsProtocol}//${baseUrl}/api/ws/runs/${runId}`;
 
     const socket = new WebSocket(wsUrl);
 
@@ -528,54 +506,14 @@ export default function ChatView({
   return (
     <div className="text-primary h-[calc(100vh-165px)] bg-primary relative rounded flex-1 scroll">
       {contextHolder}
-      <div className="flex pt-2 items-center justify-between text-sm h-10">
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1 pr-4">
-          {isCompareMode ? (
-            <SessionDropdown
-              session={session}
-              availableSessions={availableSessions}
-              onSessionChange={onSessionChange || (() => {})}
-              className="w-full"
-            />
-          ) : (
-            <>
-              <span className="text-primary font-medium whitespace-nowrap flex-shrink-0">
-                Sessions
-              </span>
-              {session && (
-                <>
-                  <ChevronRight className="w-4 h-4 text-secondary flex-shrink-0" />
-                  <Tooltip title={session.name}>
-                    <span className="text-secondary truncate overflow-hidden">
-                      {session.name}
-                    </span>
-                  </Tooltip>
-                </>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-          {!isCompareMode && !isSecondaryView && showCompareButton && (
-            <Button
-              type="text"
-              onClick={onCompareClick}
-              icon={<SplitSquareHorizontal className="w-4 h-4" />}
-            >
-              Compare
-            </Button>
-          )}
-          {isCompareMode && isSecondaryView && (
-            <Button
-              type="text"
-              onClick={onExitCompare}
-              icon={<X className="w-4 h-4" />}
-            >
-              Exit Compare
-            </Button>
-          )}
-        </div>
+      <div className="flex pt-2 items-center gap-2  text-sm">
+        <span className="text-primary font-medium"> Sessions</span>
+        {session && (
+          <>
+            <ChevronRight className="w-4 h-4 text-secondary" />
+            <span className="text-secondary">{session.name}</span>
+          </>
+        )}
       </div>
       <div className="flex flex-col h-full">
         <div
