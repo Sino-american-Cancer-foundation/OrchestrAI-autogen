@@ -24,7 +24,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 ./python/packages/probill/tests/test_KG.ipynb
-./python/probill/
+./python/packages/probill/
 ./python/packages/autogen-studio/probill/
 build/
 develop-eggs/
