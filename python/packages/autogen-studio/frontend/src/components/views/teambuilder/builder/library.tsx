@@ -11,6 +11,7 @@ import {
   Maximize2,
   Minimize2,
   GripVertical,
+  Server,
 } from "lucide-react";
 import Sider from "antd/es/layout/Sider";
 import { ComponentTypes, Gallery } from "../../../types/datamodel";
@@ -107,6 +108,57 @@ export const ComponentLibrary: React.FC<LibraryProps> = ({
           config: tool,
         })),
         icon: <Wrench className="w-4 h-4" />,
+      },
+      {
+        title: "MCP Servers",
+        type: "mcp" as ComponentTypes,
+        items: [
+          {
+            label: "STDIO MCP Server",
+            config: {
+              provider: "autogen_ext.tools.mcp.StdioMcpToolAdapter",
+              component_type: "tool",
+              version: 1,
+              label: "STDIO MCP Server",
+              description: "MCP server using standard input/output for communication",
+              config: {
+                name: "stdio_mcp_server",
+                server_params: {
+                  command: "",
+                  args: [],
+                  encoding: "utf-8",
+                  encoding_error_handler: "strict"
+                },
+                tool: {
+                  inputSchema: {}
+                }
+              }
+            }
+          },
+          {
+            label: "SSE MCP Server",
+            config: {
+              provider: "autogen_ext.tools.mcp.SseMcpToolAdapter",
+              component_type: "tool",
+              version: 1,
+              label: "SSE MCP Server",
+              description: "MCP server using Server-Sent Events for communication",
+              config: {
+                name: "sse_mcp_server",
+                server_params: {
+                  url: "",
+                  headers: null,
+                  timeout: 30,
+                  sse_read_timeout: 60
+                },
+                tool: {
+                  inputSchema: {}
+                }
+              }
+            }
+          }
+        ],
+        icon: <Server className="w-4 h-4" />,
       },
       {
         title: "Terminations",

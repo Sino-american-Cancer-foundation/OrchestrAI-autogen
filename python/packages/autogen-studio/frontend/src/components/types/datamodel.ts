@@ -6,7 +6,7 @@ export type ComponentTypes =
   | "model"
   | "tool"
   | "termination"
-  | "mcpserver";
+  | "mcp";
 export interface Component<T extends ComponentConfig> {
   provider: string;
   component_type: ComponentTypes;
@@ -180,6 +180,44 @@ export interface FunctionToolConfig {
   global_imports: Import[];
   has_cancellation_support: boolean;
 }
+
+export interface MCPServerParams {
+  host: string;
+  port: number;
+  use_sub_urls?: boolean;
+}
+
+export interface StdioMCPToolConfig {
+  name: string;
+  description: string;
+  server_params: MCPServerParams;
+  subprocess_timeout?: number;
+}
+
+export interface SSEMCPToolConfig {
+  name: string;
+  description: string;
+  server_params: MCPServerParams;
+}
+
+// Base MCP Tool types
+export interface MCPServerParams {
+  host: string;
+  port: number;
+  use_sub_urls?: boolean;
+}
+
+export interface MCPToolConfig {
+  name: string;
+  description: string;
+  server_params: MCPServerParams;
+}
+
+export interface StdioMCPToolConfig extends MCPToolConfig {
+  subprocess_timeout?: number;
+}
+
+export interface SSEMCPToolConfig extends MCPToolConfig {}
 
 // Provider-based Configs
 export interface SelectorGroupChatConfig {

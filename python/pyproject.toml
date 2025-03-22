@@ -20,6 +20,8 @@ dev = [
     "tomli-w",
     # "chainlit",
     "streamlit",
+    "ffmpeg>=1.4",
+    "neo4j>=5.28.1",
 ]
 
 [tool.uv]
