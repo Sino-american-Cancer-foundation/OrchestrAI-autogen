@@ -1,64 +1,4 @@
 {
-  "Confirmed-diagnosis-and-clinical-stage": {
-    "id": "Confirmed-diagnosis-and-clinical-stage",
-    "name": "Confirmed diagnosis and clinical stage",
-    "inputs": [
-      "cT-stage",
-      "cN-stage",
-      "M-stage",
-      "histological-type"
-    ],
-    "outputs": [
-      "go-to"
-    ],
-    "rules": [
-      {
-        "conditions": {
-          "cT-stage": "\"cTis(DCIS)\"",
-          "cN-stage": "\"cN0\"",
-          "M-stage": "\"M0\"",
-          "histological-type": "\"DCIS\""
-        },
-        "outcomes": [
-          "\"DCIS-1\""
-        ]
-      },
-      {
-        "conditions": {
-          "cT-stage": "\"cT1\",\"cT1mi\",\"cT1a\",\"cT1b\",\"cT1c\",\"cT2\",\"cT3\"",
-          "cN-stage": "Unknown",
-          "M-stage": "\"M0\"",
-          "histological-type": "not(\"DCIS\",\"Paget's disease\")"
-        },
-        "outcomes": [
-          "\"BINV-1\""
-        ]
-      },
-      {
-        "conditions": {
-          "cT-stage": "Unknown",
-          "cN-stage": "Unknown",
-          "M-stage": "\"M1\"",
-          "histological-type": "not(\"DCIS\",\"Paget's disease\")"
-        },
-        "outcomes": [
-          "\"BINV-18\""
-        ]
-      },
-      {
-        "conditions": {
-          "cT-stage": "\"cT4d\"",
-          "cN-stage": "Unknown",
-          "M-stage": "Unknown",
-          "histological-type": "Unknown"
-        },
-        "outcomes": [
-          "\"IBC-1\""
-        ]
-      }
-    ],
-    "dependsOn": []
-  },
   "Evaluation-for-metastatic-therapy": {
     "id": "Evaluation-for-metastatic-therapy",
     "name": "BINV-20",
@@ -75,87 +15,67 @@
     "rules": [
       {
         "conditions": {
-          "Metastatic-site": "\"bone\"",
-          "ER-status": "Unknown",
-          "PR-status": "Unknown",
-          "HER2-status": "Unknown"
+          "Metastatic-site": "\"bone\""
         },
-        "outcomes": [
-          "\"denosumab\" OR \"zoledronic acid\" OR \"pamidronate\"",
-          "Unknown"
-        ]
+        "outcomes": {
+          "systemic-therapy": "\"denosumab\" OR \"zoledronic acid\" OR \"pamidronate\""
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
           "ER-status": "\"Positive\"",
-          "PR-status": "Unknown",
           "HER2-status": "\"Low\",\"Negative\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-21\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-21"
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
-          "ER-status": "Unknown",
           "PR-status": "\"Positive\"",
           "HER2-status": "\"Low\",\"Negative\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-21\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-21"
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
           "ER-status": "\"Positive\"",
-          "PR-status": "Unknown",
           "HER2-status": "\"Positive\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-23\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-23"
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
-          "ER-status": "Unknown",
           "PR-status": "\"Positive\"",
           "HER2-status": "\"Positive\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-23\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-23"
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
           "ER-status": "\"Negative\"",
           "PR-status": "\"Negative\"",
           "HER2-status": "\"Positive\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-25\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-25"
+        }
       },
       {
         "conditions": {
-          "Metastatic-site": "Unknown",
           "ER-status": "\"Negative\"",
           "PR-status": "\"Negative\"",
           "HER2-status": "\"Low\",\"Negative\""
         },
-        "outcomes": [
-          "Unknown",
-          "\"BINV-26\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-26"
+        }
       }
     ],
     "dependsOn": []
@@ -163,20 +83,16 @@
   "BINV-25-1": {
     "id": "BINV-25-1",
     "name": "BINV-25-1",
-    "inputs": [
-      null
-    ],
+    "inputs": [],
     "outputs": [
       "go-to"
     ],
     "rules": [
       {
-        "conditions": {
-          "null": "Unknown"
-        },
-        "outcomes": [
-          "\"BINV-Q-3\""
-        ]
+        "conditions": {},
+        "outcomes": {
+          "go-to": "BINV-Q-3"
+        }
       }
     ],
     "dependsOn": []
@@ -196,25 +112,19 @@
     "rules": [
       {
         "conditions": {
-          "Visceral-crisis": "true",
-          "Prior-endocrine-therapy-within-1y": "Unknown",
-          "menopause": "Unknown"
+          "Visceral-crisis": "true"
         },
-        "outcomes": [
-          "\"BINV-Q\"",
-          "Unknown"
-        ]
+        "outcomes": {
+          "go-to": "BINV-Q"
+        }
       },
       {
         "conditions": {
-          "Visceral-crisis": "false",
-          "Prior-endocrine-therapy-within-1y": "Unknown",
-          "menopause": "Unknown"
+          "Visceral-crisis": "false"
         },
-        "outcomes": [
-          "\"BINV-P\"",
-          "Unknown"
-        ]
+        "outcomes": {
+          "go-to": "BINV-P"
+        }
       },
       {
         "conditions": {
@@ -222,10 +132,10 @@
           "Prior-endocrine-therapy-within-1y": "false",
           "menopause": "false"
         },
-        "outcomes": [
-          "\"BINV-P\"",
-          "\"Tamoxifen\" OR \"Toremifene\""
-        ]
+        "outcomes": {
+          "go-to": "BINV-P",
+          "systemic-therapy": "\"Tamoxifen\" OR \"Toremifene\""
+        }
       }
     ],
     "dependsOn": []
@@ -233,20 +143,16 @@
   "BINV-23-1": {
     "id": "BINV-23-1",
     "name": "BINV-23-1",
-    "inputs": [
-      null
-    ],
+    "inputs": [],
     "outputs": [
       "go-to"
     ],
     "rules": [
       {
-        "conditions": {
-          "null": "Unknown"
-        },
-        "outcomes": [
-          "\"BINV-P\" OR \"BINV-Q-3\""
-        ]
+        "conditions": {},
+        "outcomes": {
+          "go-to": "BINV-P\" OR \"BINV-Q-3"
+        }
       }
     ],
     "dependsOn": []

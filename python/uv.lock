@@ -39,9 +39,11 @@ overrides = [
 [manifest.dependency-groups]
 dev = [
     { name = "cookiecutter" },
+    { name = "ffmpeg", specifier = ">=1.4" },
     { name = "grpcio-tools", specifier = "~=1.70.0" },
     { name = "mypy", specifier = "==1.13.0" },
     { name = "mypy-protobuf" },
+    { name = "neo4j", specifier = ">=5.28.1" },
     { name = "packaging" },
     { name = "poethepoet" },
     { name = "polars" },
@@ -833,6 +835,11 @@ web = [
     { name = "uvicorn" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "playwright" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiofiles" },
@@ -860,6 +867,9 @@ requires-dist = [
     { name = "websockets" },
 ]
 provides-extras = ["web", "database"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "playwright", specifier = ">=1.49.1" }]
 
 [[package]]
 name = "autograd"
@@ -1921,6 +1931,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/ff/aa/7af346ebeb42a76bf
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/d4/8c31aad9cc18f451c49f7f9cfb5799dadffc88177f7917bc90a66459b1d7/feedparser-6.0.11-py3-none-any.whl", hash = "sha256:0be7ee7b395572b19ebeb1d6aafb0028dee11169f1c934e0ed67d54992f4ad45", size = 81343 },
 ]
+
+[[package]]
+name = "ffmpeg"
+version = "1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/cc/3b7408b8ecf7c1d20ad480c3eaed7619857bf1054b690226e906fdf14258/ffmpeg-1.4.tar.gz", hash = "sha256:6931692c890ff21d39938433c2189747815dca0c60ddc7f9bb97f199dba0b5b9", size = 5055 }
 
 [[package]]
 name = "ffmpeg-python"
@@ -4509,6 +4525,18 @@ wheels = [
 ]
 
 [[package]]
+name = "neo4j"
+version = "5.28.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4b/20/733dac16f7cedc80b23093415822c9763302519cba0e7c8bcdb5c01fc512/neo4j-5.28.1.tar.gz", hash = "sha256:ae8e37a1d895099062c75bc359b2cce62099baac7be768d0eba7180c1298e214", size = 231094 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6a/57/94225fe5e9dabdc0ff60c88cbfcedf11277f4b34e7ab1373d3e62dbdd207/neo4j-5.28.1-py3-none-any.whl", hash = "sha256:6755ef9e5f4e14b403aef1138fb6315b120631a0075c138b5ddb2a06b87b09fd", size = 312258 },
+]
+
+[[package]]
 name = "nest-asyncio"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -5486,7 +5514,7 @@ wheels = [
 
 [[package]]
 name = "probill"
-version = "0.1.dev0"
+version = "0.1.dev1"
 source = { editable = "packages/probill" }
 dependencies = [
     { name = "autogen-core" },
