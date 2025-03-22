@@ -11,20 +11,12 @@ from sqlmodel import JSON, Column, DateTime, Field, SQLModel, func
 
 from .types import (
     GalleryComponents,
-    (
-    GalleryComponents,
     GalleryConfig,
     GalleryMetadata,
-   
-    GalleryMetadata,
     MessageConfig,
-   
     MessageMeta,
-   
     SettingsConfig,
-   
     TeamResult,
-),
 )
 
 
@@ -149,7 +141,12 @@ class Gallery(SQLModel, table=True):
         sa_column=Column(JSON),
     )
 
-    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})  # type: ignore[call-arg]
+    model_config = ConfigDict(
+        json_encoders={
+            datetime: lambda v: v.isoformat(),
+            SecretStr: lambda v: v.get_secret_value(),  # Add this line
+        }
+    )  # type: ignore[call-arg]
 
 
 class Settings(SQLModel, table=True):

@@ -697,8 +697,6 @@ web-surfer = [
     { name = "autogen-agentchat" },
     { name = "magika" },
     { name = "markitdown", extra = ["all"] },
-    { name = "magika" },
-    { name = "markitdown", extra = ["all"] },
     { name = "pillow" },
     { name = "playwright" },
 ]
@@ -744,13 +742,6 @@ requires-dist = [
     { name = "markitdown", extras = ["all"], marker = "extra == 'file-surfer'", specifier = "~=0.1.0a3" },
     { name = "markitdown", extras = ["all"], marker = "extra == 'magentic-one'", specifier = "~=0.1.0a3" },
     { name = "markitdown", extras = ["all"], marker = "extra == 'web-surfer'", specifier = "~=0.1.0a3" },
-    { name = "llama-cpp-python", marker = "extra == 'llama-cpp'", specifier = ">=0.3.8" },
-    { name = "magika", marker = "extra == 'file-surfer'", specifier = ">=0.6.1rc2" },
-    { name = "magika", marker = "extra == 'magentic-one'", specifier = ">=0.6.1rc2" },
-    { name = "magika", marker = "extra == 'web-surfer'", specifier = ">=0.6.1rc2" },
-    { name = "markitdown", extras = ["all"], marker = "extra == 'file-surfer'", specifier = "~=0.1.0a3" },
-    { name = "markitdown", extras = ["all"], marker = "extra == 'magentic-one'", specifier = "~=0.1.0a3" },
-    { name = "markitdown", extras = ["all"], marker = "extra == 'web-surfer'", specifier = "~=0.1.0a3" },
     { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.1.3" },
     { name = "nbclient", marker = "extra == 'jupyter-executor'", specifier = ">=0.10.2" },
     { name = "ollama", marker = "extra == 'ollama'", specifier = ">=0.4.7" },
@@ -777,7 +768,7 @@ requires-dist = [
     { name = "tiktoken", marker = "extra == 'ollama'", specifier = ">=0.8.0" },
     { name = "tiktoken", marker = "extra == 'openai'", specifier = ">=0.8.0" },
 ]
-provides-extras = ["langchain", "azure", "docker", "ollama", "openai", "file-surfer", "llama-cpp", "graphrag", "chromadb", "web-surfer", "magentic-one", "video-surfer", "diskcache", "redis", "grpc", "jupyter-executor", "task-centric-memory", "semantic-kernel-core", "gemini", "semantic-kernel-google", "semantic-kernel-hugging-face", "semantic-kernel-mistralai", "semantic-kernel-ollama", "semantic-kernel-onnx", "semantic-kernel-anthropic", "semantic-kernel-pandas", "semantic-kernel-aws", "semantic-kernel-dapr", "http-tool", "semantic-kernel-all", "rich", "mcp"]
+provides-extras = ["anthropic", "langchain", "azure", "docker", "ollama", "openai", "file-surfer", "llama-cpp", "graphrag", "chromadb", "web-surfer", "magentic-one", "video-surfer", "diskcache", "redis", "grpc", "jupyter-executor", "task-centric-memory", "semantic-kernel-core", "gemini", "semantic-kernel-google", "semantic-kernel-hugging-face", "semantic-kernel-mistralai", "semantic-kernel-ollama", "semantic-kernel-onnx", "semantic-kernel-anthropic", "semantic-kernel-pandas", "semantic-kernel-aws", "semantic-kernel-dapr", "http-tool", "semantic-kernel-all", "rich", "mcp"]
 
 [package.metadata.requires-dev]
 dev = [
