@@ -207,3 +207,4 @@ registry.json
 .gitty/
 python/packages/autogen-studio/probill/
 python/packages/probill/tests/
+python/packages/autogen-studio/autogenstudio/mcp_tools/test.ipynb
