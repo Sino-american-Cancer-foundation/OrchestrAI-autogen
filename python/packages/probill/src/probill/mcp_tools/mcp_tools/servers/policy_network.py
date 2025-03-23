@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 
+
 # Define the data classes as provided
 @dataclass
 class PatientCase:
@@ -16,6 +17,7 @@ class PatientCase:
     patient_preferences: Optional[dict] = None
     insurance_status: Optional[dict] = None
 
+
 @dataclass
 class TreatmentRecommendation:
     patient_id: str
@@ -23,6 +25,7 @@ class TreatmentRecommendation:
     rationale: str
     confidence_score: float
     needs_human_review: bool
+
 
 # Define the PolicyNetwork with LSTM for sequential data
 class PolicyNetwork(nn.Module):
@@ -39,6 +42,7 @@ class PolicyNetwork(nn.Module):
         x = F.relu(self.fc1(x))
         logits = self.fc2(x)
         return logits
+
 
 # Feature extraction function to convert PatientCase to a state sequence
 def extract_features(patient_case: PatientCase, seq_len=3):
@@ -82,15 +86,13 @@ def extract_features(patient_case: PatientCase, seq_len=3):
     # Convert to tensor: (1, seq_len, state_dim)
     return torch.tensor(state_sequence, dtype=torch.float32).unsqueeze(0)
 
+
 # Function to map action index to treatment
 def action_to_treatment(action_index):
     """Map PolicyNetwork action to a treatment dictionary."""
-    treatment_map = {
-        0: {"type": "continue_current"},
-        1: {"type": "switch_to_new"},
-        2: {"type": "stop_treatment"}
-    }
+    treatment_map = {0: {"type": "continue_current"}, 1: {"type": "switch_to_new"}, 2: {"type": "stop_treatment"}}
     return treatment_map.get(action_index, {"type": "unknown"})
+
 
 # Main function to connect PatientCase to TreatmentRecommendation via PolicyNetwork
 def generate_treatment_recommendation(policy_net: PolicyNetwork, patient_case: PatientCase):
@@ -113,9 +115,10 @@ def generate_treatment_recommendation(policy_net: PolicyNetwork, patient_case: P
         treatments=[treatment],
         rationale="Decision based on patient history and clinical data.",
         confidence_score=confidence_score,
-        needs_human_review=confidence_score < 0.8
+        needs_human_review=confidence_score < 0.8,
     )
     return recommendation
+
 
 # Example usage
 if __name__ == "__main__":
@@ -123,12 +126,9 @@ if __name__ == "__main__":
     sample_patient = PatientCase(
         patient_id="123",
         demographics={"age": 65, "sex": "male"},
-        medical_history=[
-            {"event": "surgery", "date": "2020-01-01"},
-            {"event": "chemotherapy", "date": "2021-06-15"}
-        ],
+        medical_history=[{"event": "surgery", "date": "2020-01-01"}, {"event": "chemotherapy", "date": "2021-06-15"}],
         radiology_report={"tumor_size": 2.5, "location": "left lung"},
-        pathology_report={"grade": 3, "biomarkers": ["positive"]}
+        pathology_report={"grade": 3, "biomarkers": ["positive"]},
     )
 
     # Initialize PolicyNetwork

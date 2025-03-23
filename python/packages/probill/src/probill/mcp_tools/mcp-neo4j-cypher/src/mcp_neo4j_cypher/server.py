@@ -12,20 +12,22 @@ from typing import Any
 from neo4j import GraphDatabase
 import re
 
-logger = logging.getLogger('mcp_neo4j_cypher')
+logger = logging.getLogger("mcp_neo4j_cypher")
 logger.info("Starting MCP neo4j Server")
+
 
 def is_write_query(query: str) -> bool:
     return re.search(r"\b(MERGE|CREATE|SET|DELETE|REMOVE|ADD)\b", query, re.IGNORECASE) is not None
 
+
 class neo4jDatabase:
     def __init__(self, neo4j_uri: str, neo4j_username: str, neo4j_password: str, database: str = "testdb"):
         """Initialize connection to the neo4j database
-        
+
         Args:
             neo4j_uri: URI of the Neo4j server
             neo4j_username: Username for authentication
-            neo4j_password: Password for authentication 
+            neo4j_password: Password for authentication
             database: Name of the database to connect to (defaults to "neo4j")
         """
         logger.debug(f"Initializing database connection to {neo4j_uri}, database: {database}")
@@ -50,6 +52,7 @@ class neo4jDatabase:
         except Exception as e:
             logger.error(f"Database error executing query: {e}\n{query}")
             raise
+
 
 async def main(neo4j_url: str, neo4j_username: str, neo4j_password: str):
     logger.info(f"Connecting to neo4j MCP Server with DB URL: {neo4j_url}")
@@ -99,7 +102,7 @@ async def main(neo4j_url: str, neo4j_username: str, neo4j_password: str):
                     "type": "object",
                     "properties": {},
                 },
-            )
+            ),
         ]
 
     @server.call_tool()
@@ -132,7 +135,7 @@ RETURN label, apoc.map.fromPairs(attributes) as attributes, apoc.map.fromPairs(r
                     raise ValueError("Only write queries are allowed for write-query")
                 results = db._execute_query(arguments["query"])
                 return [types.TextContent(type="text", text=str(results))]
-            
+
             else:
                 raise ValueError(f"Unknown tool: {name}")
 

@@ -16,8 +16,10 @@ mcp = FastMCP("probill")
 
 task_states: Dict[str, Dict[str, Any]] = {}
 
+
 class Task(BaseModel):
     """Task class to hold task information."""
+
     task_id: str | None = None
     task_worker_id: str | None = None
     task_status: str = "initiated"
@@ -26,24 +28,19 @@ class Task(BaseModel):
     task_parameters: Dict[str, Any] | None = None
     task_state: Dict[str, Any] | None = None
 
-    def __init__(
-            self, 
-            task_id: str, 
-            task_parameters: Dict[str, Any] | None = None,
-            **kwargs
-        ) -> None:
+    def __init__(self, task_id: str, task_parameters: Dict[str, Any] | None = None, **kwargs) -> None:
         if not task_id:
             task_id = str(uuid.uuid4())
         if task_parameters is None:
             task_parameters = {}
-        task_parameters["ext_args"]=kwargs if kwargs else {}
-        task_state=task_parameters["ext_args"].get("task_state",None)
-        task_worker_id=task_parameters["ext_args"].get("task_worker_id",None)
+        task_parameters["ext_args"] = kwargs if kwargs else {}
+        task_state = task_parameters["ext_args"].get("task_state", None)
+        task_worker_id = task_parameters["ext_args"].get("task_worker_id", None)
         super().__init__(
             task_id=task_id,
             task_parameters=task_parameters,
         )
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "task_id": self.task_id,
@@ -51,32 +48,34 @@ class Task(BaseModel):
             "task_name": self.task_name,
             "task_description": self.task_description,
             "task_parameters": self.task_parameters,
-            "task_state": self.task_state
+            "task_state": self.task_state,
         }
-    
+
     def __str__(self) -> str:
         return f"Task: {self.task_name} ({self.task_id}) - {self.task_status}"
+
 
 @mcp.tool()
 async def get_task_state(task_id: str) -> Dict[str, Any]:
     """Get the state of the task with the given task ID. format "task_state://{task_id}"."""
     return task_states.get(task_id)
 
+
 @mcp.tool()
 async def set_task_state(task_id: str, task_state: Dict) -> Dict:
     """Set the state of the task with the given task ID.
-    
+
     Args:
         task_id (str): ID of the task to update
         task_state (Dict): New state to update or add
-        
+
     Returns:
         Dict: Status response indicating success or failure
     """
     try:
         if not task_id:
             raise ValueError("task_id cannot be empty")
-        
+
         if not isinstance(task_state, dict):
             raise TypeError("task_state must be a dictionary")
 
@@ -86,16 +85,11 @@ async def set_task_state(task_id: str, task_state: Dict) -> Dict:
         else:
             task_states[task_id] = task_state or {}
 
-        return {
-            "status": "success",
-            "message": "Task state successfully updated"
-        }
-    
+        return {"status": "success", "message": "Task state successfully updated"}
+
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
+
 
 @mcp.tool()
 async def initiate_task(task) -> Dict[str, Any]:
@@ -104,7 +98,7 @@ async def initiate_task(task) -> Dict[str, Any]:
     Args:
         task (Task): Task object containing:
             - task_id: Unique identifier for the task (optional)
-            - task_name: Name of the task 
+            - task_name: Name of the task
             - task_status: Current status of the task
             - task_description: Description of the task (optional)
             - task_parameters: Dictionary of task-specific parameters (optional)
@@ -122,7 +116,7 @@ async def initiate_task(task) -> Dict[str, Any]:
     """
     try:
         # Convert task to dictionary format
-        print(f"Initiating task type [{type(task)}]: {task}",flush=True)
+        print(f"Initiating task type [{type(task)}]: {task}", flush=True)
         if isinstance(task, Task):
             task_dict = task.to_dict()
         elif isinstance(task, str):
@@ -145,9 +139,9 @@ async def initiate_task(task) -> Dict[str, Any]:
             task_states[task.task_id] = task.task_state or {}
 
         return {
-            "status": "success", 
+            "status": "success",
             "task": task_dict,
-            "message": f"Task '{task.task_name}' initiated with ID {task.task_id}"
+            "message": f"Task '{task.task_name}' initiated with ID {task.task_id}",
         }
     except Exception as e:
         return {"status": "error", "error": str(e)}
@@ -159,13 +153,13 @@ async def retrieve_source_content(task_id: str, uri: str) -> Dict[str, Any]:
 
     Args:
         task_id (str): Unique identifier for tracking the retrieval request
-        uri (str): Source content URI in format "source_content://{data_id}" 
+        uri (str): Source content URI in format "source_content://{data_id}"
             where data_id is the unique identifier for the content
 
     Returns:
         Dict[str, Any]: Dictionary containing:
             - status: "success" or "error"
-            - content: Content object with id, title, description, content, 
+            - content: Content object with id, title, description, content,
               author, date, tags, categories and metadata (on success)
             - message: Error message (on failure)
     """
@@ -185,13 +179,13 @@ async def retrieve_source_content(task_id: str, uri: str) -> Dict[str, Any]:
                         "patient_address": "123 Main St, Anytown, USA",
                         "patient_phone": "123-456-7890",
                         "patient_email": "",
-                        "patient_insurance": "Blue Cross Blue Shield"
-                    }
+                        "patient_insurance": "Blue Cross Blue Shield",
+                    },
                 },
                 "metadata": {
                     "type": "face sheet",
                     "original_id": uri,
-                }      
+                },
             }
         }
 
@@ -208,18 +202,19 @@ async def retrieve_source_content(task_id: str, uri: str) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 @mcp.tool()
 async def match_healthcare_provider(task_id: str, uri: str) -> Dict[str, Any]:
     """Match and return healthcare provider information from the given URI.
 
     Args:
         task_id (str): Unique identifier for tracking the retrieval request
-        uri (str): Source content URI in format "contents://{content_data_id}" 
+        uri (str): Source content URI in format "contents://{content_data_id}"
             where content_data_id is the unique identifier for the provider content
 
     Returns:
         Dict[str, Any]: Dictionary containing:
-            - status: "success" or "error"  
+            - status: "success" or "error"
             - provider: Provider object with id, name, address, contact info,
               services, hours, insurance, languages, specialties and identifiers (on success)
             - message: Error message (on failure)
@@ -228,45 +223,36 @@ async def match_healthcare_provider(task_id: str, uri: str) -> Dict[str, Any]:
         # Implementation for healthcare provider matching
         # This is a placeholder - implement actual logic
         provider = {
-            "status": "success", 
+            "status": "success",
             "resources": {
                 "uri": "providers://healthcare/huntington_hospital",
                 "content": {
                     "id": "huntington_hospital",
                     "name": "Huntington Hospital",
                     "address": "100 W California Blvd, Pasadena, CA 91105",
-                    "contact": {
-                        "phone": "626-397-5000",
-                        "email": "frontoffice@huntington.com"
-                    },
+                    "contact": {"phone": "626-397-5000", "email": "frontoffice@huntington.com"},
                     "services": ["Emergency Care", "Cardiology", "Oncology"],
                     "hours": "24/7",
                     "insurance": ["Blue Cross Blue Shield", "Aetna", "Cigna"],
                     "languages": ["English", "Spanish", "Chinese"],
                     "specialties": ["Cardiology", "Oncology", "Pediatrics"],
-                    "identifiers": {
-                        "NPI": "1234567890",
-                        "EIN": "987654321"
-                    }
+                    "identifiers": {"NPI": "1234567890", "EIN": "987654321"},
                 },
-                "metadata": {
-                    "type": "required_data_format",
-                    "id": uri
-                },
+                "metadata": {"type": "required_data_format", "id": uri},
                 "context": {
                     "face_sheet": {
                         "prompt": "Please provide the following information for patient registration",
-                        "required_data_format":{
-                            "patient_name":"",
-                            "patient_dob":"",
-                            "patient_address":"",
-                            "patient_phone":"",
-                            "patient_email":"",
-                            "patient_insurance":""
-                        }
+                        "required_data_format": {
+                            "patient_name": "",
+                            "patient_dob": "",
+                            "patient_address": "",
+                            "patient_phone": "",
+                            "patient_email": "",
+                            "patient_insurance": "",
+                        },
                     }
-                }
-            }
+                },
+            },
         }
 
         # Update task state with source content
@@ -282,15 +268,16 @@ async def match_healthcare_provider(task_id: str, uri: str) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
     """Create a Starlette application that can serve the provided mcp server with SSE."""
     sse = SseServerTransport("/messages/")
 
     async def handle_sse(request: Request) -> None:
         async with sse.connect_sse(
-                request.scope,
-                request.receive,
-                request._send,  # noqa: SLF001
+            request.scope,
+            request.receive,
+            request._send,  # noqa: SLF001
         ) as (read_stream, write_stream):
             await mcp_server.run(
                 read_stream,
@@ -306,12 +293,13 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
         ],
     )
 
+
 if __name__ == "__main__":
     mcp_server = mcp._mcp_server  # noqa: WPS437
-    
-    parser = argparse.ArgumentParser(description='Run Probill MCP SSE-based server')
-    parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
-    parser.add_argument('--port', type=int, default=9002, help='Port to listen on')
+
+    parser = argparse.ArgumentParser(description="Run Probill MCP SSE-based server")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=9002, help="Port to listen on")
 
     args = parser.parse_args()
 

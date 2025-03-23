@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server implementation that provides database inte
 ## Components
 
 ### Resources
-
+cc
 ### Prompts
 The server provides a demonstration prompt:
 - `mcp-demo`: Interactive prompt that guides users through database operations

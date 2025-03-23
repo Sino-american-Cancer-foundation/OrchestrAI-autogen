@@ -7,12 +7,7 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.messages import AgentEvent, ChatMessage, TextMessage
 from autogen_agentchat.base import TaskResult
 
-from autogen_core import (
-    CancellationToken,
-    Component,
-    ComponentModel,
-    FunctionCall
-)
+from autogen_core import CancellationToken, Component, ComponentModel, FunctionCall
 
 from autogen_core.models import (
     AssistantMessage,
@@ -33,6 +28,7 @@ from typing_extensions import Self
 
 class McpHostAgentConfig(BaseModel):
     """Configuration for the MCP Host Agent."""
+
     name: str
     model_client: ComponentModel
     description: str | None = None
@@ -68,7 +64,9 @@ class McpHostAgent(AssistantAgent, Component[McpHostAgentConfig]):
         description: str | None = None,
         server_params: McpServerParams | None = None,
     ):
-        super().__init__(name, description or "An MCP host agent that can connect to MCP servers and manage their tools.")
+        super().__init__(
+            name, description or "An MCP host agent that can connect to MCP servers and manage their tools."
+        )
         self._model_client = model_client
         self._server_params = server_params
         self._tools: List[StdioMcpToolAdapter | SseMcpToolAdapter] = []

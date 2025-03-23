@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
+
 class NCCNGuideline(BaseModel):
-    
     def __init__(self, page_id):
         """
         Initialize the guideline with a page identifier.

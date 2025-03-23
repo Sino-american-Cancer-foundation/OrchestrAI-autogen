@@ -10,7 +10,4 @@ def get_guideline_file(guideline_name: str) -> str:
 
 
 def get_guideline_files(guideline_name: str) -> list[str]:
-    return [
-        os.path.join(get_guideline_path(guideline_name), f)
-        for f in os.listdir(get_guideline_path(guideline_name))
-    ]
+    return [os.path.join(get_guideline_path(guideline_name), f) for f in os.listdir(get_guideline_path(guideline_name))]
