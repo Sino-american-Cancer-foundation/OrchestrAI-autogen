@@ -1,4 +1,16 @@
 # Use Open AI with key
 provider: autogen_ext.models.openai.OpenAIChatCompletionClient
 config:
-  model: gpt-4o
+  model: qwen2.5-coder:32b-instruct-q5_0
+  base_url: http://10.0.40.49:11434/v1
+  temperature: 0.1
+  max_tokens: 4096
+  top_p: 0.95
+  top_k: 40
+  run_stream: true
+  model_info:
+    vision: false
+    function_calling: true
+    json_output: true
+    family: Unknown
+    structured_output: true
