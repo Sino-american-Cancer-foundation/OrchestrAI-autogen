@@ -8,7 +8,7 @@ from autogen_core.models import (
 from autogen_ext.experimental.task_centric_memory import MemoryController
 from autogen_ext.experimental.task_centric_memory.utils import PageLogger
 from utils import create_oai_client, load_yaml_file
-
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 """
 This code sample evaluates memory precision and recall, with no agent involved at all.
@@ -26,7 +26,7 @@ An insight is any text (like a hint, advice, a demonstration or plan) that might
 
 
 async def eval_retrieval(
-    memory_controller: MemoryController, client: ChatCompletionClient, logger: PageLogger, config: Dict[str, Any]
+    memory_controller: MemoryController, client: OpenAIChatCompletionClient, logger: PageLogger, config: Dict[str, Any]
 ) -> str:
     """
     Evaluates precision and recall of task-centric memory retrieval.

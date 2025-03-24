@@ -13,6 +13,9 @@ def create_oai_client(config: Dict[str, Any]) -> ChatCompletionClient:
     """
     client = OpenAIChatCompletionClient(
         model=config["model"],
+        base_url=config["base_url"],
+        api_key=config["api_key"],
+        model_info=config["model_info"],
         max_tokens=config["max_completion_tokens"],
         max_retries=config["max_retries"],
         temperature=config["temperature"],

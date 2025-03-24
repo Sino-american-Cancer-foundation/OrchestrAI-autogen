@@ -8,7 +8,7 @@ from _utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import (
     TypeSubscription,
 )
-from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from rich.console import Console
 from rich.markdown import Markdown
@@ -29,7 +29,7 @@ async def main(config: AppConfig) -> None:
             description=config.writer_agent.description,
             group_chat_topic_type=config.group_chat_manager.topic_type,
             system_message=config.writer_agent.system_message,
-            model_client=AzureOpenAIChatCompletionClient(**config.client_config),
+            model_client=OpenAIChatCompletionClient(**config.client_config),
             ui_config=config.ui_agent,
         ),
     )

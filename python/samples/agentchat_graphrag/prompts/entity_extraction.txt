@@ -5,7 +5,35 @@ Given a text document that is potentially relevant to this activity and a list o
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
 - entity_name: Name of the entity, capitalized
-- entity_type: One of the following types: [person, character, setting, dialogue, narrative technique, literary device]
+- entity_type: One of the following types: [Based on the provided text, here are some of the key entity types that can be identified:
+
+1. **People**:
+   - Sherlock Holmes (detective)
+   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
+   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
+   - Toller (servant man working for Mr. Rucastle)
+   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
+
+2. **Places**:
+   - The City and Suburban Bank
+   - Scotland Yard (police headquarters)
+   - Concert hall or venue where Mr. Wilson attended a concert
+
+3. **Organizations/Groups**:
+   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
+
+4. **Items/Objects**:
+   - Dog-cart (vehicle used by Mrs. Stangerson)
+   - Return ticket (ticket found in Mrs. Stangerson's glove)
+   - Jacket (Mrs. Stangerson's jacket with mud stains)
+   - Bullion (gold or silver bars, likely the target of the robbery)
+
+5. **Concepts**:
+   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
+   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
+
+These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
 - entity_description: Comprehensive description of the entity's attributes and activities
 Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>)
 
@@ -17,9 +45,61 @@ For each pair of related entities, extract the following information:
 - relationship_strength: an integer score between 1 to 10, indicating strength of the relationship between the source entity and target entity
 Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tuple_delimiter}<target_entity>{tuple_delimiter}<relationship_description>{tuple_delimiter}<relationship_strength>)
 
-3. Return output in The primary language of the provided text is "English." as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+3. Return output in perfectly," I said, impressed by Holmes' deductive reasoning.
 
-4. If you have to translate into The primary language of the provided text is "English.", just translate the descriptions, nothing else!
+Holmes smiled modestly. "It's merely a matter of observation and logical deduction, my dear Watson."
+
+The lady in the carriage looked on with growing amazement at the conversation between the two men. She seemed to be trying to piece together what had transpired.
+
+"Mr. Holmes," she said hesitantly, "I must thank you for your assistance. I was quite worried about Mr. Wilson and his safety."
+
+Holmes nodded politely. "It's my pleasure, madam. Your concern for Mr. Wilson is commendable. He seems to be a good man who has been caught up in an unfortunate situation."
+
+The lady smiled gratefully. "Indeed he is. And I must say, your methods of investigation are quite fascinating. They seem almost magical at times."
+
+Holmes chuckled softly. "Thank you, madam. It's all just a matter of paying close attention to the details and following the evidence where it leads."
+
+As they arrived back at Mr. Wilson's house, the scene was one of relief and gratitude. The police had apprehended the would-be robbers, and Mr. Wilson was safe.
+
+"Thank you, thank you both," Mr. Wilson said, shaking Holmes' hand vigorously. "I don't know what I'd do without your help."
+
+Holmes smiled warmly. "It's my duty to assist those in need, Mr. Wilson. And it seems that the League of the Red-headed Men has lost one of its members tonight."
+
+The lady laughed softly. "Indeed they have. It was quite a spectacle, wasn't it?"
+
+Holmes nodded. "A most interesting evening, indeed. But now, if you'll excuse me, I believe I must be off. There are other mysteries to solve and cases to investigate."
+
+With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their relief and gratitude. As he walked away, I couldn't help but marvel at his incredible abilities once more.
+
+"Another case solved," I said to myself, shaking my head in wonder. "Sherlock Holmes, you never cease to amaze me." as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+
+4. If you have to translate into perfectly," I said, impressed by Holmes' deductive reasoning.
+
+Holmes smiled modestly. "It's merely a matter of observation and logical deduction, my dear Watson."
+
+The lady in the carriage looked on with growing amazement at the conversation between the two men. She seemed to be trying to piece together what had transpired.
+
+"Mr. Holmes," she said hesitantly, "I must thank you for your assistance. I was quite worried about Mr. Wilson and his safety."
+
+Holmes nodded politely. "It's my pleasure, madam. Your concern for Mr. Wilson is commendable. He seems to be a good man who has been caught up in an unfortunate situation."
+
+The lady smiled gratefully. "Indeed he is. And I must say, your methods of investigation are quite fascinating. They seem almost magical at times."
+
+Holmes chuckled softly. "Thank you, madam. It's all just a matter of paying close attention to the details and following the evidence where it leads."
+
+As they arrived back at Mr. Wilson's house, the scene was one of relief and gratitude. The police had apprehended the would-be robbers, and Mr. Wilson was safe.
+
+"Thank you, thank you both," Mr. Wilson said, shaking Holmes' hand vigorously. "I don't know what I'd do without your help."
+
+Holmes smiled warmly. "It's my duty to assist those in need, Mr. Wilson. And it seems that the League of the Red-headed Men has lost one of its members tonight."
+
+The lady laughed softly. "Indeed they have. It was quite a spectacle, wasn't it?"
+
+Holmes nodded. "A most interesting evening, indeed. But now, if you'll excuse me, I believe I must be off. There are other mysteries to solve and cases to investigate."
+
+With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their relief and gratitude. As he walked away, I couldn't help but marvel at his incredible abilities once more.
+
+"Another case solved," I said to myself, shaking my head in wonder. "Sherlock Holmes, you never cease to amaze me.", just translate the descriptions, nothing else!
 
 5. When finished, output {completion_delimiter}.
 
@@ -28,95 +108,256 @@ Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tupl
 
 Example 1:
 
-entity_types: [person, character, setting, dialogue, narrative technique, literary device]
-text:
- my kicks and shoves. ‘Hullo!’
-I yelled. ‘Hullo! Colonel! Let me out!’
+entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
 
-“And then suddenly in the silence I heard a sound which sent my heart
-into my mouth. It was the clank of the levers and the swish of the
-leaking cylinder. He had set the engine at work. The lamp still stood
-upon the floor where I had placed it when examining the trough. By its
-light I saw that the black ceiling was coming down upon me, slowly,
-jerkily, but, as none knew better than myself, with a force which must
-within a minute grind me to a shapeless pulp. I threw myself,
-screaming, against the door, and dragged with my nails at the lock. I
-implored the colonel to let me out, but the remorseless clanking of the
-levers drowned my cries. The ceiling was only a foot or two above my
-head,
+1. **People**:
+   - Sherlock Holmes (detective)
+   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
+   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
+   - Toller (servant man working for Mr. Rucastle)
+   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
+
+2. **Places**:
+   - The City and Suburban Bank
+   - Scotland Yard (police headquarters)
+   - Concert hall or venue where Mr. Wilson attended a concert
+
+3. **Organizations/Groups**:
+   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
+
+4. **Items/Objects**:
+   - Dog-cart (vehicle used by Mrs. Stangerson)
+   - Return ticket (ticket found in Mrs. Stangerson's glove)
+   - Jacket (Mrs. Stangerson's jacket with mud stains)
+   - Bullion (gold or silver bars, likely the target of the robbery)
+
+5. **Concepts**:
+   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
+   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
+
+These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+text:
+igrated to America when he was a young man and became
+a planter in Florida, where he was reported to have done very well. At
+the time of the war he fought in Jackson’s army, and afterwards under
+Hood, where he rose to be a colonel. When Lee laid down his arms my
+uncle returned to his plantation, where he remained for three or four
+years. About 1869 or 1870 he came back to Europe and took a small
+estate in Sussex, near Horsham. He had made a very considerable fortune
+in the States, and his reason for leaving them was his aversion to the
+negroes, and his dislike of the Republican policy in extending the
+franchise to them. He was a singular man, fierce and quick-tempered,
+very foul-mouthed when he was angry, and of a most retiring
+disposition. During all the years that he lived at Horsham, I doubt
 ------------------------
 output:
-("entity"{tuple_delimiter}COLONEL{tuple_delimiter}PERSON{tuple_delimiter}The Colonel is a character who is being addressed by the narrator, indicating a position of authority or control in the situation described.)
-{record_delimiter}
-("entity"{tuple_delimiter}NARRATOR{tuple_delimiter}CHARACTER{tuple_delimiter}The narrator is the character experiencing fear and desperation, trying to escape from a dangerous situation involving a descending ceiling.)
-{record_delimiter}
-("entity"{tuple_delimiter}LEVERS{tuple_delimiter)LITERARY DEVICE{tuple_delimiter}The levers symbolize the mechanism of control and the impending danger, contributing to the tension in the narrative.)
-{record_delimiter}
-("entity"{tuple_delimiter}CEILING{tuple_delimiter}SETTING{tuple_delimiter}The ceiling represents the physical threat to the narrator, creating a sense of claustrophobia and urgency in the scene.)
-{record_delimiter}
-("entity"{tuple_delimiter}DOOR{tuple_delimiter}SETTING{tuple_delimiter}The door is a barrier between the narrator and freedom, emphasizing the struggle for escape.)
-{record_delimiter}
-("entity"{tuple_delimiter}SILENCE{tuple_delimiter}LITERARY DEVICE{tuple_delimiter}Silence serves as a narrative technique that heightens the tension before the sound of the levers is heard, creating a dramatic contrast.)
-{record_delimiter}
-("relationship"{tuple_delimiter}NARRATOR{tuple_delimiter}COLONEL{tuple_delimiter}The narrator is pleading with the Colonel for help, indicating a relationship of desperation and authority.{tuple_delimiter}8)
-{record_delimiter}
-("relationship"{tuple_delimiter}NARRATOR{tuple_delimiter}CEILING{tuple_delimiter}The narrator is directly threatened by the descending ceiling, creating a relationship of fear and urgency.{tuple_delimiter}9)
-{record_delimiter}
-("relationship"{tuple_delimiter}NARRATOR{tuple_delimiter}DOOR{tuple_delimiter}The narrator is trying to escape through the door, establishing a relationship of struggle and confinement.{tuple_delimiter}7)
-{record_delimiter}
-("relationship"{tuple_delimiter}NARRATOR{tuple_delimiter}LEVERS{tuple_delimiter}The narrator's situation is exacerbated by the sound of the levers, which symbolize the mechanism of danger, linking them through tension.{tuple_delimiter}8)
-{record_delimiter}
-("relationship"{tuple_delimiter}SILENCE{tuple_delimiter}LEVERS{tuple_delimiter}The silence is broken by the sound of the levers, creating a relationship that emphasizes the shift from calm to chaos.{tuple_delimiter}6)
-{completion_delimiter}
+("igrated" seems to be a typo in the text, so I'll assume it should read "immigrated". Here is the output based on the corrected text and identified entity types):
+
+- **People**:
+  - Uncle (the narrator's uncle who immigrated to America)
+
+- **Places**:
+  - Florida (where the uncle became a planter)
+  - Jackson’s army (army in which the uncle fought during the war)
+  - Hood’s army (army under which the uncle fought after Jackson’s army)
+  - Horsham (location of the small estate in Sussex where the uncle moved)
+
+- **Organizations/Groups**:
+  - League of the Red-headed Men (not mentioned in this text, but included from previous context)
+
+- **Items/Objects**:
+  - Plantation (property owned by the uncle in Florida)
+  - Small estate (property bought by the uncle in Sussex near Horsham)
+
+- **Concepts**:
+  - Negroes (people of African descent, whom the uncle disliked)
+  - Republican policy (political stance that extended voting rights to negroes)
+  - Retiring disposition (the uncle's tendency to be shy and withdrawn)
+
+Here is the structured output:
+
+```plaintext
+- **People**:
+  - Uncle (the narrator's uncle who immigrated to America)
+
+- **Places**:
+  - Florida (where the uncle became a planter)
+  - Jackson’s army (army in which the uncle fought during the war)
+  - Hood’s army (army under which the uncle fought after Jackson’s army)
+  - Horsham (location of the small estate in Sussex where the uncle moved)
+
+- **Organizations/Groups**:
+  - League of the Red-headed Men (not mentioned in this text, but included from previous context)
+
+- **Items/Objects**:
+  - Plantation (property owned by the uncle in Florida)
+  - Small estate (property bought by the uncle in Sussex near Horsham)
+
+- **Concepts**:
+  - Negroes (people of African descent, whom the uncle disliked)
+  - Republican policy (political stance that extended voting rights to negroes)
+  - Retiring disposition (the uncle's tendency to be shy and withdrawn)
+```
+
+This output captures the key entities mentioned in the text and their relationships.
 #############################
 
 
 Example 2:
 
-entity_types: [person, character, setting, dialogue, narrative technique, literary device]
-text:
- effect,” remarked Holmes. “This is wanting in the police
-report, where more stress is laid, perhaps, upon the platitudes of the
-magistrate than upon the details, which to an observer contain the
-vital essence of the whole matter. Depend upon it, there is nothing so
-unnatural as the commonplace.”
+entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
 
-I smiled and shook my head. “I can quite understand your thinking so,”
-I said. “Of course, in your position of unofficial adviser and helper
-to everybody who is absolutely puzzled, throughout three continents,
-you are brought in contact with all that is strange and bizarre. But
-here”—I picked up the morning paper from the ground—“let us put it to a
-practical test. Here is the first heading upon which I come. ‘A
-husband’s cruelty to his wife.’ There is half a column of print, but I
-know without reading it that it is all perfectly familiar to me. There
-is, of
+1. **People**:
+   - Sherlock Holmes (detective)
+   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
+   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
+   - Toller (servant man working for Mr. Rucastle)
+   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
+
+2. **Places**:
+   - The City and Suburban Bank
+   - Scotland Yard (police headquarters)
+   - Concert hall or venue where Mr. Wilson attended a concert
+
+3. **Organizations/Groups**:
+   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
+
+4. **Items/Objects**:
+   - Dog-cart (vehicle used by Mrs. Stangerson)
+   - Return ticket (ticket found in Mrs. Stangerson's glove)
+   - Jacket (Mrs. Stangerson's jacket with mud stains)
+   - Bullion (gold or silver bars, likely the target of the robbery)
+
+5. **Concepts**:
+   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
+   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
+
+These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+text:
+ial,’ I read, peeping over his shoulder.
+
+“‘What papers? What sundial?’ he asked.
+
+“‘The sundial in the garden. There is no other,’ said I; ‘but the
+papers must be those that are destroyed.’
+
+“‘Pooh!’ said he, gripping hard at his courage. ‘We are in a civilised
+land here, and we can’t have tomfoolery of this kind. Where does the
+thing come from?’
+
+“‘From Dundee,’ I answered, glancing at the postmark.
+
+“‘Some preposterous practical joke,’ said he. ‘What have I to do with
+sundials and papers? I shall take no notice of such nonsense.’
+
+“‘I should certainly speak to the police,’ I said.
+
+“‘And be laughed at for my pains. Nothing of the sort.’
+
+“‘Then let me do so?’
+
+“‘No, I forbid you. I won’t have a
 ------------------------
 output:
-("entity"{tuple_delimiter}HOLMES{tuple_delimiter}PERSON{tuple_delimiter}Holmes is a character known for his keen observation and deduction skills, often serving as an unofficial adviser to those puzzled by strange occurrences.)
-{record_delimiter}
-("entity"{tuple_delimiter}POLICE REPORT{tuple_delimiter}LITERARY DEVICE{tuple_delimiter}The police report is a narrative element that emphasizes the contrast between mundane details and the more significant observations that Holmes values.)
-{record_delimiter}
-("entity"{tuple_delimiter}MAGISTRATE{tuple_delimiter}CHARACTER{tuple_delimiter}The magistrate is a character referenced in the context of the police report, representing the conventional authority that Holmes critiques.)
-{record_delimiter}
-("entity"{tuple_delimiter}MORNING PAPER{tuple_delimiter}SETTING{tuple_delimiter}The morning paper serves as a setting for the practical test Holmes proposes, representing the everyday reality that contrasts with the bizarre cases he encounters.)
-{record_delimiter}
-("entity"{tuple_delimiter}HUSBAND'S CRUELTY TO HIS WIFE{tuple_delimiter}DIALOGUE{tuple_delimiter}This heading from the morning paper exemplifies the commonplace nature of human cruelty, which Holmes finds familiar and unremarkable.)
-{record_delimiter}
-("relationship"{tuple_delimiter}HOLMES{tuple_delimiter}MAGISTRATE{tuple_delimiter}Holmes critiques the magistrate's focus on platitudes in the police report, highlighting a difference in their perspectives on what is significant in a case.{tuple_delimiter}8)
-{record_delimiter}
-("relationship"{tuple_delimiter}HOLMES{tuple_delimiter}POLICE REPORT{tuple_delimiter}Holmes contrasts the details in the police report with his own observations, indicating his belief that the report lacks the vital essence of the matter.{tuple_delimiter}9)
-{record_delimiter}
-("relationship"{tuple_delimiter}HOLMES{tuple_delimiter}MORNING PAPER{tuple_delimiter}Holmes uses the morning paper as a practical test to illustrate his point about the familiarity of commonplace events.{tuple_delimiter}7)
-{record_delimiter}
-("relationship"{tuple_delimiter}HUSBAND'S CRUELTY TO HIS WIFE{tuple_delimiter}MORNING PAPER{tuple_delimiter}The heading about the husband's cruelty is a specific example found in the morning paper, representing the mundane realities that Holmes finds unremarkable.{tuple_delimiter}6)
-{completion_delimiter}
+Based on the provided text snippet, here are the entities and relationships that can be identified:
+
+### Entities
+
+1. **People**:
+   - The narrator (likely Dr. John H. Watson)
+   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+
+2. **Places**:
+   - Dundee (a city in Scotland, mentioned as the origin of a letter or package)
+
+3. **Items/Objects**:
+   - Sundial (an object found in the garden)
+   - Papers (documents that are destroyed)
+
+4. **Concepts**:
+   - Practical joke (mentioned as a possible explanation for the sundial and papers)
+
+### Relationships
+
+1. **People to People**:
+   - The narrator is speaking with Mr. Jabez Wilson.
+   - Mr. Jabez Wilson is seeking help from Sherlock Holmes, though he does not explicitly mention him in this snippet.
+
+2. **People to Places**:
+   - Mr. Jabez Wilson received something (likely the sundial and papers) from Dundee.
+
+3. **People to Items/Objects**:
+   - Mr. Jabez Wilson has a sundial in his garden.
+   - Mr. Jabez Wilson has some papers that are destroyed.
+
+4. **People to Concepts**:
+   - The narrator suggests speaking to the police, but Mr. Jabez Wilson dismisses it as being laughed at for his pains.
+   - Mr. Jabez Wilson considers the possibility of a practical joke involving the sundial and papers.
+
+### Output
+
+```plaintext
+- People:
+  - Narrator (likely Dr. John H. Watson)
+  - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+
+- Places:
+  - Dundee (a city in Scotland, mentioned as the origin of a letter or package)
+
+- Items/Objects:
+  - Sundial (an object found in the garden)
+  - Papers (documents that are destroyed)
+
+- Concepts:
+  - Practical joke (mentioned as a possible explanation for the sundial and papers)
+
+- Relationships:
+  - The narrator is speaking with Mr. Jabez Wilson.
+  - Mr. Jabez Wilson received something from Dundee.
+  - Mr. Jabez Wilson has a sundial in his garden.
+  - Mr. Jabez Wilson has some papers that are destroyed.
+  - The narrator suggests speaking to the police, but Mr. Jabez Wilson dismisses it as being laughed at for his pains.
+  - Mr. Jabez Wilson considers the possibility of a practical joke involving the sundial and papers.
+```
+
+This output captures the key entities and their relationships based on the provided text snippet.
 #############################
 
 
 
 -Real Data-
 ######################
-entity_types: [person, character, setting, dialogue, narrative technique, literary device]
+entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
+
+1. **People**:
+   - Sherlock Holmes (detective)
+   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
+   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
+   - Toller (servant man working for Mr. Rucastle)
+   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
+
+2. **Places**:
+   - The City and Suburban Bank
+   - Scotland Yard (police headquarters)
+   - Concert hall or venue where Mr. Wilson attended a concert
+
+3. **Organizations/Groups**:
+   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
+
+4. **Items/Objects**:
+   - Dog-cart (vehicle used by Mrs. Stangerson)
+   - Return ticket (ticket found in Mrs. Stangerson's glove)
+   - Jacket (Mrs. Stangerson's jacket with mud stains)
+   - Bullion (gold or silver bars, likely the target of the robbery)
+
+5. **Concepts**:
+   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
+   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
+
+These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
 text: {input_text}
 ######################
 output:

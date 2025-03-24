@@ -152,16 +152,18 @@ def create_default_gallery() -> GalleryConfig:
         category="conversation",
     )
 
-    base_model = OllamaChatCompletionClient(
+    base_model = OpenAIChatCompletionClient(
         model="qwen2.5-coder:32b-instruct-q5_0",
-        host="http://10.0.40.49:11434",
+        base_url="http://10.0.40.49:11434/v1",
         model_info = {
         "vision": False,
         "function_calling": True,
         "json_output": True,
+        "structured_output": True,
         "family": "unknown"
         }        
     )
+    
     builder.add_model(
         base_model.dump_component(),
         label="qwen2.5-coder:32b-instruct Local",
@@ -171,6 +173,7 @@ def create_default_gallery() -> GalleryConfig:
     # Create base model client
     openai_model = OpenAIChatCompletionClient(model="gpt-4o-mini")
     builder.add_model(openai_model.dump_component(), label="OpenAI GPT-4o Mini", description="OpenAI GPT-4o-mini")
+    
     # Create Mistral vllm model
     mistral_vllm_model = OpenAIChatCompletionClient(
         model="TheBloke/Mistral-7B-Instruct-v0.2-GGUF",

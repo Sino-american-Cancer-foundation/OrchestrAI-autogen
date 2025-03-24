@@ -23,12 +23,18 @@ ui_agent:
     max: 0.1
 
 client_config:
-  model: "gpt-4o"
-  azure_endpoint: "https://{your-custom-endpoint}.openai.azure.com"
-  azure_deployment: "{your-azure-deployment}"
-  api_version: "2024-08-01-preview"
-  api_key: ""
-  model_capabilities:
-    vision: True
-    function_calling: True
-    json_output: True
+# Use Open AI with key
+  model: qwen2.5-coder:32b-instruct-q5_0
+  api_key: sk-...
+  base_url: http://10.0.40.49:11434/v1
+  temperature: 0.1
+  max_tokens: 4096
+  top_p: 0.95
+  top_k: 40
+  run_stream: true
+  model_info:
+    vision: false
+    function_calling: true
+    json_output: true
+    family: Unknown
+    structured_output: true

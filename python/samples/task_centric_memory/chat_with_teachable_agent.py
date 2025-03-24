@@ -5,9 +5,30 @@ from autogen_ext.experimental.task_centric_memory import MemoryController
 from autogen_ext.experimental.task_centric_memory.utils import Teachability
 
 
+
+
 async def main():
     # Create a client
-    client = OpenAIChatCompletionClient(model="gpt-4o-2024-08-06", )
+    config = {
+        "model": "qwen2.5-coder:32b-instruct-q5_0",
+        "base_url": "http://10.0.40.49:11434/v1",
+        "api_key": "sk-xxx",
+        "model_info": {
+            "vision": False,
+            "function_calling": True,
+            "json_output": True,
+            "family": "Unknown",
+            "structured_output": True
+        },
+        "temperature": 0.8,
+        "max_completion_tokens": 4096,
+        "presence_penalty": 0.0,
+        "frequency_penalty": 0.0,
+        "top_p": 1.0,
+        "max_retries": 65535,
+        "retry_delay": 0.5
+    }
+    client = OpenAIChatCompletionClient(**config)
 
     # Create an instance of Task-Centric Memory, passing minimal parameters for this simple example
     memory_controller = MemoryController(reset=False, client=client)

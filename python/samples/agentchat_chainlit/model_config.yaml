@@ -3,6 +3,7 @@ provider: autogen_ext.models.openai.OpenAIChatCompletionClient
 config:
   model: qwen2.5-coder:32b-instruct-q5_0
   base_url: http://10.0.40.49:11434/v1
+  api_key: sk-xxx
   temperature: 0.1
   max_tokens: 4096
   top_p: 0.95

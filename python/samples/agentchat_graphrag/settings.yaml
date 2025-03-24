@@ -7,10 +7,15 @@
 encoding_model: cl100k_base # this needs to be matched to your model!
 
 llm:
-  api_key: null
-  type: openai_chat # or azure_openai_chat
-  model: gpt-4o
-  model_supports_json: true # recommended if this is available for your model.
+  model: qwen2.5-coder:32b-instruct-q5_0
+  api_base: http://10.0.40.49:11434/v1
+  api_key: sk-xxx  
+  model_info:
+    vision: false
+    function_calling: true
+    json_output: true
+    family: Unknown
+    structured_output: true  
   # audience: "https://cognitiveservices.azure.com/.default"
   # api_base: https://<resource-name>.openai.azure.com
   # api_version: 2024-08-01-preview
@@ -30,9 +35,10 @@ embeddings:
     container_name: default
     overwrite: true
   llm:
-    api_key: null
     type: openai_embedding # or azure_openai_embedding
-    model: text-embedding-3-small
+    model: nomic-embed-text
+    api_base: http://10.0.40.49:11434/v1
+    api_key: sk-xxx  
     # api_base: https://<resource-name>.openai.azure.com
     # api_version: "2023-05-15"
     # audience: "https://cognitiveservices.azure.com/.default"
