@@ -17,11 +17,13 @@ from ._prompts import ORCHESTRATOR_FINAL_ANSWER_PROMPT
 trace_logger = logging.getLogger(TRACE_LOGGER_NAME)
 event_logger = logging.getLogger(EVENT_LOGGER_NAME)
 
+
 class GroupChatTermination(BaseModel):
     """A message indicating that a group chat has terminated."""
 
     message: StopMessage
     """The stop message that indicates the reason of termination."""
+
 
 class MagenticOneGroupChatConfig(BaseModel):
     """The declarative configuration for a MagenticOneGroupChat."""

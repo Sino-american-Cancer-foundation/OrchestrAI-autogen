@@ -208,3 +208,13 @@ registry.json
 python/packages/autogen-studio/probill/
 python/packages/probill/tests/
 python/packages/autogen-studio/autogenstudio/mcp_tools/test.ipynb
+python/samples/task_centric_memory/pagelogs/
+python/samples/task_centric_memory/memory_bank/
+config.yaml
+settings.yaml
+python/samples/task_centric_memory/configs/demonstration.yaml
+python/samples/task_centric_memory/configs/retrieval.yaml
+python/samples/task_centric_memory/configs/self_teaching.yaml
+python/samples/task_centric_memory/configs/teachability.yaml
+python/samples/core_distributed-group-chat/config.yaml
+python/samples/agentchat_graphrag/settings.yaml
