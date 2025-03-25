@@ -5,35 +5,7 @@ Given a text document that is potentially relevant to this activity and a list o
 -Steps-
 1. Identify all entities. For each identified entity, extract the following information:
 - entity_name: Name of the entity, capitalized
-- entity_type: One of the following types: [Based on the provided text, here are some of the key entity types that can be identified:
-
-1. **People**:
-   - Sherlock Holmes (detective)
-   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
-   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
-   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
-   - Toller (servant man working for Mr. Rucastle)
-   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
-
-2. **Places**:
-   - The City and Suburban Bank
-   - Scotland Yard (police headquarters)
-   - Concert hall or venue where Mr. Wilson attended a concert
-
-3. **Organizations/Groups**:
-   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
-
-4. **Items/Objects**:
-   - Dog-cart (vehicle used by Mrs. Stangerson)
-   - Return ticket (ticket found in Mrs. Stangerson's glove)
-   - Jacket (Mrs. Stangerson's jacket with mud stains)
-   - Bullion (gold or silver bars, likely the target of the robbery)
-
-5. **Concepts**:
-   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
-   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
-
-These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+- entity_type: One of the following types: [person, location, organization, date]
 - entity_description: Comprehensive description of the entity's attributes and activities
 Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>)
 
@@ -45,61 +17,53 @@ For each pair of related entities, extract the following information:
 - relationship_strength: an integer score between 1 to 10, indicating strength of the relationship between the source entity and target entity
 Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tuple_delimiter}<target_entity>{tuple_delimiter}<relationship_description>{tuple_delimiter}<relationship_strength>)
 
-3. Return output in perfectly," I said, impressed by Holmes' deductive reasoning.
+3. Return output in The text you've provided is a passage from Sir Arthur Conan Doyle's famous Sherlock Holmes series. The language used is characteristic of late 19th-century English literature, marked by formal and somewhat archaic phrasing. Here are some key features:
 
-Holmes smiled modestly. "It's merely a matter of observation and logical deduction, my dear Watson."
+1. **Formal Tone**: The writing maintains a high level of formality, typical of the period in which it was written.
 
-The lady in the carriage looked on with growing amazement at the conversation between the two men. She seemed to be trying to piece together what had transpired.
+2. **Complex Sentences**: The sentences are often long and complex, with multiple clauses that add depth to the narrative.
 
-"Mr. Holmes," she said hesitantly, "I must thank you for your assistance. I was quite worried about Mr. Wilson and his safety."
+3. **Vocabulary**: The vocabulary is rich and varied, including some words that might be considered archaic today (e.g., "august," "personage").
 
-Holmes nodded politely. "It's my pleasure, madam. Your concern for Mr. Wilson is commendable. He seems to be a good man who has been caught up in an unfortunate situation."
+4. **Descriptive Language**: There's a strong emphasis on descriptive language, especially in setting the scene or describing characters.
 
-The lady smiled gratefully. "Indeed he is. And I must say, your methods of investigation are quite fascinating. They seem almost magical at times."
+5. **Dialogue Tags**: Dialogue tags are used sparingly and often with additional descriptors to convey tone and emotion (e.g., "said Holmes dryly").
 
-Holmes chuckled softly. "Thank you, madam. It's all just a matter of paying close attention to the details and following the evidence where it leads."
+6. **Punctuation**: The punctuation is meticulous, including the use of commas, semicolons, and dashes to clarify meaning and structure.
 
-As they arrived back at Mr. Wilson's house, the scene was one of relief and gratitude. The police had apprehended the would-be robbers, and Mr. Wilson was safe.
+7. **Characterization**: Characters are described in detail, both physically and through their actions and speech.
 
-"Thank you, thank you both," Mr. Wilson said, shaking Holmes' hand vigorously. "I don't know what I'd do without your help."
+8. **Setting Details**: The setting is vividly depicted, often with historical or cultural references that were relevant at the time of writing.
 
-Holmes smiled warmly. "It's my duty to assist those in need, Mr. Wilson. And it seems that the League of the Red-headed Men has lost one of its members tonight."
+9. **Mystery Elements**: The text includes elements typical of mystery stories, such as a mysterious visitor, hints of intrigue, and a sense of impending revelation.
 
-The lady laughed softly. "Indeed they have. It was quite a spectacle, wasn't it?"
+10. **Historical Context**: References to specific events and places (e.g., "the Trepoff murder," "Trincomalee") provide context that would have been familiar to the original readers but may require additional explanation for modern audiences.
 
-Holmes nodded. "A most interesting evening, indeed. But now, if you'll excuse me, I believe I must be off. There are other mysteries to solve and cases to investigate."
+This style of writing is designed to engage the reader with a detailed and immersive narrative, typical of the detective genre in its early days. as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
 
-With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their relief and gratitude. As he walked away, I couldn't help but marvel at his incredible abilities once more.
+4. If you have to translate into The text you've provided is a passage from Sir Arthur Conan Doyle's famous Sherlock Holmes series. The language used is characteristic of late 19th-century English literature, marked by formal and somewhat archaic phrasing. Here are some key features:
 
-"Another case solved," I said to myself, shaking my head in wonder. "Sherlock Holmes, you never cease to amaze me." as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+1. **Formal Tone**: The writing maintains a high level of formality, typical of the period in which it was written.
 
-4. If you have to translate into perfectly," I said, impressed by Holmes' deductive reasoning.
+2. **Complex Sentences**: The sentences are often long and complex, with multiple clauses that add depth to the narrative.
 
-Holmes smiled modestly. "It's merely a matter of observation and logical deduction, my dear Watson."
+3. **Vocabulary**: The vocabulary is rich and varied, including some words that might be considered archaic today (e.g., "august," "personage").
 
-The lady in the carriage looked on with growing amazement at the conversation between the two men. She seemed to be trying to piece together what had transpired.
+4. **Descriptive Language**: There's a strong emphasis on descriptive language, especially in setting the scene or describing characters.
 
-"Mr. Holmes," she said hesitantly, "I must thank you for your assistance. I was quite worried about Mr. Wilson and his safety."
+5. **Dialogue Tags**: Dialogue tags are used sparingly and often with additional descriptors to convey tone and emotion (e.g., "said Holmes dryly").
 
-Holmes nodded politely. "It's my pleasure, madam. Your concern for Mr. Wilson is commendable. He seems to be a good man who has been caught up in an unfortunate situation."
+6. **Punctuation**: The punctuation is meticulous, including the use of commas, semicolons, and dashes to clarify meaning and structure.
 
-The lady smiled gratefully. "Indeed he is. And I must say, your methods of investigation are quite fascinating. They seem almost magical at times."
+7. **Characterization**: Characters are described in detail, both physically and through their actions and speech.
 
-Holmes chuckled softly. "Thank you, madam. It's all just a matter of paying close attention to the details and following the evidence where it leads."
+8. **Setting Details**: The setting is vividly depicted, often with historical or cultural references that were relevant at the time of writing.
 
-As they arrived back at Mr. Wilson's house, the scene was one of relief and gratitude. The police had apprehended the would-be robbers, and Mr. Wilson was safe.
+9. **Mystery Elements**: The text includes elements typical of mystery stories, such as a mysterious visitor, hints of intrigue, and a sense of impending revelation.
 
-"Thank you, thank you both," Mr. Wilson said, shaking Holmes' hand vigorously. "I don't know what I'd do without your help."
+10. **Historical Context**: References to specific events and places (e.g., "the Trepoff murder," "Trincomalee") provide context that would have been familiar to the original readers but may require additional explanation for modern audiences.
 
-Holmes smiled warmly. "It's my duty to assist those in need, Mr. Wilson. And it seems that the League of the Red-headed Men has lost one of its members tonight."
-
-The lady laughed softly. "Indeed they have. It was quite a spectacle, wasn't it?"
-
-Holmes nodded. "A most interesting evening, indeed. But now, if you'll excuse me, I believe I must be off. There are other mysteries to solve and cases to investigate."
-
-With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their relief and gratitude. As he walked away, I couldn't help but marvel at his incredible abilities once more.
-
-"Another case solved," I said to myself, shaking my head in wonder. "Sherlock Holmes, you never cease to amaze me.", just translate the descriptions, nothing else!
+This style of writing is designed to engage the reader with a detailed and immersive narrative, typical of the detective genre in its early days., just translate the descriptions, nothing else!
 
 5. When finished, output {completion_delimiter}.
 
@@ -108,256 +72,179 @@ With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their
 
 Example 1:
 
-entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
-
-1. **People**:
-   - Sherlock Holmes (detective)
-   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
-   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
-   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
-   - Toller (servant man working for Mr. Rucastle)
-   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
-
-2. **Places**:
-   - The City and Suburban Bank
-   - Scotland Yard (police headquarters)
-   - Concert hall or venue where Mr. Wilson attended a concert
-
-3. **Organizations/Groups**:
-   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
-
-4. **Items/Objects**:
-   - Dog-cart (vehicle used by Mrs. Stangerson)
-   - Return ticket (ticket found in Mrs. Stangerson's glove)
-   - Jacket (Mrs. Stangerson's jacket with mud stains)
-   - Bullion (gold or silver bars, likely the target of the robbery)
-
-5. **Concepts**:
-   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
-   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
-
-These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+entity_types: [person, location, organization, date]
 text:
-igrated to America when he was a young man and became
-a planter in Florida, where he was reported to have done very well. At
-the time of the war he fought in Jackson’s army, and afterwards under
-Hood, where he rose to be a colonel. When Lee laid down his arms my
-uncle returned to his plantation, where he remained for three or four
-years. About 1869 or 1870 he came back to Europe and took a small
-estate in Sussex, near Horsham. He had made a very considerable fortune
-in the States, and his reason for leaving them was his aversion to the
-negroes, and his dislike of the Republican policy in extending the
-franchise to them. He was a singular man, fierce and quick-tempered,
-very foul-mouthed when he was angry, and of a most retiring
-disposition. During all the years that he lived at Horsham, I doubt
+ in the chair.
+
+“What is it?”
+
+“It’s quite too funny. I am sure you could never guess how I employed
+my morning, or what I ended by doing.”
+
+“I can’t imagine. I suppose that you have been watching the habits, and
+perhaps the house, of Miss Irene Adler.”
+
+“Quite so; but the sequel was rather unusual. I will tell you, however.
+I left the house a little after eight o’clock this morning in the
+character of a groom out of work. There is a wonderful sympathy and
+freemasonry among horsey men. Be one of them, and you will know all
+that there is to know. I soon found Briony Lodge. It is a _bijou_
+villa, with a garden at the back, but built out in front right up to
+the road, two stories. Chubb lock to the door. Large sitting-room on
+the right side, well furnished, with long windows almost to the floor
 ------------------------
 output:
-("igrated" seems to be a typo in the text, so I'll assume it should read "immigrated". Here is the output based on the corrected text and identified entity types):
+("in the chair" is not an entity and does not fit into any of the provided categories.)
 
-- **People**:
-  - Uncle (the narrator's uncle who immigrated to America)
+("What is it?" is a question and not an entity.)
 
-- **Places**:
-  - Florida (where the uncle became a planter)
-  - Jackson’s army (army in which the uncle fought during the war)
-  - Hood’s army (army under which the uncle fought after Jackson’s army)
-  - Horsham (location of the small estate in Sussex where the uncle moved)
+("It’s quite too funny. I am sure you could never guess how I employed my morning, or what I ended by doing." is a statement and not an entity.)
 
-- **Organizations/Groups**:
-  - League of the Red-headed Men (not mentioned in this text, but included from previous context)
+("I can’t imagine. I suppose that you have been watching the habits, and perhaps the house, of Miss Irene Adler." is a statement and not an entity.)
 
-- **Items/Objects**:
-  - Plantation (property owned by the uncle in Florida)
-  - Small estate (property bought by the uncle in Sussex near Horsham)
+("Quite so; but the sequel was rather unusual. I will tell you, however. I left the house a little after eight o’clock this morning in the character of a groom out of work." contains the following entities:
+- "Miss Irene Adler" (person)
+- "eight o’clock this morning" (date))
 
-- **Concepts**:
-  - Negroes (people of African descent, whom the uncle disliked)
-  - Republican policy (political stance that extended voting rights to negroes)
-  - Retiring disposition (the uncle's tendency to be shy and withdrawn)
+("There is a wonderful sympathy and freemasonry among horsey men. Be one of them, and you will know all that there is to know. I soon found Briony Lodge." contains the following entities:
+- "Briony Lodge" (location))
 
-Here is the structured output:
+("It is a _bijou_ villa, with a garden at the back, but built out in front right up to the road, two stories. Chubb lock to the door. Large sitting-room on the right side, well furnished, with long windows almost to the floor." describes the physical characteristics of Briony Lodge and does not contain any additional entities.)
 
-```plaintext
-- **People**:
-  - Uncle (the narrator's uncle who immigrated to America)
+Therefore, the output is:
 
-- **Places**:
-  - Florida (where the uncle became a planter)
-  - Jackson’s army (army in which the uncle fought during the war)
-  - Hood’s army (army under which the uncle fought after Jackson’s army)
-  - Horsham (location of the small estate in Sussex where the uncle moved)
+("Miss Irene Adler" (person))
+("eight o’clock this morning" (date))
+("Briony Lodge" (location))
 
-- **Organizations/Groups**:
-  - League of the Red-headed Men (not mentioned in this text, but included from previous context)
-
-- **Items/Objects**:
-  - Plantation (property owned by the uncle in Florida)
-  - Small estate (property bought by the uncle in Sussex near Horsham)
-
-- **Concepts**:
-  - Negroes (people of African descent, whom the uncle disliked)
-  - Republican policy (political stance that extended voting rights to negroes)
-  - Retiring disposition (the uncle's tendency to be shy and withdrawn)
-```
-
-This output captures the key entities mentioned in the text and their relationships.
+{completion_delimiter}
 #############################
 
 
 Example 2:
 
-entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
-
-1. **People**:
-   - Sherlock Holmes (detective)
-   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
-   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
-   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
-   - Toller (servant man working for Mr. Rucastle)
-   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
-
-2. **Places**:
-   - The City and Suburban Bank
-   - Scotland Yard (police headquarters)
-   - Concert hall or venue where Mr. Wilson attended a concert
-
-3. **Organizations/Groups**:
-   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
-
-4. **Items/Objects**:
-   - Dog-cart (vehicle used by Mrs. Stangerson)
-   - Return ticket (ticket found in Mrs. Stangerson's glove)
-   - Jacket (Mrs. Stangerson's jacket with mud stains)
-   - Bullion (gold or silver bars, likely the target of the robbery)
-
-5. **Concepts**:
-   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
-   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
-
-These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+entity_types: [person, location, organization, date]
 text:
-ial,’ I read, peeping over his shoulder.
+ the most inextricable
+mysteries. So accustomed was I to his invariable success that the very
+possibility of his failing had ceased to enter into my head.
 
-“‘What papers? What sundial?’ he asked.
+It was close upon four before the door opened, and a drunken-looking
+groom, ill-kempt and side-whiskered, with an inflamed face and
+disreputable clothes, walked into the room. Accustomed as I was to my
+friend’s amazing powers in the use of disguises, I had to look three
+times before I was certain that it was indeed he. With a nod he
+vanished into the bedroom, whence he emerged in five minutes
+tweed-suited and respectable, as of old. Putting his hands into his
+pockets, he stretched out his legs in front of the fire and laughed
+heartily for some minutes.
 
-“‘The sundial in the garden. There is no other,’ said I; ‘but the
-papers must be those that are destroyed.’
-
-“‘Pooh!’ said he, gripping hard at his courage. ‘We are in a civilised
-land here, and we can’t have tomfoolery of this kind. Where does the
-thing come from?’
-
-“‘From Dundee,’ I answered, glancing at the postmark.
-
-“‘Some preposterous practical joke,’ said he. ‘What have I to do with
-sundials and papers? I shall take no notice of such nonsense.’
-
-“‘I should certainly speak to the police,’ I said.
-
-“‘And be laughed at for my pains. Nothing of the sort.’
-
-“‘Then let me do so?’
-
-“‘No, I forbid you. I won’t have a
+“Well, really!” he cried, and then he choked and laughed again until he
+was obliged to lie back, limp and helpless,
 ------------------------
 output:
-Based on the provided text snippet, here are the entities and relationships that can be identified:
+{completion_delimiter}
+#############################
 
-### Entities
 
-1. **People**:
-   - The narrator (likely Dr. John H. Watson)
-   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+Example 3:
 
-2. **Places**:
-   - Dundee (a city in Scotland, mentioned as the origin of a letter or package)
+entity_types: [person, location, organization, date]
+text:
+ and will, at the same time, raise the cry of fire. You
+quite follow me?”
 
-3. **Items/Objects**:
-   - Sundial (an object found in the garden)
-   - Papers (documents that are destroyed)
+“Entirely.”
 
-4. **Concepts**:
-   - Practical joke (mentioned as a possible explanation for the sundial and papers)
+“It is nothing very formidable,” he said, taking a long cigar-shaped
+roll from his pocket. “It is an ordinary plumber’s smoke-rocket, fitted
+with a cap at either end to make it self-lighting. Your task is
+confined to that. When you raise your cry of fire, it will be taken up
+by quite a number of people. You may then walk to the end of the
+street, and I will rejoin you in ten minutes. I hope that I have made
+myself clear?”
 
-### Relationships
+“I am to remain neutral, to get near the window, to watch you, and at
+the signal to throw in this object, then to raise the cry of fire, and
+to wait you at the corner of the street.”
 
-1. **People to People**:
-   - The narrator is speaking with Mr. Jabez Wilson.
-   - Mr. Jabez Wilson is seeking help from Sherlock Holmes, though he does not explicitly mention him in this snippet.
+“Precisely.”
 
-2. **People to Places**:
-   - Mr. Jabez Wilson received something (likely the sundial and papers) from Dundee.
+“Then you may entirely rely on me.”
 
-3. **People to Items/Objects**:
-   - Mr. Jabez Wilson has a sundial in his garden.
-   - Mr. Jabez Wilson has some papers that are destroyed.
+“That is excellent. I
+------------------------
+output:
+{completion_delimiter}
+#############################
 
-4. **People to Concepts**:
-   - The narrator suggests speaking to the police, but Mr. Jabez Wilson dismisses it as being laughed at for his pains.
-   - Mr. Jabez Wilson considers the possibility of a practical joke involving the sundial and papers.
 
-### Output
+Example 4:
 
-```plaintext
-- People:
-  - Narrator (likely Dr. John H. Watson)
-  - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
+entity_types: [person, location, organization, date]
+text:
+ I have heard it is no use your applying if your hair is
+light red, or dark red, or anything but real bright, blazing, fiery
+red. Now, if you cared to apply, Mr. Wilson, you would just walk in;
+but perhaps it would hardly be worth your while to put yourself out of
+the way for the sake of a few hundred pounds.’
 
-- Places:
-  - Dundee (a city in Scotland, mentioned as the origin of a letter or package)
+“Now, it is a fact, gentlemen, as you may see for yourselves, that my
+hair is of a very full and rich tint, so that it seemed to me that if
+there was to be any competition in the matter I stood as good a chance
+as any man that I had ever met. Vincent Spaulding seemed to know so
+much about it that I thought he might prove useful, so I just ordered
+him to put up the shutters for the day and to come right away with me.
+He was very willing to have a holiday, so we shut the business up and
+------------------------
+output:
+("Vincent Spaulding", "person")
+("Mr. Wilson", "person")
+#############################
 
-- Items/Objects:
-  - Sundial (an object found in the garden)
-  - Papers (documents that are destroyed)
 
-- Concepts:
-  - Practical joke (mentioned as a possible explanation for the sundial and papers)
+Example 5:
 
-- Relationships:
-  - The narrator is speaking with Mr. Jabez Wilson.
-  - Mr. Jabez Wilson received something from Dundee.
-  - Mr. Jabez Wilson has a sundial in his garden.
-  - Mr. Jabez Wilson has some papers that are destroyed.
-  - The narrator suggests speaking to the police, but Mr. Jabez Wilson dismisses it as being laughed at for his pains.
-  - Mr. Jabez Wilson considers the possibility of a practical joke involving the sundial and papers.
-```
+entity_types: [person, location, organization, date]
+text:
+ in silence for some few minutes until we had turned down one of the
+quiet streets which lead towards the Edgeware Road.
 
-This output captures the key entities and their relationships based on the provided text snippet.
+“You did it very nicely, Doctor,” he remarked. “Nothing could have been
+better. It is all right.”
+
+“You have the photograph?”
+
+“I know where it is.”
+
+“And how did you find out?”
+
+“She showed me, as I told you she would.”
+
+“I am still in the dark.”
+
+“I do not wish to make a mystery,” said he, laughing. “The matter was
+perfectly simple. You, of course, saw that everyone in the street was
+an accomplice. They were all engaged for the evening.”
+
+“I guessed as much.”
+
+“Then, when the row broke out, I had a little moist red paint in the
+palm of my hand. I rushed forward, fell down, clapped my hand to my
+face, and became a piteous spectacle. It is an old trick.”
+
+“That also I could fathom
+------------------------
+output:
+("Edgeware Road", "location")
+{No other entities (person, organization, date) are explicitly mentioned in the provided text.}
 #############################
 
 
 
 -Real Data-
 ######################
-entity_types: [Based on the provided text, here are some of the key entity types that can be identified:
-
-1. **People**:
-   - Sherlock Holmes (detective)
-   - Dr. John H. Watson (narrator and friend to Sherlock Holmes)
-   - Mr. Jabez Wilson (client seeking help from Sherlock Holmes)
-   - Mr. Rucastle (landlord or owner of the house where Mrs. Stangerson lives)
-   - Toller (servant man working for Mr. Rucastle)
-   - Mrs. Stangerson (tenant living in the house owned by Mr. Rucastle)
-
-2. **Places**:
-   - The City and Suburban Bank
-   - Scotland Yard (police headquarters)
-   - Concert hall or venue where Mr. Wilson attended a concert
-
-3. **Organizations/Groups**:
-   - League of the Red-headed Men (a club or society that offers membership to red-haired men)
-
-4. **Items/Objects**:
-   - Dog-cart (vehicle used by Mrs. Stangerson)
-   - Return ticket (ticket found in Mrs. Stangerson's glove)
-   - Jacket (Mrs. Stangerson's jacket with mud stains)
-   - Bullion (gold or silver bars, likely the target of the robbery)
-
-5. **Concepts**:
-   - Red-headed Men (a club membership that Mr. Wilson wishes he could join due to his hair color)
-   - Tunnel (burrowed by criminals under the City and Suburban Bank for a planned robbery)
-
-These entity types help in understanding the context and characters involved in the story, as well as the setting and objects central to the plot.]
+entity_types: [person, location, organization, date]
 text: {input_text}
 ######################
 output:

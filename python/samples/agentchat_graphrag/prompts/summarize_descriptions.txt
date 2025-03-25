@@ -1,34 +1,30 @@
 
-You are an expert detective specializing in behavioral analysis and forensic deduction. You are skilled at interpreting subtle clues and understanding the motivations behind criminal actions. You are adept at helping people with complex investigations by piecing together seemingly unrelated details to solve mysteries.
+You are an expert detective with a deep understanding of complex investigations and the ability to solve intricate puzzles. You are adept at helping people unravel mysteries involving high-stakes situations, such as stolen artifacts and royal scandals, by employing keen observation skills and strategic thinking.
 Using your expertise, you're asked to generate a comprehensive summary of the data provided below.
 Given one or two entities, and a list of descriptions, all related to the same entity or group of entities.
-Please concatenate all of these into a single, concise description in perfectly," I said, impressed by Holmes' deductive reasoning.
+Please concatenate all of these into a single, concise description in The text you've provided is a passage from Sir Arthur Conan Doyle's famous Sherlock Holmes series. The language used is characteristic of late 19th-century English literature, marked by formal and somewhat archaic phrasing. Here are some key features:
 
-Holmes smiled modestly. "It's merely a matter of observation and logical deduction, my dear Watson."
+1. **Formal Tone**: The writing maintains a high level of formality, typical of the period in which it was written.
 
-The lady in the carriage looked on with growing amazement at the conversation between the two men. She seemed to be trying to piece together what had transpired.
+2. **Complex Sentences**: The sentences are often long and complex, with multiple clauses that add depth to the narrative.
 
-"Mr. Holmes," she said hesitantly, "I must thank you for your assistance. I was quite worried about Mr. Wilson and his safety."
+3. **Vocabulary**: The vocabulary is rich and varied, including some words that might be considered archaic today (e.g., "august," "personage").
 
-Holmes nodded politely. "It's my pleasure, madam. Your concern for Mr. Wilson is commendable. He seems to be a good man who has been caught up in an unfortunate situation."
+4. **Descriptive Language**: There's a strong emphasis on descriptive language, especially in setting the scene or describing characters.
 
-The lady smiled gratefully. "Indeed he is. And I must say, your methods of investigation are quite fascinating. They seem almost magical at times."
+5. **Dialogue Tags**: Dialogue tags are used sparingly and often with additional descriptors to convey tone and emotion (e.g., "said Holmes dryly").
 
-Holmes chuckled softly. "Thank you, madam. It's all just a matter of paying close attention to the details and following the evidence where it leads."
+6. **Punctuation**: The punctuation is meticulous, including the use of commas, semicolons, and dashes to clarify meaning and structure.
 
-As they arrived back at Mr. Wilson's house, the scene was one of relief and gratitude. The police had apprehended the would-be robbers, and Mr. Wilson was safe.
+7. **Characterization**: Characters are described in detail, both physically and through their actions and speech.
 
-"Thank you, thank you both," Mr. Wilson said, shaking Holmes' hand vigorously. "I don't know what I'd do without your help."
+8. **Setting Details**: The setting is vividly depicted, often with historical or cultural references that were relevant at the time of writing.
 
-Holmes smiled warmly. "It's my duty to assist those in need, Mr. Wilson. And it seems that the League of the Red-headed Men has lost one of its members tonight."
+9. **Mystery Elements**: The text includes elements typical of mystery stories, such as a mysterious visitor, hints of intrigue, and a sense of impending revelation.
 
-The lady laughed softly. "Indeed they have. It was quite a spectacle, wasn't it?"
+10. **Historical Context**: References to specific events and places (e.g., "the Trepoff murder," "Trincomalee") provide context that would have been familiar to the original readers but may require additional explanation for modern audiences.
 
-Holmes nodded. "A most interesting evening, indeed. But now, if you'll excuse me, I believe I must be off. There are other mysteries to solve and cases to investigate."
-
-With that, Holmes bid farewell to Mr. Wilson and the lady, leaving them to their relief and gratitude. As he walked away, I couldn't help but marvel at his incredible abilities once more.
-
-"Another case solved," I said to myself, shaking my head in wonder. "Sherlock Holmes, you never cease to amaze me.". Make sure to include information collected from all the descriptions.
+This style of writing is designed to engage the reader with a detailed and immersive narrative, typical of the detective genre in its early days.. Make sure to include information collected from all the descriptions.
 If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
 Make sure it is written in third person, and include the entity names so we have the full context.
 

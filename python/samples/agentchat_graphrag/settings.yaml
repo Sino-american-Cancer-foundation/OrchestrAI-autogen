@@ -7,14 +7,15 @@
 encoding_model: cl100k_base # this needs to be matched to your model!
 
 llm:
-  model: qwen2.5-coder:32b-instruct-q5_0
+  model: qwq
   api_base: http://10.0.40.49:11434/v1
   api_key: sk-xxx  
+  model_supports_json: true
   model_info:
     vision: false
     function_calling: true
     json_output: true
-    family: Unknown
+    family: r1
     structured_output: true  
   # audience: "https://cognitiveservices.azure.com/.default"
   # api_base: https://<resource-name>.openai.azure.com
@@ -23,7 +24,7 @@ llm:
 
 parallelization:
   stagger: 0.3
-  # num_threads: 50
+  num_threads: 2
 
 async_mode: threaded # or asyncio
 
