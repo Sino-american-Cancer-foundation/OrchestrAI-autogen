@@ -177,7 +177,7 @@ class McpSseAgent(BaseChatAgent, Component[McpSseAgentConfig]):
         
         # Add a system message if this is the first message
         if len(self._chat_history) == 1:
-            self._chat_history.insert(0, SystemMessage(content=self.DEFAULT_SYSTEM_MESSAGE))
+            self._chat_history.insert(0, SystemMessage(content=self.system_message))
         
         try:
             # Get tool list to pass to the model
