@@ -2,8 +2,8 @@ import asyncio
 import json
 from typing import Dict, List, Any, Union
 
-from autogen_core import FunctionCall
-from autogen_core.models import RequestUsage
+from autogen_agentchat.agents import BaseChatAgent
+from autogen_agentchat.base import Response
 from autogen_agentchat.messages import ToolCallRequestEvent, ToolCallExecutionEvent, TextMessage
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.agents.insurance import InsuranceAgent
@@ -15,6 +15,8 @@ class FormattedConsole:
         self.stream = stream
         self.tool_calls = []
         self.tool_results = []
+        # Flag to track if we've already displayed the user request
+        self.user_request_displayed = False
     
     async def __aenter__(self):
         return await self.__anext__()
@@ -32,11 +34,21 @@ class FormattedConsole:
         print("="*80 + "\n")
         
         async for message in self.stream:
-            if isinstance(message, TextMessage):
-                # Direct text response from the agent
-                print("\n🔷 AGENT RESPONSE:")
-                print(f"{message.content}\n")
+            # If it's a Response object, extract the chat_message
+            if hasattr(message, 'chat_message'):
+                message = message.chat_message
                 
+            if isinstance(message, TextMessage):
+                # Check the source to determine if it's from the agent
+                if message.source != "user":
+                    print("\n🔷 AGENT RESPONSE:")
+                    print(f"{message.content}\n")
+                elif not self.user_request_displayed:
+                    # Only display user message once at the beginning
+                    print("🔷 USER REQUEST:")
+                    print(f"{message.content}\n")
+                    self.user_request_displayed = True
+                    
             elif isinstance(message, ToolCallRequestEvent):
                 # Tool call - captures the reasoning logic and tool selection
                 for tool_call in message.content:
@@ -80,7 +92,10 @@ async def main() -> None:
     Example script demonstrating how to use the InsuranceAgent with a local MCP server.
     """
     # Create the model client
-    model_client = OpenAIChatCompletionClient(model="gpt-4o")
+    model_client = OpenAIChatCompletionClient(
+        model="gpt-4o", 
+        parallel_tool_calls=False, # Disable parallel tool calls
+    )
     
     # Create the insurance agent
     insurance_agent = InsuranceAgent(
@@ -98,13 +113,14 @@ async def main() -> None:
     4. Patient Name: Liza Silina
     5. Service Date: 2024-01-15
     """
-    
-    print("🔷 USER REQUEST:")
-    print(task)
+
+    task = "Hi"
     
     # Use the formatted console UI to display structured output
     try:
-        await FormattedConsole(insurance_agent.run_stream(task=task)).run()
+        # Display the user request at the beginning
+        formatter = FormattedConsole(insurance_agent.run_stream(task=task))
+        await formatter.run()
     finally:
         # Clean up resources
         await model_client.close()

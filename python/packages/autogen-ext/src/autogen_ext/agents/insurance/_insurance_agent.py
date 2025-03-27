@@ -147,6 +147,12 @@ class InsuranceAgent(BaseChatAgent, Component[InsuranceAgentConfig]):
                     except Exception as e:
                         self.logger.warning(f"Failed to process tool {tool.name}: {str(e)}")
                 
+                # from autogen_ext.tools.mcp._factory import mcp_server_tools
+                # tools = await mcp_server_tools(server_params)
+                # for tool in tools:
+                #     comp = tool.dump_component().model_dump_json()
+                #     print(comp)
+                
                 self.logger.info(f"Initialized MCP session with {len(self._mcp_tools)} tools.")
                 self._mcp_initialized = True
         except Exception as e:
@@ -213,7 +219,7 @@ class InsuranceAgent(BaseChatAgent, Component[InsuranceAgentConfig]):
             # Process the conversation turn by turn
             while True:
                 if isinstance(response.content, str):
-                    # Final text response - we're done
+                    # Final text response: last one in the list, return it
                     self._chat_history.append(AssistantMessage(content=response.content, source=self.name))
                     yield Response(
                         chat_message=TextMessage(content=response.content, source=self.name),
