@@ -72,7 +72,7 @@ async def main():
         model_client=model_client,
         termination_condition=TextMentionTermination("TERMINATE"),
         selector_prompt=selector_prompt,
-        allow_repeated_speaker=False,
+        allow_repeated_speaker=True,
     )
     
     try:
