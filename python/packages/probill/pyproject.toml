@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "probill"
-version = "0.1.dev1"
+version = "0.1.1.dev"
 license = {file = "LICENSE-CODE"}
 description = "teams, agents, tools for Probill"
 readme = "README.md"

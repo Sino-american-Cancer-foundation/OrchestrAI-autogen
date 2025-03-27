@@ -11,6 +11,9 @@ from pydantic import AnyUrl
 from typing import Any
 from neo4j import GraphDatabase
 import re
+import asyncio
+import os
+import argparse
 
 logger = logging.getLogger("mcp_neo4j_cypher")
 logger.info("Starting MCP neo4j Server")
@@ -21,7 +24,7 @@ def is_write_query(query: str) -> bool:
 
 
 class neo4jDatabase:
-    def __init__(self, neo4j_uri: str, neo4j_username: str, neo4j_password: str, database: str = "testdb"):
+    def __init__(self, neo4j_uri: str, neo4j_username: str, neo4j_password: str, neo4j_database: str):
         """Initialize connection to the neo4j database
 
         Args:
@@ -30,11 +33,13 @@ class neo4jDatabase:
             neo4j_password: Password for authentication
             database: Name of the database to connect to (defaults to "neo4j")
         """
-        logger.debug(f"Initializing database connection to {neo4j_uri}, database: {database}")
-        d = GraphDatabase.driver(neo4j_uri, auth=(neo4j_username, neo4j_password))
+        logger.debug(f"Initializing database connection to {neo4j_uri}, database: {neo4j_database}")
+        print(f"Initializing database connection to {neo4j_uri}, database: {neo4j_database}",flush=True)
+        d = GraphDatabase.driver(uri=neo4j_uri, auth=(neo4j_username, neo4j_password), database=neo4j_database)
         d.verify_connectivity()
         self.driver = d
-        self.database = database
+        self.database = neo4j_database
+        print(f"Initialized database connection to {neo4j_uri}, database: {neo4j_database}",flush=True)
 
     def _execute_query(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Execute a Cypher query and return results as a list of dictionaries"""
@@ -54,10 +59,17 @@ class neo4jDatabase:
             raise
 
 
-async def main(neo4j_url: str, neo4j_username: str, neo4j_password: str):
+async def main(neo4j_url: str, neo4j_username: str, neo4j_password: str, neo4j_database: str = "neo4j"):
     logger.info(f"Connecting to neo4j MCP Server with DB URL: {neo4j_url}")
 
-    db = neo4jDatabase(neo4j_url, neo4j_username, neo4j_password)
+    print(f"Connecting to neo4j MCP Server with DB URL: {neo4j_url}",flush=True)
+
+    db = neo4jDatabase(
+        neo4j_uri=neo4j_url, 
+        neo4j_username=neo4j_username, 
+        neo4j_password=neo4j_password, 
+        neo4j_database=neo4j_database
+    )
     server = Server("neo4j-manager")
 
     # Register handlers
@@ -156,3 +168,20 @@ RETURN label, apoc.map.fromPairs(attributes) as attributes, apoc.map.fromPairs(r
                 ),
             ),
         )
+        
+if __name__ == "__main__":
+    print("Starting MCP neo4j Server",flush=True)
+    parser = argparse.ArgumentParser(description='Neo4j MCP Server')
+    parser.add_argument('--db-url', help='Neo4j server URL')
+    parser.add_argument('--username', help='Neo4j username')
+    parser.add_argument('--password', help='Neo4j password')
+    parser.add_argument('--database', help='Neo4j database name')
+    
+    args = parser.parse_args()
+
+    neo4j_url = args.db_url or os.environ.get("NEO4J_URL", "neo4j://localhost:7687")
+    neo4j_username = args.username or os.environ.get("NEO4J_USERNAME", "neo4j")
+    neo4j_password = args.password or os.environ.get("NEO4J_PASSWORD", "password")
+    neo4j_database = args.database or os.environ.get("NEO4J_DATABASE", "neo4j")
+
+    asyncio.run(main(neo4j_url, neo4j_username, neo4j_password, neo4j_database))

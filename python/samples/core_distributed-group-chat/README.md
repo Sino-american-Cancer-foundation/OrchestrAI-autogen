@@ -114,3 +114,87 @@ graph TD;
 
 - [ ] Properly handle chat restarts. It complains about group chat manager being already registered
 - [ ] Add streaming to the UI like [this example](https://docs.chainlit.io/advanced-features/streaming) when [this bug](https://github.com/microsoft/autogen/issues/4213) is resolved
+
+```mermaid
+sequenceDiagram
+    participant P as Patient
+    participant A as Agent
+    participant Ph as Physician
+    participant B as Blockchain
+
+    %% Step 1: Patient submits medical records, creating CLINICAL_NFT_A
+    P->>B: Submit medical records
+    B-->>P: Mint CLINICAL_NFT_A (100% owned by Patient)
+
+    %% Step 2: Agent processes CLINICAL_NFT_A to create CLINICAL_NFT_B
+    P->>A: Share CLINICAL_NFT_A
+    A->>B: Process data, link to knowledge graph
+    B-->>A: Mint CLINICAL_NFT_B (Patient + Agent ownership)
+    B-->>P: Notify of CLINICAL_NFT_B creation
+
+    %% Step 3: Physician uses CLINICAL_NFT_B to make a decision, creating CLINICAL_NFT_C
+    A->>Ph: Share CLINICAL_NFT_B
+    Ph->>B: Make clinical decision
+    B-->>Ph: Mint CLINICAL_NFT_C (Patient + Agent + Physician ownership)
+    B-->>A: Notify of CLINICAL_NFT_C creation
+    B-->>P: Notify of CLINICAL_NFT_C creation
+
+    %% Step 4: Create a new NFT (CLINICAL_NFT_D) that references A, B, and C
+    P->>B: Request new NFT combining A, B, C
+    A->>B: Approve reference to CLINICAL_NFT_B
+    Ph->>B: Approve reference to CLINICAL_NFT_C
+    B-->>P: Mint CLINICAL_NFT_D (references A, B, C owned by Patient + Agent + Physician)
+    B-->>A: Notify of CLINICAL_NFT_D creation
+    B-->>Ph: Notify of CLINICAL_NFT_D creation
+```
+
+```mermaid
+sequenceDiagram
+    participant P as Patient
+    participant A as Agent
+    participant Ph as Physician
+    participant OCS as Off-Chain Storage
+    participant B as Blockchain
+
+    %% Step 1: Patient submits medical records, creating CLINICAL_NFT_A
+    Note over P,OCS: Patient encrypts medical records
+    P->>OCS: Upload encrypted medical records
+    OCS-->>P: Return storage reference (URI_A)
+    P->>B: Request mint CLINICAL_NFT_A with URI_A
+    B-->>P: Mint CLINICAL_NFT_A (owned by P, contains URI_A)
+
+    %% Step 2: Agent processes CLINICAL_NFT_A to create CLINICAL_NFT_B
+    P->>A: Share CLINICAL_NFT_A and decryption key for A
+    A->>OCS: Retrieve encrypted data using URI_A from CLINICAL_NFT_A
+    OCS-->>A: Provide encrypted data
+    Note over A: Agent decrypts data with key
+    A->>A: Process data, generate insights
+    Note over A,OCS: Agent encrypts processed data
+    A->>OCS: Upload encrypted processed data
+    OCS-->>A: Return storage reference (URI_B)
+    A->>B: Request mint CLINICAL_NFT_B with URI_B
+    B-->>A: Mint CLINICAL_NFT_B (owned by P and A, contains URI_B)
+    B-->>P: Notify of CLINICAL_NFT_B creation
+
+    %% Step 3: Physician uses CLINICAL_NFT_B to make a decision, creating CLINICAL_NFT_C
+    A->>Ph: Share CLINICAL_NFT_B and decryption key for B
+    Ph->>OCS: Retrieve encrypted data using URI_B from CLINICAL_NFT_B
+    OCS-->>Ph: Provide encrypted data
+    Note over Ph: Physician decrypts data with key
+    Ph->>Ph: Make clinical decision
+    Note over Ph,OCS: Physician encrypts clinical decision
+    Ph->>OCS: Upload encrypted clinical decision
+    OCS-->>Ph: Return storage reference (URI_C)
+    Ph->>B: Request mint CLINICAL_NFT_C with URI_C
+    B-->>Ph: Mint CLINICAL_NFT_C (owned by P, A, Ph, contains URI_C)
+    B-->>A: Notify of CLINICAL_NFT_C creation
+    B-->>P: Notify of CLINICAL_NFT_C creation
+
+    %% Step 4: Create a new NFT (CLINICAL_NFT_D) that references A, B, and C
+    P->>B: Request new NFT combining A, B, C
+    A->>B: Approve reference to CLINICAL_NFT_B
+    Ph->>B: Approve reference to CLINICAL_NFT_C
+    B-->>P: Mint CLINICAL_NFT_D (references A, B, C - owned by P, A, Ph)
+    B-->>A: Notify of CLINICAL_NFT_D creation
+    B-->>Ph: Notify of CLINICAL_NFT_D creation
+```

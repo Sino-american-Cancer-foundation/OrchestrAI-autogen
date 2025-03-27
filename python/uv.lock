@@ -48,6 +48,7 @@ dev = [
     { name = "packaging" },
     { name = "poethepoet" },
     { name = "polars" },
+    { name = "probill", editable = "packages/probill" },
     { name = "pyright", specifier = "==1.1.389" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -5626,7 +5627,7 @@ wheels = [
 
 [[package]]
 name = "probill"
-version = "0.1.dev1"
+version = "0.1.1.dev0"
 source = { editable = "packages/probill" }
 dependencies = [
     { name = "autogen-core" },
