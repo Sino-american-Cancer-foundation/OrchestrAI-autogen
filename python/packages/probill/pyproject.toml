@@ -2,48 +2,71 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.targets.wheel]
-    packages = ["src/probill"]
-
 [project]
 name = "probill"
-version = "0.1.1.dev"
+version = "0.1.4.dev"
 license = {file = "LICENSE-CODE"}
-description = "teams, agents, tools for Probill"
+description = "Teams, agents, tools for Probill, including a Neo4j Cypher MCP server"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: MIT License",  # Or update to a commercial license
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "autogen-core",
+    "autogen-core>=0.4.9",
     "autogen-ext",
     "autogen-test-utils",
     "autogenstudio",
     "component-schema-gen",
     "magentic-one-cli",
+    "mcp>=1.6.0",
+    "neo4j>=5.26.0",
 ]
 
-[dependency-groups]
-dev = []
+[project.scripts]
+mcp-kg = "probill.mcp_servers.mcp_kg:main"  # Updated to plural mcp_servers
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/probill"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pyright>=1.1.389",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.20.3",
+    "ruff>=0.4.8",
+    "poethepoet",
+]
 
 [tool.ruff]
-extend = "../../pyproject.toml"
-include = ["src/**", "tests/*.py"]
+line-length = 120
+fix = true
+target-version = "py310"
+include = ["src/**/*.py", "tests/*.py"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
+ignore = ["F401", "E501"]
 
 [tool.pyright]
-extends = "../../pyproject.toml"
-include = ["src", "tests"]
+include = ["src/probill", "tests"]
+typeCheckingMode = "strict"
+reportUnnecessaryIsInstance = false
+reportMissingTypeStubs = false
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
-
-[tool.poe]
-include = "../../shared_tasks.toml"
+asyncio_mode = "auto"
 
 [tool.poe.tasks]
+fmt = "ruff format ."
+lint = "ruff check . --fix"
+pyright = "pyright"
 test = "pytest -n auto"
+check = ["fmt", "lint", "pyright", "test"]

@@ -127,12 +127,8 @@
               "label": "ne4j.read-neo4j-cypher",
               "config": {
                 "server_params": {
-                  "command": "uv",
+                  "command": "mcp-kg",
                   "args": [
-                    "--directory",
-                    "/workspaces/OrchestrAI-autogen/python/packages/probill/src/mcp-neo4j/servers/mcp-neo4j-cypher/src",
-                    "run",
-                    "mcp-neo4j-cypher",
                     "--db-url",
                     "bolt://10.0.40.100:7687",
                     "--username",

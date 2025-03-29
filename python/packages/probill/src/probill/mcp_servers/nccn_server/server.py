@@ -11,6 +11,7 @@ from mcp.server import Server
 import uvicorn
 import argparse
 from .nccn_tool import DecisionLoader
+import signal
 
 # Initialize FastMCP server for NCCN tools (SSE)
 mcp = FastMCP("nccn")
@@ -47,7 +48,114 @@ class NCCNEvaluation(BaseModel):
             "neo4j_database": self.neo4j_database
         }
 
+@mcp.resource("patient://{patient_id}")
+async def get_patient(patient_id: str) -> Dict[str, Any]:
+    """Get patient details from the knowledge graph.
 
+    Args:
+        patient_id (str): ID of the patient
+    Returns:
+        Dict[str, Any]: Dictionary containing patient details
+    """
+    return {
+        "patient_id": patient_id,
+        "name": "John Doe",
+        "age": 45,  
+    }
+
+@mcp.resource("regimen://{name}")
+async def get_regimen(name: str) -> Dict[str, Any]:
+    """Get regimen details from the knowledge graph.
+
+    Args:
+        name (str): Name of the regimen
+
+    Returns:
+        Dict[str, Any]: Dictionary containing regimen details
+    """
+    # Load regimen details from the decision tree
+    # This is a placeholder; actual implementation will depend on the decision tree structure
+    regimen_details = {
+        "name": name,
+        "description": f"Details for regimen {name}"
+    }
+    return regimen_details
+
+@mcp.prompt("evaluation")
+async def get_evaluation_prompt(patient_id: str, start_page_id: str, clinical_data: Dict) -> Dict[str, Any]:
+    """_summary_
+
+    Args:
+        patient_id (str): _description_
+        start_page_id (str): _description_
+        clinical_data (Dict): _description_
+
+    Returns:
+        Dict[str, Any]: _description_
+    """
+    return {
+        "template": (
+            f"Evaluate the patient {patient_id} against the NCCN guidelines starting from page {start_page_id}. "
+            f"Use the following clinical data: {clinical_data}"
+        )
+    }
+    
+@mcp.tool()
+async def update_patient_data(patient_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """Update patient data in the knowledge graph.
+
+    Args:
+        patient_id (str): ID of the patient
+        data (Dict[str, Any]): Data to update
+
+    Returns:
+        Dict[str, Any]: Dictionary containing updated patient details
+    """
+    # Placeholder for updating patient data in the knowledge graph
+    # Actual implementation will depend on the Neo4j database structure
+    return {
+        "status": "success",
+        "message": f"Patient {patient_id} updated successfully",
+        "data": data
+    }
+    
+@mcp.tool()
+async def remove_patient_data(patient_id: str) -> Dict[str, Any]:
+    """Remove patient data from the knowledge graph.
+
+    Args:
+        patient_id (str): ID of the patient
+
+    Returns:
+        Dict[str, Any]: Dictionary containing removal status
+    """
+    # Placeholder for removing patient data from the knowledge graph
+    # Actual implementation will depend on the Neo4j database structure
+    return {
+        "status": "success",
+        "message": f"Patient {patient_id} removed successfully"
+    }
+    
+@mcp.tool()
+async def remove_patient(patient_id: str) -> Dict[str, Any]:
+    """Remove patient from the knowledge graph.
+
+    Args:
+        patient_id (str): ID of the patient
+
+    Returns:
+        Dict[str, Any]: Dictionary containing removal status
+    """
+    # Placeholder for removing patient from the knowledge graph
+    # Actual implementation will depend on the Neo4j database structure
+    return {
+        "status": "success",
+        "message": f"Patient {patient_id} removed successfully"
+    }
+    # Placeholder for removing patient from the knowledge graph
+    
+    
+    
 @mcp.tool()
 async def evaluate_patient_guidelines(evaluation: NCCNEvaluation) -> Dict[str, Any]:
     """Evaluate a patient against NCCN guidelines using the decision tree.
@@ -157,3 +265,17 @@ if __name__ == "__main__":
 
     starlette_app = create_starlette_app(mcp_server, debug=True)
     uvicorn.run(starlette_app, host=args.host, port=args.port)
+    
+    def signal_handler(sig, frame):
+        print("\nShutting down NCCN MCP server...")
+        # Close MCP client connections
+        mcp._mcp_server.close()
+        
+        # Close any open Neo4j connections
+        for state in evaluation_states.values():
+            if 'loader' in state:
+                state['loader'].close()
+        evaluation_states.clear()
+        exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
