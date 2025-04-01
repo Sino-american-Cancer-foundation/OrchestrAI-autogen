@@ -320,7 +320,7 @@ class GroupChatManager(RoutedAgent):
         assert isinstance(message.body, UserMessage)
         self._chat_history.append(message.body)
 
-        # Check for termination
+        # Explicit termination signal check
         if message.body.content and "TERMINATE" in message.body.content:
             message_text = "Task has been completed. Thank you for using the insurance verification team."
             await publish_message_to_ui(
@@ -331,11 +331,11 @@ class GroupChatManager(RoutedAgent):
             )
             self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}**: {message_text}"))
             return
-            
+                
         # Increment round counter
         self._round += 1
         if self._round >= self._max_rounds:
-            message_text = f"Maximum rounds ({self._max_rounds}) reached. Terminating conversation."
+            message_text = f"Maximum rounds ({self._max_rounds}) reached. Insurance verification process will be terminated."
             await publish_message_to_ui(
                 runtime=self, 
                 source=self.id.type, 
@@ -354,7 +354,37 @@ class GroupChatManager(RoutedAgent):
                 messages.append(f"{msg.source}: {', '.join(str(item) for item in msg.content)}")
         history = "\n".join(messages)
         
-        # Format roles
+        # First, check if the task is complete using the LLM
+        completion_check_prompt = f"""
+        {self._team_goal}
+        
+        Based on the following conversation, determine if the insurance verification task has been COMPLETED or if it still NEEDS MORE WORK.
+        Respond with only "COMPLETED" or "NEEDS MORE WORK".
+
+        Conversation:
+        {history}
+        
+        Has the insurance verification task been completed?
+        """
+        
+        completion_check = await self._model_client.create(
+            [SystemMessage(content=completion_check_prompt)],
+            cancellation_token=ctx.cancellation_token,
+        )
+        
+        # Check if the task is complete
+        if "COMPLETED" in completion_check.content:
+            message_text = "Insurance verification task has been completed successfully."
+            await publish_message_to_ui(
+                runtime=self, 
+                source=self.id.type, 
+                user_message=message_text, 
+                ui_config=self._ui_config
+            )
+            self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}**: {message_text}"))
+            return
+        
+        # Format roles for next speaker selection
         roles = "\n".join(
             [
                 f"{topic_type}: {description}".strip()
@@ -365,7 +395,7 @@ class GroupChatManager(RoutedAgent):
             ]
         )
         
-        # Create selector prompt
+        # Create selector prompt for next speaker
         selector_prompt = f"""
         {self._team_goal}
         
