@@ -202,3 +202,6 @@ registry.json
 
 # files created by the gitty agent in python/samples/gitty
 .gitty/
+
+#
+.chainlit*
