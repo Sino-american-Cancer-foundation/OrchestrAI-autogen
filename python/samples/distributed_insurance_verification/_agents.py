@@ -40,7 +40,10 @@ Phase 2 (Verification via Phone Call):
 2.2: If the patient is eligible, update the EMR/EHR system with the verified information.
 2.3: If the patient is not eligible, inform the user clearly that the patient is not eligible for the requested service.
 
-Note: Always evaluate what information you currently have, identify what additional steps and tools are necessary, or confirm if the verification task is already complete.
+
+Important Note: 
+1. Always evaluate what information you currently have, identify what additional steps and tools are necessary, or confirm if the verification task is already complete.
+2. If you are unsure about the next steps, ask for clarification or additional information and wait for a user instruction.
 """
 
 
@@ -359,12 +362,15 @@ class GroupChatManager(RoutedAgent):
         {self._team_goal}
         
         Based on the following conversation, determine if the insurance verification task has been COMPLETED or if it still NEEDS MORE WORK.
-        Respond with only "COMPLETED" or "NEEDS MORE WORK".
+        Respond with only "COMPLETED", "DONT_HAVE_THE_RIGHT_AGENT" and "NEEDS_MORE_WORK".
 
         Conversation:
         {history}
         
-        Has the insurance verification task been completed?
+        Has the insurance verification task been completed? 
+        If the agent response with just questions or requests for more information, please say "NEEDS_MORE_WORK".
+        If you think the task is completed, please say "COMPLETED".
+        If you think the task is not completed but there are agents available to do the task, please say "NEEDS_MORE_WORK".
         """
         
         completion_check = await self._model_client.create(
@@ -372,6 +378,18 @@ class GroupChatManager(RoutedAgent):
             cancellation_token=ctx.cancellation_token,
         )
         
+        # Need user to confirm the task is not completed
+        if "DONT_HAVE_THE_RESOURCE" in completion_check.content:
+            message_text = "Task cannot be completed due to lack of resources."
+            await publish_message_to_ui(
+                runtime=self, 
+                source=self.id.type, 
+                user_message=message_text, 
+                ui_config=self._ui_config
+            )
+            self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}**: {message_text}"))
+            return
+
         # Check if the task is complete
         if "COMPLETED" in completion_check.content:
             message_text = "Insurance verification task has been completed successfully."
