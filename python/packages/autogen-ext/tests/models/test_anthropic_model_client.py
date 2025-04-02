@@ -339,7 +339,6 @@ async def test_anthropic_serialization() -> None:
 @pytest.mark.asyncio
 async def test_anthropic_muliple_system_message() -> None:
     """Test multiple system messages in a single request."""
-
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         pytest.skip("ANTHROPIC_API_KEY not found in environment variables")
@@ -560,3 +559,65 @@ def test_merge_system_messages_no_duplicates() -> None:
     assert isinstance(merged_messages[0], SystemMessage)
     # 중복된 내용도 그대로 병합됨
     assert merged_messages[0].content == "Same instruction\nSame instruction"
+
+
+@pytest.mark.asyncio
+async def test_empty_assistant_content_string_with_anthropic() -> None:
+    """Test that an empty assistant content string is handled correctly."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        pytest.skip("ANTHROPIC_API_KEY not found in environment variables")
+
+    client = AnthropicChatCompletionClient(
+        model="claude-3-haiku-20240307",
+        api_key=api_key,
+    )
+
+    # Test empty assistant content string
+    result = await client.create(
+        messages=[
+            UserMessage(content="Say something", source="user"),
+            AssistantMessage(content="", source="assistant"),
+        ]
+    )
+
+    # Verify we got a response
+    assert isinstance(result.content, str)
+    assert len(result.content) > 0
+
+
+@pytest.mark.asyncio
+async def test_claude_trailing_whitespace_at_last_assistant_content() -> None:
+    """Test that an empty assistant content string is handled correctly."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        pytest.skip("ANTHROPIC_API_KEY not found in environment variables")
+
+    client = AnthropicChatCompletionClient(
+        model="claude-3-haiku-20240307",
+        api_key=api_key,
+    )
+
+    messages: list[LLMMessage] = [
+        UserMessage(content="foo", source="user"),
+        UserMessage(content="bar", source="user"),
+        AssistantMessage(content="foobar ", source="assistant"),
+    ]
+
+    result = await client.create(messages=messages)
+    assert isinstance(result.content, str)
+
+
+def test_rstrip_railing_whitespace_at_last_assistant_content() -> None:
+    messages: list[LLMMessage] = [
+        UserMessage(content="foo", source="user"),
+        UserMessage(content="bar", source="user"),
+        AssistantMessage(content="foobar ", source="assistant"),
+    ]
+
+    # This will crash if _rstrip_railing_whitespace_at_last_assistant_content is not applied to "content"
+    dummy_client = AnthropicChatCompletionClient(model="claude-3-5-haiku-20241022", api_key="dummy-key")
+    result = dummy_client._rstrip_last_assistant_message(messages)  # pyright: ignore[reportPrivateUsage]
+
+    assert isinstance(result[-1].content, str)
+    assert result[-1].content == "foobar"
