@@ -13,7 +13,7 @@ class GroupChatMessage(BaseModel):
 
 class RequestToSpeak(BaseModel):
     """Message type for agents to speak"""
-    pass
+    reasoning: str = ""  # Add reasoning field
 
 
 @dataclass

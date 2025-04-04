@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import warnings
+from pathlib import Path
 
 import chainlit as cl  # type: ignore [reportUnknownMemberType] # This dependency is installed through instructions
 from _agents import MessageChunk, UIAgent
@@ -21,20 +22,40 @@ message_chunks: dict[str, Message] = {}  # type: ignore [reportUnknownVariableTy
 
 
 async def send_cl_stream(msg: MessageChunk) -> None:
-    print(f"Received message chunk with author: {msg.author}")
-    
     if msg.message_id not in message_chunks:
-        # Initialize with author's name at the beginning of the message content
-        message_chunks[msg.message_id] = Message(content=f"{msg.author}: ", author=msg.author)
+        message_chunks[msg.message_id] = Message(content="", author=msg.author)
 
     if not msg.finished:
-        await message_chunks[msg.message_id].stream_token(msg.text)  # type: ignore [reportUnknownVariableType]
+        await message_chunks[msg.message_id].stream_token(msg.text)
     else:
-        await message_chunks[msg.message_id].stream_token(msg.text)  # type: ignore [reportUnknownVariableType]
-        await message_chunks[msg.message_id].update()  # type: ignore [reportUnknownMemberType]
+        await message_chunks[msg.message_id].stream_token(msg.text)
+        
+        # Check if this is the final chunk and the message mentions the specific screenshot ID
+        if msg.message_id in message_chunks:
+            full_content = message_chunks[msg.message_id].content
+            
+            # Check if the specific screenshot ID is mentioned
+            if "SCRNiVBORw0KGgoAAAAN" in full_content:
+                # Path to your image
+                image_path = Path("public/demo_images/SCRNiVBORw0KGgoAAAAN.png")
+                
+                # Only proceed if the image exists
+                if image_path.exists():
+                    # Create an elements list if it doesn't exist
+                    if not hasattr(message_chunks[msg.message_id], "elements"):
+                        message_chunks[msg.message_id].elements = []
+                    
+                    # Add the image as an element to the message
+                    message_chunks[msg.message_id].elements.append(
+                        cl.Image(path=str(image_path), name="Insurance Portal Screenshot")
+                    )
+                    
+                    print(f"Added image: {image_path} to message")
+        
+        await message_chunks[msg.message_id].update()
         await asyncio.sleep(3)
-        cl_msg = message_chunks[msg.message_id]  # type: ignore [reportUnknownVariableType]
-        await cl_msg.send()  # type: ignore [reportUnknownMemberType]
+        cl_msg = message_chunks[msg.message_id]
+        await cl_msg.send()
 
 
 

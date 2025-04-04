@@ -58,19 +58,19 @@ async def main(config: AppConfig):
 
     await publish_message_to_ui(
         runtime=group_chat_manager_runtime,
-        source="System",
+        source="system",
         user_message="[ **Insurance Verification Team initialized and ready for task** ]",
         ui_config=config.ui_agent,
     )
     await asyncio.sleep(3)
 
     user_message: str = """
-    Do your job with the following information:
-    1. Portal website url: https://www.brmsprovidergateway.com/provideronline/search.aspx
-    2. Member ID (username): E01257465
-    3. Date of Birth (password): 08/03/1988
-    4. Patient Name: Liza Silina
-    5. Service Date: 2024-01-15
+    Help me to do the insrance eligibility check with the following information: \n
+    1. Portal website url: https://www.brmsprovidergateway.com/provideronline/search.aspx \n
+    2. Member ID (username): E01257465 \n
+    3. Date of Birth (password): 08/03/1988 \n
+    4. Patient Name: Liza Silina \n
+    5. Service Date: 2024-01-15 \n
     """
     Console().print(f"Simulating User input in group chat topic:\n\t'{user_message}'")
 

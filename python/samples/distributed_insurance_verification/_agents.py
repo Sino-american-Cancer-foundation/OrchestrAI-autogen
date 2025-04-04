@@ -2,6 +2,7 @@ import asyncio
 import json
 import random
 import traceback
+import re
 from typing import Awaitable, Callable, Dict, List
 from uuid import uuid4
 
@@ -25,25 +26,33 @@ from rich.markdown import Markdown
 
 TEAM_GOAL = """
 Goal:
-Accurately verify insurance eligibility and, if confirmed, update the patient's verified information into the EMR/EHR system.
+Accurately verify insurance eligibility and, if the patient is eligible, update their verified information into the EMR/EHR system using the VM tool.
 
 Process:
-Insurance eligibility verification should follow this structured two-phase workflow:
+Insurance eligibility verification must follow this strict two-phase process:
 
-Phase 1 (Initial Verification via Portals):
-1.1: Log into the provided insurance portal(s) using given credentials and analyze screenshots or portal data to determine preliminary eligibility.
-1.2: If the patient is clearly eligible (without IPA involvement), update the EMR/EHR system accordingly.
-1.3: If eligibility is unclear or IPA involvement exists, proceed to Phase 2.
+Phase 1 (Portal-Based Initial Verification):
+1.1: Log into the insurance portal(s) using the provided credentials.
+1.2: Analyze portal data or screenshots to determine preliminary eligibility.
+1.3: 
+  - If the patient is clearly eligible (and there is no IPA involvement), proceed immediately to run the VM tool to input the information into the EMR/EHR system. → [RUN VM] → END.
+  - If eligibility is unclear or involves IPA, proceed to Phase 2.
 
-Phase 2 (Verification via Phone Call):
-2.1: If IPA involvement is detected, you should contact IPA directly for verification. Otherwise, contact the insurance provider by phone to verify eligibility.
-2.2: If the patient is eligible, update the EMR/EHR system with the verified information.
-2.3: If the patient is not eligible, inform the user clearly that the patient is not eligible for the requested service.
+Phase 2 (Phone-Based Verification):
+2.1: 
+  - If IPA is involved, call the IPA to confirm eligibility.
+  - Otherwise, call the insurance provider to confirm eligibility.
+2.2:
+  - If the patient is confirmed eligible, you MUST run the VM tool to record the verified info in the EMR/EHR. → [RUN VM] → END.
+  - If the patient is not eligible, clearly state this to the user. → END.
 
-
-Important Note: 
-1. Always evaluate what information you currently have, identify what additional steps and tools are necessary, or confirm if the verification task is already complete.
-2. If you are unsure about the next steps, ask for clarification or additional information and wait for a user instruction.
+Important Instructions:
+- The task is NOT COMPLETE just by confirming eligibility. You MUST run the VM tool to complete the process.
+- Only two outcomes mark completion:
+  1. VM task is run after confirming eligibility.
+  2. Patient is confirmed not eligible and this is clearly communicated.
+- Do not stop or assume success until one of these two actions is taken.
+- Always double-check what you have and what must happen next.
 """
 
 
@@ -98,7 +107,6 @@ class BaseGroupChatAgent(RoutedAgent):
 
 class McpSseGroupChatAgent(BaseGroupChatAgent):
     """A group chat participant using an LLM with MCP SSE tools."""
-
     def __init__(
         self,
         description: str,
@@ -110,13 +118,26 @@ class McpSseGroupChatAgent(BaseGroupChatAgent):
         sse_headers: Dict[str, str] = None,
         sse_timeout: float = 120.0,
     ) -> None:
+        # Additional instructions for results reporting
+        additional_instruction = """IMPORTANT: Your response should focus on reporting execution results clearly and concisely.
+                                    0. Always try to use your tools first to do the task.
+                                    1. Do not engage in unnecessary conversation.
+                                    2. Only ask follow-up questions if you absolutely need missing information to complete your task.
+                                    3. Keep responses brief and results-focused.
+                                    4. ALWAYS include any specific IDs, values, or important information returned by tools in your response.
+                                    """
+        
+        # Combine the original system message with the additional instructions
+        enhanced_system_message = f"{system_message}\n\n{additional_instruction}"
+        
         super().__init__(
             description=description,
             group_chat_topic_type=group_chat_topic_type,
             model_client=model_client,
-            system_message=system_message,
+            system_message=enhanced_system_message,  # Use enhanced system message
             ui_config=ui_config,
         )
+        
         self._sse_url = sse_url
         self._sse_headers = sse_headers or {}
         self._sse_timeout = sse_timeout
@@ -163,10 +184,21 @@ class McpSseGroupChatAgent(BaseGroupChatAgent):
         # Initialize MCP session if not already initialized
         await self._lazy_init(ctx.cancellation_token)
         
-        # Add system prompt about being transferred
-        self._chat_history.append(
-            UserMessage(content=f"Transferred to {self.id.type}, adopt the persona immediately.", source="system")
-        )
+        # Add appropriate system prompt based on whether reasoning is provided
+        if hasattr(message, 'reasoning') and message.reasoning:
+            self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}** received reasoning:\n{message.reasoning}"))
+            # Add reasoning to chat history with special formatting
+            self._chat_history.append(
+                UserMessage(
+                    content=f"You are {self.id.type}. Consider the following analysis and task:\n\n{message.reasoning}\n\nRespond accordingly.",
+                    source="system"
+                )
+            )
+        else:
+            # Original basic instruction if no reasoning provided
+            self._chat_history.append(
+                UserMessage(content=f"Transferred to {self.id.type}, adopt the persona immediately.", source="system")
+            )
         
         # Get tool schemas to pass to the model
         tool_schemas = []
@@ -357,30 +389,72 @@ class GroupChatManager(RoutedAgent):
                 messages.append(f"{msg.source}: {', '.join(str(item) for item in msg.content)}")
         history = "\n".join(messages)
         
-        # First, check if the task is complete using the LLM
-        completion_check_prompt = f"""
+        # Format roles info for the orchestration prompt
+        roles_info = "\n".join([
+            f"- {topic_type}: {description}".strip()
+            for topic_type, description in zip(
+                self._participant_topic_types, self._participant_descriptions, strict=True
+            )
+        ])
+        
+        # Combined orchestration prompt that merges task completion check and agent selection
+        orchestration_prompt = f"""
         {self._team_goal}
         
-        Based on the following conversation, determine if the insurance verification task has been COMPLETED or if it still NEEDS MORE WORK.
-        Respond with only "COMPLETED", "DONT_HAVE_THE_RIGHT_AGENT" and "NEEDS_MORE_WORK".
-
-        Conversation:
+        You are the orchestrator for an insurance verification workflow. Your job is to analyze the conversation,
+        determine the current state of the verification process, and decide what to do next.
+        
+        Available specialists:
+        {roles_info}
+        
+        Conversation history:
         {history}
         
-        Has the insurance verification task been completed? 
-        If the agent response with just questions or requests for more information, please say "NEEDS_MORE_WORK".
-        If you think the task is completed, please say "COMPLETED".
-        If you think the task is not completed but there are agents available to do the task, please say "NEEDS_MORE_WORK".
+        Based on this conversation, analyze the situation and respond with ONE of the following:
+        
+        Option 1 - If the insurance verification task is COMPLETE and no further actions are needed:
+        ```
+        STATUS: COMPLETE
+        REASONING: [Explain why the task is complete]
+        ```
+        
+        Option 2 - If the task requires more work:
+        ```
+        STATUS: NEEDS_MORE_WORK
+        AGENT: [Name of the agent that should act next]
+        REASONING: [Your analysis of the current situation]
+        TASK: [Specific instructions for the selected agent]
+        ```
+        
+        Option 3 - If the situation requires user input or clarification:
+        ```
+        STATUS: NEEDS_USER_INPUT
+        REASONING: [Explain what information is needed from the user]
+        ```
+        
+        Think carefully about the current state of the verification process. Determine if the task is complete or what 
+        specific action is needed next and which specialist should perform it.
         """
         
-        completion_check = await self._model_client.create(
-            [SystemMessage(content=completion_check_prompt)],
+        # Get orchestration analysis
+        orchestration_response = await self._model_client.create(
+            [SystemMessage(content=orchestration_prompt)],
             cancellation_token=ctx.cancellation_token,
         )
         
-        # Need user to confirm the task is not completed
-        if "DONT_HAVE_THE_RESOURCE" in completion_check.content:
-            message_text = "Task cannot be completed due to lack of resources."
+        assert isinstance(orchestration_response.content, str)
+        response_text = orchestration_response.content.strip()
+        
+        # Extract the status from the response
+        status_match = re.search(r"STATUS:\s*(.*?)(?:\n|$)", response_text)
+        status = status_match.group(1).strip() if status_match else ""
+        
+        # If the task is complete
+        if status == "COMPLETE":
+            reasoning_match = re.search(r"REASONING:\s*(.*?)(?:$)", response_text, re.DOTALL)
+            reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
+            
+            message_text = f"Insurance verification task has been completed. {reasoning}"
             await publish_message_to_ui(
                 runtime=self, 
                 source=self.id.type, 
@@ -389,10 +463,13 @@ class GroupChatManager(RoutedAgent):
             )
             self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}**: {message_text}"))
             return
-
-        # Check if the task is complete
-        if "COMPLETED" in completion_check.content:
-            message_text = "Insurance verification task has been completed successfully."
+        
+        # If user input is needed
+        elif status == "NEEDS_USER_INPUT":
+            reasoning_match = re.search(r"REASONING:\s*(.*?)(?:$)", response_text, re.DOTALL)
+            reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
+            
+            message_text = f"Additional information needed: {reasoning}"
             await publish_message_to_ui(
                 runtime=self, 
                 source=self.id.type, 
@@ -401,56 +478,66 @@ class GroupChatManager(RoutedAgent):
             )
             self.console.print(Markdown(f"\n{'-'*80}\n**{self.id.type}**: {message_text}"))
             return
+            
+        # If more work is needed
+        elif status == "NEEDS_MORE_WORK":
+            # Extract agent, reasoning, and task
+            agent_match = re.search(r"AGENT:\s*(.*?)(?:\n|$)", response_text)
+            reasoning_match = re.search(r"REASONING:\s*(.*?)(?:TASK:|$)", response_text, re.DOTALL)
+            task_match = re.search(r"TASK:\s*(.*?)(?:$)", response_text, re.DOTALL)
+            
+            selected_agent = agent_match.group(1).strip() if agent_match else ""
+            reasoning_text = reasoning_match.group(1).strip() if reasoning_match else ""
+            task_instructions = task_match.group(1).strip() if task_match else ""
+            
+            # Now combine the reasoning and task instructions
+            combined_reasoning = f"REASONING: {reasoning_text}\n\nTASK: {task_instructions}"
+            
+            # Find the matching agent topic type from the agent name
+            selected_topic_type = None
+            for topic_type in self._participant_topic_types:
+                if topic_type.lower() in selected_agent.lower():
+                    selected_topic_type = topic_type
+                    self._previous_participant_topic_type = selected_topic_type
+                    self.console.print(
+                        Markdown(f"\n{'-'*80}\n**{self.id.type}**: Orchestration analysis:\n{combined_reasoning}\n\nAssigning task to `{selected_topic_type}`")
+                    )
+                    # Send RequestToSpeak with reasoning
+                    await self.publish_message(
+                        RequestToSpeak(reasoning=combined_reasoning), 
+                        DefaultTopicId(type=selected_topic_type)
+                    )
+                    return
+            
+            # Fallback if no matching agent found
+            self.console.print(
+                Markdown(f"\n{'-'*80}\n**{self.id.type}**: Could not find matching agent for '{selected_agent}'. Using fallback selection.")
+            )
+            
+            # Fallback selection - pick the first available agent that's not the previous one
+            for topic_type in self._participant_topic_types:
+                if topic_type != self._previous_participant_topic_type:
+                    self._previous_participant_topic_type = topic_type
+                    await self.publish_message(
+                        RequestToSpeak(reasoning=f"REASONING: Fallback selection.\n\nTASK: Continue the verification process based on the current state."), 
+                        DefaultTopicId(type=topic_type)
+                    )
+                    return
         
-        # Format roles for next speaker selection
-        roles = "\n".join(
-            [
-                f"{topic_type}: {description}".strip()
-                for topic_type, description in zip(
-                    self._participant_topic_types, self._participant_descriptions, strict=True
-                )
-                if topic_type != self._previous_participant_topic_type
-            ]
-        )
-        
-        # Create selector prompt for next speaker
-        selector_prompt = f"""
-        {self._team_goal}
-        
-        You are in a role play game. The following roles are available:
-        {roles}.
-        
-        Read the following conversation. Then select the next role from {[topic_type for topic_type in self._participant_topic_types if topic_type != self._previous_participant_topic_type]} to play. Only return the role.
-
-        {history}
-
-        Read the above conversation. Then select the next role from {[topic_type for topic_type in self._participant_topic_types if topic_type != self._previous_participant_topic_type]} to play. Only return the role.
-        """
-        
-        system_message = SystemMessage(content=selector_prompt)
-        completion = await self._model_client.create([system_message], cancellation_token=ctx.cancellation_token)
-        assert isinstance(completion.content, str)
-        
-        # Determine the next speaker
-        selected_topic_type: str
-        for topic_type in self._participant_topic_types:
-            if topic_type.lower() in completion.content.lower():
-                selected_topic_type = topic_type
-                self._previous_participant_topic_type = selected_topic_type
-                self.console.print(
-                    Markdown(f"\n{'-'*80}\n**{self.id.type}**: Asking `{selected_topic_type}` to speak")
-                )
-                await self.publish_message(RequestToSpeak(), DefaultTopicId(type=selected_topic_type))
-                return
-        
-        # If no match found, use the first agent
-        selected_topic_type = self._participant_topic_types[0]
-        self._previous_participant_topic_type = selected_topic_type
+        # If the response doesn't match any expected format, use a simple fallback
         self.console.print(
-            Markdown(f"\n{'-'*80}\n**{self.id.type}**: Asking `{selected_topic_type}` to speak (default)")
+            Markdown(f"\n{'-'*80}\n**{self.id.type}**: Unexpected orchestration response. Using fallback selection.")
         )
-        await self.publish_message(RequestToSpeak(), DefaultTopicId(type=selected_topic_type))
-
+        
+        # Simple fallback - pick the first available agent that's not the previous one
+        for topic_type in self._participant_topic_types:
+            if topic_type != self._previous_participant_topic_type:
+                self._previous_participant_topic_type = topic_type
+                await self.publish_message(
+                    RequestToSpeak(), 
+                    DefaultTopicId(type=topic_type)
+                )
+                return
 
 class UIAgent(RoutedAgent):
     """Handles UI-related tasks and message processing for the distributed system."""
