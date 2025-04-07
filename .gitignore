@@ -206,20 +206,16 @@ registry.json
 # files created by the gitty agent in python/samples/gitty
 .gitty/
 python/packages/autogen-studio/probill/
-python/packages/probill/tests/
 python/packages/autogen-studio/autogenstudio/mcp_tools/test.ipynb
-python/samples/task_centric_memory/pagelogs/
-python/samples/task_centric_memory/memory_bank/
 config.yaml
 settings.yaml
-python/samples/task_centric_memory/configs/demonstration.yaml
-python/samples/task_centric_memory/configs/retrieval.yaml
-python/samples/task_centric_memory/configs/self_teaching.yaml
-python/samples/task_centric_memory/configs/teachability.yaml
-python/samples/core_distributed-group-chat/config.yaml
-python/samples/agentchat_graphrag/settings.yaml
 python/uv.lock
 python/packages/probill/tests/pagelogs/
-python/samples/task_centric_memory_test/pagelogs/
 python/packages/probill/src/probill/mcp_servers/mcp_nccn/guideline/
 python/samples/
+python/packages/probill/tests/agents/pagelogs/
+python/packages/probill/tests/kg/
+python/packages/probill/tests/nccn/
+python/packages/probill/tests/memory_bank/
+python/packages/probill/tests/myapp/
+python/packages/probill/tests/agents/memory_bank/
