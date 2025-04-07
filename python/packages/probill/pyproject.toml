@@ -8,7 +8,7 @@ version = "0.1.4.dev"
 license = {file = "LICENSE-CODE"}
 description = "Teams, agents, tools for Probill, including a Neo4j Cypher MCP server"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",  # Or update to a commercial license
@@ -23,10 +23,14 @@ dependencies = [
     "magentic-one-cli",
     "mcp>=1.6.0",
     "neo4j>=5.26.0",
+    "markitdown>=0.0.1a3",
 ]
 
 [project.scripts]
 mcp-kg = "probill.mcp_servers.mcp_kg:main"  # Updated to plural mcp_servers
+mcp-nccn = "probill.mcp_servers.mcp_nccn:main"  # Updated to plural mcp_servers
+mcp-test = "probill.mcp_servers.mcp_test:main"  # Updated to plural mcp_servers
+markitdown = "probill.mcp_servers.mcp_markitdown:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/probill"]

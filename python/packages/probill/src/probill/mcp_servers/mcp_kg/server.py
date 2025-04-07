@@ -14,10 +14,30 @@ import re
 import asyncio
 import os
 import argparse
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 logger = logging.getLogger("mcp_neo4j_cypher")
 logger.info("Starting MCP neo4j Server")
 
+load_dotenv()
+
+class Neo4jConfig(BaseModel):
+    """Configuration for Neo4j connection"""
+    uri: str = Field(default="bolt://localhost:7687", description="Neo4j connection URI")
+    user: str = Field(default="neo4j", description="Neo4j username")
+    password: str = Field(description="Neo4j password")
+    database: str = Field(default="neo4j", description="Neo4j database name")
+
+    @classmethod
+    def from_env(cls) -> "Neo4jConfig":
+        """Create configuration from environment variables"""
+        return cls(
+            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
+            user=os.getenv('NEO4J_USER', 'neo4j'),
+            password=os.getenv('NEO4J_PASSWORD', ''),
+            database=os.getenv('NEO4J_DATABASE', 'neo4j')
+        )
 
 def is_write_query(query: str) -> bool:
     return re.search(r"\b(MERGE|CREATE|SET|DELETE|REMOVE|ADD)\b", query, re.IGNORECASE) is not None
@@ -35,7 +55,14 @@ class neo4jDatabase:
         """
         logger.debug(f"Initializing database connection to {neo4j_uri}, database: {neo4j_database}")
         print(f"Initializing database connection to {neo4j_uri}, database: {neo4j_database}",flush=True)
-        d = GraphDatabase.driver(uri=neo4j_uri, auth=(neo4j_username, neo4j_password), database=neo4j_database)
+        config = Neo4jConfig.from_env()
+        
+        d = GraphDatabase.driver(
+            uri=config.uri, 
+            auth=(config.user, config.password), 
+            database=config.database
+        )
+
         d.verify_connectivity()
         self.driver = d
         self.database = neo4j_database
@@ -64,10 +91,15 @@ class neo4jDatabase:
             logger.error(f"Database error executing query: {e}\n{query}")
             raise
 
-
-async def main(neo4j_url: str, neo4j_username: str, neo4j_password: str, neo4j_database: str = "neo4j", shutdown_event: asyncio.Event = None):
+async def main(
+        neo4j_url: str, 
+        neo4j_username: str, 
+        neo4j_password: str, 
+        neo4j_database: str = "neo4j", 
+        shutdown_event: asyncio.Event = None
+    ):
+    
     logger.info(f"Connecting to neo4j MCP Server with DB URL: {neo4j_url}")
-    print(f"Connecting to neo4j MCP Server with DB URL: {neo4j_url}",flush=True)
 
     db = None
     server_task = None
