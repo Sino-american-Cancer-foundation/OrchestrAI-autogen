@@ -274,6 +274,33 @@ export interface AssistantAgentConfig {
   model_client_stream: boolean;
 }
 
+export interface McpServerParamsConfig {
+  command?: string[];
+  working_directory?: string;
+  environment?: Record<string, string>;
+  base_url?: string;
+  timeout?: number;
+  headers?: Record<string, string>;
+  cookies?: Record<string, string>;
+  auth?: Record<string, string>;
+}
+
+export interface McpHostAgentConfig {
+  name: string;
+  model_client: Component<ModelConfig>;
+  tools?: Component<ToolConfig>[];
+  handoffs?: any[]; // HandoffBase | str equivalent
+  model_context?: Component<ChatCompletionContextConfig>;
+  memory?: Component<any>[];
+  description?: string;
+  system_message?: string;
+  server_params?: McpServerParamsConfig;
+  reflect_on_tool_use: boolean;
+  model_client_stream: boolean;
+  tool_call_summary_format: string;
+  metadata?: Record<string, string>;
+}
+
 export interface UserProxyAgentConfig {
   name: string;
   description: string;
@@ -375,7 +402,8 @@ export type TeamConfig =
 export type AgentConfig =
   | MultimodalWebSurferConfig
   | AssistantAgentConfig
-  | UserProxyAgentConfig;
+  | UserProxyAgentConfig
+  | McpHostAgentConfig;
 
 export type ModelConfig =
   | OpenAIClientConfig

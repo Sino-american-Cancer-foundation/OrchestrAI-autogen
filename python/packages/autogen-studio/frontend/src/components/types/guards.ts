@@ -24,6 +24,7 @@ import type {
   StdioMcpToolAdapterConfig,
   SseMcpToolAdapterConfig,
   AndTerminationConfig,
+  McpHostAgentConfig,
 } from "./datamodel";
 
 // Provider constants
@@ -37,6 +38,7 @@ const PROVIDERS = {
   ASSISTANT_AGENT: "autogen_agentchat.agents.AssistantAgent",
   USER_PROXY: "autogen_agentchat.agents.UserProxyAgent",
   WEB_SURFER: "autogen_ext.agents.web_surfer.MultimodalWebSurfer",
+  MCP_HOST_AGENT: "probill.agents.mcp_host_agent.McpHostAgent",
 
   // Models
   OPENAI: "autogen_ext.models.openai.OpenAIChatCompletionClient",
@@ -73,6 +75,7 @@ type ProviderToConfig = {
   [PROVIDERS.ASSISTANT_AGENT]: AssistantAgentConfig;
   [PROVIDERS.USER_PROXY]: UserProxyAgentConfig;
   [PROVIDERS.WEB_SURFER]: MultimodalWebSurferConfig;
+  [PROVIDERS.MCP_HOST_AGENT]: McpHostAgentConfig;
 
   // Models
   [PROVIDERS.OPENAI]: OpenAIClientConfig;
@@ -188,6 +191,12 @@ export function isWebSurferAgent(
   component: Component<ComponentConfig>
 ): component is Component<MultimodalWebSurferConfig> {
   return isComponentOfType(component, PROVIDERS.WEB_SURFER);
+}
+
+export function isMcpHostAgent(
+  component: Component<ComponentConfig>
+): component is Component<McpHostAgentConfig> {
+  return isComponentOfType(component, PROVIDERS.MCP_HOST_AGENT);
 }
 
 // Model provider guards with proper type narrowing

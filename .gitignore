@@ -221,3 +221,5 @@ python/samples/agentchat_graphrag/settings.yaml
 python/uv.lock
 python/packages/probill/tests/pagelogs/
 python/samples/task_centric_memory_test/pagelogs/
+python/packages/probill/src/probill/mcp_servers/mcp_nccn/guideline/
+python/samples/

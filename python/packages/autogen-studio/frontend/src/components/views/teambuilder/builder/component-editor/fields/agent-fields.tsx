@@ -11,6 +11,7 @@ import {
   isAssistantAgent,
   isUserProxyAgent,
   isWebSurferAgent,
+  isMcpHostAgent,
 } from "../../../../../types/guards";
 import DetailGroup from "../detailgroup";
 
@@ -86,7 +87,7 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
 
   const handleRemoveTool = useCallback(
     (toolIndex: number) => {
-      if (!isAssistantAgent(component)) return;
+      if (!isAssistantAgent(component) && !isMcpHostAgent(component)) return;
       const newTools = [...(component.config.tools || [])];
       newTools.splice(toolIndex, 1);
       handleConfigUpdate("tools", newTools);
@@ -95,7 +96,7 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
   );
 
   const handleAddTool = useCallback(() => {
-    if (!isAssistantAgent(component)) return;
+    if (!isAssistantAgent(component) && !isMcpHostAgent(component)) return;
 
     const blankTool: Component<FunctionToolConfig> = {
       provider: "autogen_core.tools.FunctionTool",
@@ -525,6 +526,300 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </div>
+            </>
+          )}
+
+          {isMcpHostAgent(component) && (
+            <>
+              <InputWithTooltip
+                label="Name"
+                tooltip="Name of the MCP host agent"
+                required
+              >
+                <Input
+                  value={component.config.name}
+                  onChange={(e) => handleConfigUpdate("name", e.target.value)}
+                />
+              </InputWithTooltip>
+
+              {/* Model Client Section */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-primary">
+                  Model Client
+                </span>
+                {component.config.model_client ? (
+                  <div className="bg-secondary p-1 px-2 rounded-md">
+                    <div className="flex items-center justify-between">
+                      {" "}
+                      <span className="text-sm">
+                        {component.config.model_client.config.model}
+                      </span>
+                      <div className="flex items-center justify-between">
+                        {component.config.model_client && onNavigate && (
+                          <Button
+                            type="text"
+                            icon={<Edit className="w-4 h-4" />}
+                            onClick={() =>
+                              onNavigate(
+                                "model",
+                                component.config.model_client?.label || "",
+                                "model_client"
+                              )
+                            }
+                          >
+                            Configure Model
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
+                    No model configured
+                  </div>
+                )}
+              </div>
+
+              <InputWithTooltip
+                label="System Message"
+                tooltip="System message for the agent"
+              >
+                <TextArea
+                  rows={4}
+                  value={component.config.system_message}
+                  onChange={(e) =>
+                    handleConfigUpdate("system_message", e.target.value)
+                  }
+                />
+              </InputWithTooltip>
+
+              {/* Server Parameters Section */}
+              <DetailGroup title="MCP Server Parameters">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">
+                      Connection Type
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        type={
+                          component.config.server_params?.command
+                            ? "primary"
+                            : "default"
+                        }
+                        size="small"
+                        onClick={() => {
+                          const currentParams = component.config.server_params || {};
+                          handleConfigUpdate("server_params", {
+                            ...currentParams,
+                            command: currentParams.command || [""],
+                            working_directory: currentParams.working_directory,
+                            environment: currentParams.environment,
+                            base_url: undefined,
+                            timeout: undefined,
+                            headers: undefined,
+                            cookies: undefined,
+                            auth: undefined,
+                          });
+                        }}
+                      >
+                        Stdio
+                      </Button>
+                      <Button
+                        type={
+                          component.config.server_params?.base_url
+                            ? "primary"
+                            : "default"
+                        }
+                        size="small"
+                        onClick={() => {
+                          const currentParams = component.config.server_params || {};
+                          handleConfigUpdate("server_params", {
+                            ...currentParams,
+                            base_url: currentParams.base_url || "",
+                            timeout: currentParams.timeout || 30.0,
+                            headers: currentParams.headers,
+                            cookies: currentParams.cookies,
+                            auth: currentParams.auth,
+                            command: undefined,
+                            working_directory: undefined,
+                            environment: undefined,
+                          });
+                        }}
+                      >
+                        SSE
+                      </Button>
+                    </div>
+                  </div>
+
+                  {component.config.server_params?.command && (
+                    <>
+                      <InputWithTooltip
+                        label="Command"
+                        tooltip="Command to execute the MCP server"
+                      >
+                        <Input
+                          value={Array.isArray(component.config.server_params.command) 
+                            ? component.config.server_params.command.join(" ") 
+                            : (component.config.server_params.command || "")}
+                          onChange={(e) => {
+                            const commands = e.target.value.split(" ").filter(Boolean);
+                            handleConfigUpdate("server_params", {
+                              ...component.config.server_params,
+                              command: commands,
+                            });
+                          }}
+                        />
+                      </InputWithTooltip>
+                      <InputWithTooltip
+                        label="Working Directory"
+                        tooltip="Working directory for the MCP server"
+                      >
+                        <Input
+                          value={component.config.server_params.working_directory || ""}
+                          onChange={(e) => {
+                            handleConfigUpdate("server_params", {
+                              ...component.config.server_params,
+                              working_directory: e.target.value,
+                            });
+                          }}
+                        />
+                      </InputWithTooltip>
+                    </>
+                  )}
+
+                  {component.config.server_params?.base_url && (
+                    <>
+                      <InputWithTooltip
+                        label="Base URL"
+                        tooltip="Base URL for the MCP server"
+                      >
+                        <Input
+                          value={component.config.server_params.base_url}
+                          onChange={(e) => {
+                            handleConfigUpdate("server_params", {
+                              ...component.config.server_params,
+                              base_url: e.target.value,
+                            });
+                          }}
+                        />
+                      </InputWithTooltip>
+                      <InputWithTooltip
+                        label="Timeout"
+                        tooltip="Timeout in seconds for MCP server requests"
+                      >
+                        <Input
+                          type="number"
+                          value={component.config.server_params.timeout || 30.0}
+                          onChange={(e) => {
+                            handleConfigUpdate("server_params", {
+                              ...component.config.server_params,
+                              timeout: parseFloat(e.target.value),
+                            });
+                          }}
+                        />
+                      </InputWithTooltip>
+                    </>
+                  )}
+                </div>
+              </DetailGroup>
+
+              {/* Tools Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-primary">
+                    Tools
+                  </span>
+                  <Button
+                    type="dashed"
+                    size="small"
+                    onClick={handleAddTool}
+                    icon={<PlusCircle className="w-4 h-4" />}
+                  >
+                    Add Tool
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {component.config.tools?.map((tool, index) => (
+                    <div
+                      key={(tool.label || "") + index}
+                      className="bg-secondary p-1 px-2 rounded-md"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">
+                          {tool.config.name || tool.label || ""}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {onNavigate && (
+                            <Button
+                              type="text"
+                              icon={<Edit className="w-4 h-4" />}
+                              onClick={() =>
+                                onNavigate(
+                                  "tool",
+                                  tool.config.name || tool.label || "",
+                                  "tools"
+                                )
+                              }
+                            />
+                          )}
+                          <Button
+                            type="text"
+                            danger
+                            icon={<Trash2 className="w-4 h-4" />}
+                            onClick={() => handleRemoveTool(index)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!component.config.tools ||
+                    component.config.tools.length === 0) && (
+                    <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
+                      No tools configured
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  Reflect on Tool Use
+                </span>
+                <Switch
+                  checked={component.config.reflect_on_tool_use}
+                  onChange={(checked) =>
+                    handleConfigUpdate("reflect_on_tool_use", checked)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  Stream Model Client
+                </span>
+                <Switch
+                  checked={component.config.model_client_stream}
+                  onChange={(checked) =>
+                    handleConfigUpdate("model_client_stream", checked)
+                  }
+                />
+              </div>
+
+              <InputWithTooltip
+                label="Tool Call Summary Format"
+                tooltip="Format for tool call summaries"
+              >
+                <Input
+                  value={component.config.tool_call_summary_format}
+                  onChange={(e) =>
+                    handleConfigUpdate(
+                      "tool_call_summary_format",
+                      e.target.value
+                    )
+                  }
+                />
+              </InputWithTooltip>
             </>
           )}
         </div>
