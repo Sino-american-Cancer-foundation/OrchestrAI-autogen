@@ -218,3 +218,6 @@ python/samples/task_centric_memory/configs/self_teaching.yaml
 python/samples/task_centric_memory/configs/teachability.yaml
 python/samples/core_distributed-group-chat/config.yaml
 python/samples/agentchat_graphrag/settings.yaml
+python/uv.lock
+python/packages/probill/tests/pagelogs/
+python/samples/task_centric_memory_test/pagelogs/
