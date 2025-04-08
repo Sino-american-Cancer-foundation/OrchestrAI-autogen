@@ -40,7 +40,8 @@ def create_stdio_server(config: Dict[str, Any]) -> Any:
     
     return StdioServerParams(
         command=config.get("command"),
-        args=config.get("args", [])
+        args=config.get("args", []),
+        env=config.get("env", {})
     )
 
 
@@ -51,6 +52,7 @@ def export_component(c: Component)->Dict:
         _component.description = _component.config["description"]
         return _component
     except Exception as e:
+        print(f"ERROR: {e}")
         return None
 
 def load_yaml_file(file_path: str) -> Any:

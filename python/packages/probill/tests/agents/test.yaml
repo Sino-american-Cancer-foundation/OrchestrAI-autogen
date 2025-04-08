@@ -6,7 +6,7 @@ PageLogger:
 StdioServerParams:
   command: uvx
   args: ["mcp-obsidian"]
-  env:
+  env: 
     OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
 
 Obsidian:
