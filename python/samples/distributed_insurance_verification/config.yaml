@@ -1,0 +1,47 @@
+host:
+  hostname: "localhost"
+  port: 50060
+
+group_chat_manager:
+  topic_type: "group_chat"
+  max_rounds: 10
+
+web_navigation_agent:
+  topic_type: "WebNavigationAgent"
+  description: "An agent specialized in insurance portal logins and navigation"
+  system_message: "You are a web navigation specialist agent. Your primary capabilities include logging into insurance portals with provided credentials and capturing screenshots of member information pages. Use your portal-login tool when assigned a web navigation task."
+
+web_navigation_mcp:
+  sse_url: "http://localhost:8088/sse"
+  sse_headers: {}
+  sse_timeout: 120.0
+
+image_analysis_agent:
+  topic_type: "ImageAnalysisAgent"
+  description: "An agent specialized in analyzing insurance portal screenshots"
+  system_message: "You are an image analysis specialist agent. Your primary capabilities include analyzing insurance portal screenshots to determine eligibility for specific service dates and extracting information about insurance providers, eligibility status, and contact information. Use your analyze-image tool when assigned an image analysis task."
+
+image_analysis_mcp:
+  sse_url: "http://localhost:8080/sse"
+  sse_headers: {}
+  sse_timeout: 120.0
+
+healthcare_task_agent:
+  topic_type: "HealthcareTaskAgent"
+  description: "An agent specialized in making verification calls and handling EMR/EHR system tasks"
+  system_message: "You are a healthcare task specialist agent. Your primary capabilities include making outgoing calls to verify insurance eligibility with providers, retrieving results from completed verification calls, and running tasks on virtual machines to fill out information in EMR/EHR systems. Use your make-call, get-call-results, and run-vm-task tools as appropriate."
+
+healthcare_task_mcp:
+  sse_url: "http://localhost:8000/sse"
+  sse_headers: {}
+  sse_timeout: 120.0
+
+ui_agent:
+  topic_type: "ui_events"
+  artificial_stream_delay_seconds:
+    min: 0.05
+    max: 0.1
+
+client_config:
+  model: "gpt-4o"
+  # Add your OpenAI API key or configuration here

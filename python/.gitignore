@@ -174,3 +174,5 @@ tmp_code_*.py
 
 # .NET Development settings
 appsettings.Development.json
+config.yaml
+.files
