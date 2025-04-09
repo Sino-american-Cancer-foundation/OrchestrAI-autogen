@@ -9,7 +9,7 @@ from autogen_agentchat.messages import AgentEvent, ChatMessage
 from autogen_agentchat.ui import Console
 
 from autogen_ext.models.openai import OpenAIChatCompletionClient
-from autogen_ext.agents.mcp_sse_agent import McpSseAgent
+from autogen_ext.tools.mcp import SseMcpToolAdapter, SseServerParams, mcp_server_tools
 
 TEAM_GOAL = """
 Goal:
@@ -34,20 +34,24 @@ async def main():
     # Initialize the model client
     model_client = OpenAIChatCompletionClient(
         model="gpt-4o",
+        # api_key="your-api-key"
     )
     
     # 1. Planning Agent with team goal
     planning_agent = AssistantAgent(
         "PlanningAgent",
         model_client=model_client,
-        description="A planning coordinator that decomposes tasks and assigns them to specialized agents.",
-        system_message= TEAM_GOAL +"""
-        
+        description="A planning coordinator that MUST design a road map to accompalish the task and review progress after every agent action.",
+        system_message= TEAM_GOAL + """
+    
         You are a planning coordinator for a team of specialized agents.
         Your team consists of:
         - WebNavigationAgent: Specializes in web portal login and navigation
         - ImageAnalysisAgent: Specializes in analyzing insurance portal screenshots
         - HealthcareTaskAgent: Specializes in making verification calls and running EMR/EHR system tasks
+        
+        IMPORTANT: You must always provide coordination after any agent completes a task. 
+        Always acknowledge their work, analyze their results, and provide the next steps.
         
         Break down complex tasks into clear subtasks and assign each to the most appropriate agent.
         Always begin by analyzing the task and creating a structured plan.
@@ -55,56 +59,85 @@ async def main():
         
         Ensure all team actions adhere to healthcare privacy standards and proper handling of sensitive information.
         
-        Use "TERMINATE" when the overall task is complete.
+        Use "TERMINATE" when the overall task is complete, and only use it when the task is done.
         """
     )
     
-    # 2. Web Navigation Agent (McpSseAgent) - Portal Login (Server 3)
-    web_navigation_agent = McpSseAgent(
+    # 2. Web Navigation Agent - Portal Login (Server 3)
+    web_navigation_server_params = SseServerParams(
+        url="http://10.101.22.241:8088/sse",  # Using port from sub_server_3.py
+        headers={},  # Add any required headers here
+        timeout=120.0  # Adjust timeout as needed
+    )
+    
+    # Get all MCP tools from the web navigation server
+    web_navigation_tools = await mcp_server_tools(web_navigation_server_params)
+    
+    web_navigation_agent = AssistantAgent(
         "WebNavigationAgent",
         model_client=model_client,
-        sse_url="http://localhost:8088/sse",  # Using port from sub_server_3.py
+        tools=web_navigation_tools,  # Use the MCP tools directly
         description="An agent specialized in insurance portal logins and navigation.",
         system_message="""You are a web navigation specialist agent.
         Your primary capabilities include:
         - Logging into insurance portals with provided credentials
         - Capturing screenshots of member information pages
         
+        IMPORTANT: After completing your assigned task, always note that the PlanningAgent should review your work next.
+
         When assigned a web navigation task:
         1. Always confirm the portal URL before proceeding
         2. Handle login credentials securely
         3. Return screenshot IDs that can be used by the ImageAnalysisAgent
         
-        You have access to the following tool:
-        - portal-login: Log into an insurance portal and capture a screenshot of the member information
+        You have access to MCP tools for portal navigation and login.
         """
     )
     
-    # 3. Image Analysis Agent (McpSseAgent) - Image Analysis (Server 2)
-    image_analysis_agent = McpSseAgent(
+    # 3. Image Analysis Agent - Image Analysis (Server 2)
+    image_analysis_server_params = SseServerParams(
+        url="http://10.101.22.241:8080/sse",  # Using port from sub_server_2.py
+        headers={},  # Add any required headers here
+        timeout=120.0  # Adjust timeout as needed
+    )
+    
+    # Get all MCP tools from the image analysis server
+    image_analysis_tools = await mcp_server_tools(image_analysis_server_params)
+    
+    image_analysis_agent = AssistantAgent(
         "ImageAnalysisAgent", 
         model_client=model_client,
-        sse_url="http://localhost:8080/sse",  # Using port from sub_server_2.py
+        tools=image_analysis_tools,  # Use the MCP tools directly
         description="An agent specialized in analyzing insurance portal screenshots.",
         system_message="""You are an image analysis specialist agent.
         Your primary capabilities include:
         - Analyzing insurance portal screenshots to determine eligibility for specific service dates
         - Extracting information about insurance providers, eligibility status, and contact information
         
+        IMPORTANT: After completing your assigned task, always note that the PlanningAgent should review your work next.
+
         When assigned an image analysis task:
         1. Always request the screenshot ID (from WebNavigationAgent) and service date
         2. Provide detailed extracted information from the portal screenshot
         
-        You have access to the following tool:
-        - analyze-image: Analyze an insurance portal screenshot to determine eligibility for a specific service date
+        You have access to MCP tools for image analysis.
         """
     )
     
-    # 4. Healthcare Task Agent (McpSseAgent) - Call and EMR tasks (Server 1)
-    healthcare_task_agent = McpSseAgent(
+    # 4. Healthcare Task Agent - Call and EMR tasks (Server 1)
+    healthcare_task_server_params = SseServerParams(
+        url="http://10.101.22.241:8087/sse",  # Using port from sub_server_1.py
+        headers={},  # Add any required headers here
+        timeout=120.0  # Adjust timeout as needed
+    )
+    
+    # Get all MCP tools from the healthcare task server
+    healthcare_task_tools = await mcp_server_tools(healthcare_task_server_params)
+    
+    healthcare_task_agent = AssistantAgent(
         "HealthcareTaskAgent",
         model_client=model_client,
-        sse_url="http://localhost:8000/sse",  # Using port from sub_server_1.py
+        tools=healthcare_task_tools,  # Use the MCP tools directly
         description="An agent specialized in making verification calls and handling EMR/EHR system tasks.",
         system_message="""You are a healthcare task specialist agent.
         Your primary capabilities include:
@@ -112,43 +145,37 @@ async def main():
         - Retrieving results from completed verification calls
         - Running tasks on virtual machines to fill out information in EMR/EHR systems
         
+        IMPORTANT: After completing your assigned task, always note that the PlanningAgent should review your work next.
+
         When assigned a healthcare task:
         1. For call verification tasks, use make-call first, then check results with get-call-results
         2. For EMR/EHR data entry, use run-vm-task with the appropriate task name
         3. Document all actions taken for audit purposes
         
-        You have access to the following tools:
-        - make-call: Initiate an outgoing call to verify insurance eligibility
-        - get-call-results: Retrieve results from a completed verification call
-        - run-vm-task: Run a background task on a VM to fill out information in EMR/EHR systems
+        You have access to MCP tools for making calls and running EMR/EHR tasks.
         """
     )
     
     # Define selector prompt
     selector_prompt = """Select the most appropriate agent to perform the current task step.
-    
+
     {roles}
-    
+
     Current conversation context:
     {history}
-    
+
     Based on the above conversation, select one agent from {participants} to perform the next step.
-    
-    Guidelines for agent selection:
+
+    CRITICAL SELECTION RULE: If the last message was NOT from PlanningAgent, ALWAYS select PlanningAgent next.
+
+    Additional guidelines for agent selection:
     - PlanningAgent should start the task and provide coordination between other agents.
     - WebNavigationAgent should handle tasks involving insurance portal logins.
     - ImageAnalysisAgent should handle tasks involving analyzing insurance portal screenshots.
     - HealthcareTaskAgent should handle tasks involving verification calls and EMR/EHR system tasks.
-    
-    Always select the agent with the most relevant expertise for the immediate next step in the task.
+
     Select only one agent.
     """
-
-
-    def selector_func(messages: Sequence[AgentEvent | ChatMessage]) -> str | None:
-        if messages[-1].source != planning_agent.name:
-            return planning_agent.name
-        return None
     
     # Create the SelectorGroupChat
     team = SelectorGroupChat(
@@ -157,9 +184,22 @@ async def main():
         termination_condition=TextMentionTermination("TERMINATE"),
         selector_prompt=selector_prompt,
         allow_repeated_speaker=False,
-        selector_func=selector_func,
+        max_turns=10,
     )
-    
+
+    # Dump the component configuration
+    component_representation = team.dump_component()
+
+    # Convert the component model to a dictionary
+    component_dict = component_representation.model_dump()
+
+    import json
+    json_output = json.dumps(component_dict, indent=2)
+    with open("custom_team_config.json", "w") as f:
+        f.write(json_output)
+    # Print or save as needed
+    print(json_output)
+    # await asyncio.sleep(100)
     try:
         # Example task
         task = """
@@ -170,9 +210,12 @@ async def main():
         4. Patient Name: Liza Silina
         5. Service Date: 2024-01-15
         """
+        # task = "Hi, read all the MCP tool you can have and terminate the process."
         
         # Run the team and display the conversation
         await Console(team.run_stream(task=task))
+
+        
         
     except Exception as e:
         print(f"Error: {str(e)}")

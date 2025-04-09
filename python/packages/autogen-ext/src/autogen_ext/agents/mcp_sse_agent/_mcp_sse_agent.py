@@ -46,9 +46,13 @@ class McpSseAgentConfig(BaseModel):
     name: str
     model_client: Any  # Changed from Component[Any] to Any
     description: str | None = None
+    system_message: str = Field(
+        default="You are a helpful AI assistant. Solve tasks using your tools. Reply with TERMINATE when the task has been completed."
+    )
     sse_url: str
     sse_headers: Dict[str, Any] | None = None
     sse_timeout: float = 120.0
+    mcp_tools: List[Any] = Field(default_factory=list)  # List of tools available in the MCP server
     
     class Config:
         arbitrary_types_allowed = True  # Allow arbitrary types for validation
@@ -332,9 +336,11 @@ class McpSseAgent(BaseChatAgent, Component[McpSseAgentConfig]):
             name=self.name,
             model_client=self._model_client.dump_component(),
             description=self.description,
+            system_message=self.system_message,
             sse_url=self._sse_url,
             sse_headers=self._sse_headers,
             sse_timeout=self._sse_timeout,
+            mcp_tools=[tool.dump_component() for tool in self._mcp_tools],
         )
 
     @classmethod
@@ -346,7 +352,9 @@ class McpSseAgent(BaseChatAgent, Component[McpSseAgentConfig]):
             name=config.name,
             model_client=ChatCompletionClient.load_component(config.model_client),
             description=config.description or cls.DEFAULT_DESCRIPTION,
+            system_message=config.system_message,
             sse_url=config.sse_url,
             sse_headers=config.sse_headers,
             sse_timeout=config.sse_timeout,
+            mcp_tools=[tool.load_component() for tool in config.mcp_tools],
         )
