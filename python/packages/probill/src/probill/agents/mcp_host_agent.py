@@ -45,7 +45,7 @@ from autogen_agentchat.messages import (
 
 from autogen_agentchat.base import TaskResult, Response, Handoff as HandoffBase
 from autogen_agentchat.utils import content_to_str, remove_images
-from autogen_core import CancellationToken, Component, ComponentModel, FunctionCall
+from autogen_core import CancellationToken, Component, ComponentModel, FunctionCall, RoutedAgent
 from autogen_core.tools import BaseTool, FunctionTool
 
 import base64
@@ -189,7 +189,7 @@ class McpHostAgentConfig(BaseModel):
     tool_call_summary_format: str
     metadata: Dict[str, str] | None = None
 
-class McpHostAgent(BaseChatAgent, Component[McpHostAgentConfig]):
+class McpHostAgent(BaseChatAgent, Component[McpHostAgentConfig], RoutedAgent):
     """
     McpHostAgent is an agent that can connect to MCP servers and manage tools, resources, and prompts.
     It acts as a host that can understand and utilize tools provided by MCP servers through either
