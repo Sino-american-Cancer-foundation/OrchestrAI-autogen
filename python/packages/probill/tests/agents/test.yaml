@@ -8,12 +8,13 @@ StdioServerParams:
   args: ["mcp-obsidian"]
   env: 
     OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+  read_timeout_seconds: 30
 
 Obsidian:
   api_key: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
 
 client:
-  model: qwen2.5-coder:32b-instruct-q5_0
+  model: hhao/qwen2.5-coder-tools:32b
   base_url: http://10.0.40.49:11434/v1
   api_key: sk-xxx  
   model_info:
@@ -22,11 +23,11 @@ client:
     json_output: true
     family: Unknown
     structured_output: true  
-  temperature: 0.8
+  temperature: 0.0
   max_completion_tokens: 4096
   presence_penalty: 0.0
   frequency_penalty: 0.0
-  top_p: 1.0
+  top_p: 0.4
   max_retries: 65535
 
 Apprentice:

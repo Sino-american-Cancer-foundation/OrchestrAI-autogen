@@ -41,7 +41,8 @@ def create_stdio_server(config: Dict[str, Any]) -> Any:
     return StdioServerParams(
         command=config.get("command"),
         args=config.get("args", []),
-        env=config.get("env", {})
+        env=config.get("env", {}),
+        read_timeout_seconds=config.get("read_timeout_seconds", 5),
     )
 
 
