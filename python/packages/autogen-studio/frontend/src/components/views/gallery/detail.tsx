@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, Button, Tooltip, Drawer, Input } from "antd";
 import {
   Package,
@@ -12,7 +12,7 @@ import {
   Copy,
   Trash,
   Plus,
-  Server,
+  Download,
 } from "lucide-react";
 import { ComponentEditor } from "../teambuilder/builder/component-editor/component-editor";
 import { TruncatableText } from "../atoms";
@@ -189,6 +189,13 @@ export const GalleryDetail: React.FC<{
     gallery.config.metadata.description
   );
 
+  useEffect(() => {
+    setTempName(gallery.config.name);
+    setTempDescription(gallery.config.metadata.description);
+    setActiveTab("team");
+    setEditingComponent(null);
+  }, [gallery.id]);
+
   const updateGallery = (
     category: CategoryKey,
     updater: (
@@ -326,57 +333,60 @@ export const GalleryDetail: React.FC<{
     setIsEditingDetails(false);
   };
 
-  // Build tabItems with the defined order
-  const validTabs = tabOrder.filter(key => {
-    const categoryKey = getCategoryKey(key);
-    return Boolean(gallery.config.components[categoryKey]);
-  });
+  const handleDownload = () => {
+    const dataStr = JSON.stringify(gallery, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${gallery.config.name
+      .toLowerCase()
+      .replace(/\s+/g, "_")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
-  const tabItems = validTabs.map(key => {
-    const Icon = iconMap[key as keyof typeof iconMap];
-    // Ensure that the component array exists with a default empty array
-    const componentArray = gallery.config.components[getCategoryKey(key)] || [];
-    
-    return {
-      key,
-      label: (
-        <span className="flex items-center gap-2">
-          <Icon className="w-5 h-5" />
-          {key.charAt(0).toUpperCase() + key.slice(1)}s
-          <span className="text-xs font-light text-secondary">
-            ({componentArray.length})
-          </span>
+  const tabItems = Object.entries(iconMap).map(([key, Icon]) => ({
+    key,
+    label: (
+      <span className="flex items-center gap-2">
+        <Icon className="w-5 h-5" />
+        {key.charAt(0).toUpperCase() + key.slice(1)}s
+        <span className="text-xs font-light text-secondary">
+          ({gallery.config.components[`${key}s` as CategoryKey].length})
         </span>
-      ),
-      children: (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-medium">
-              {componentArray.length}{" "}
-              {componentArray.length === 1
-                ? key.charAt(0).toUpperCase() + key.slice(1)
-                : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
-            </h3>
-            <Button
-              type="primary"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => {
-                setActiveTab(key as ComponentTypes);
-                handleAdd();
-              }}
-            >
-              {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
-            </Button>
-          </div>
-          <ComponentGrid
-            items={componentArray}
-            title={key}
-            {...handlers}
-          />
+      </span>
+    ),
+    children: (
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-medium">
+            {gallery.config.components[`${key}s` as CategoryKey].length}{" "}
+            {gallery.config.components[`${key}s` as CategoryKey].length === 1
+              ? key.charAt(0).toUpperCase() + key.slice(1)
+              : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
+          </h3>
+          <Button
+            type="primary"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => {
+              setActiveTab(key as ComponentTypes);
+              handleAdd();
+            }}
+          >
+            {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
+          </Button>
         </div>
-      ),
-    };
-  });
+        <ComponentGrid
+          items={gallery.config.components[`${key}s` as CategoryKey]}
+          title={key}
+          {...handlers}
+        />
+      </div>
+    ),
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -407,25 +417,6 @@ export const GalleryDetail: React.FC<{
                   </Tooltip>
                 )}
               </div>
-              {!isEditingDetails ? (
-                <Button
-                  icon={<Edit className="w-4 h-4" />}
-                  onClick={() => setIsEditingDetails(true)}
-                  type="text"
-                  className="text-white hover:text-white/80"
-                >
-                  Edit
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button onClick={() => setIsEditingDetails(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="primary" onClick={handleDetailsSave}>
-                    Save
-                  </Button>
-                </div>
-              )}
             </div>
             {isEditingDetails ? (
               <TextArea
@@ -435,9 +426,39 @@ export const GalleryDetail: React.FC<{
                 rows={2}
               />
             ) : (
-              <p className="text-secondary w-1/2 mt-2 line-clamp-2">
-                {gallery.config.metadata.description}
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="text-secondary w-1/2 mt-2 line-clamp-2">
+                  {gallery.config.metadata.description}
+                </p>
+                <div className="flex gap-0">
+                  <Tooltip title="Edit Gallery">
+                    <Button
+                      icon={<Edit className="w-4 h-4" />}
+                      onClick={() => setIsEditingDetails(true)}
+                      type="text"
+                      className="text-white hover:text-white/80"
+                    />
+                  </Tooltip>
+                  <Tooltip title="Download Gallery">
+                    <Button
+                      icon={<Download className="w-4 h-4" />}
+                      onClick={handleDownload}
+                      type="text"
+                      className="text-white hover:text-white/80"
+                    />
+                  </Tooltip>
+                </div>
+              </div>
+            )}
+            {isEditingDetails && (
+              <div className="flex gap-2 mt-2">
+                <Button onClick={() => setIsEditingDetails(false)}>
+                  Cancel
+                </Button>
+                <Button type="primary" onClick={handleDetailsSave}>
+                  Save
+                </Button>
+              </div>
             )}
           </div>
           <div className="flex gap-2">
