@@ -11,6 +11,7 @@ import AgentPage from "./agentPage";
 import { Gallery } from "../../types/datamodel";
 import { galleryAPI } from "../gallery/api";
 import UploadTeamPage from "./uploadTeamPage";
+import UploadAgentPage from "./uploadAgentPage";
 
 const PlaceholderManager: React.FC = () => {
     const { user } = useContext(appContext);
@@ -60,6 +61,9 @@ const PlaceholderManager: React.FC = () => {
                         onSelect={setSelectedKey}
                     />
                 );
+
+            case "agentUpload":
+                return <UploadAgentPage />;
             default:
                 return null;
         }

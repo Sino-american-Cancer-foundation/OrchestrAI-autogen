@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Input, Button, List, Divider } from "antd";
 import { ChevronRight } from "lucide-react";
-
+import ReactMarkdown from "react-markdown";
 const AgentPage: React.FC = () => {
     interface ChatMessage {
-        sender: "user" | "bot" | "system" | "error" | "execution_worker";
+        sender:
+            | "user"
+            | "summary_assistant"
+            | "task_agent"
+            | "error"
+            | "bot"
+            | "system";
         text: string;
     }
 
@@ -79,11 +85,12 @@ const AgentPage: React.FC = () => {
                         return;
                     }
                     addMessage({ sender: "user", text: content });
-                } else if (data.source === "assistant") {
-                    if (data.type === "TextMessage") {
-                        addMessage({ sender: "bot", text: content });
-                    }
-                } else if (data.source === "execution_worker") {
+                } else if (data.source === "summary_assistant") {
+                    addMessage({
+                        sender: "summary_assistant",
+                        text: content,
+                    });
+                } else if (data.source === "task_agent") {
                     try {
                         const parsed = JSON.parse(content);
                         if (
@@ -97,18 +104,18 @@ const AgentPage: React.FC = () => {
                             const lastTwo = messagesArray.slice(-2);
                             const formatted = JSON.stringify(lastTwo, null, 2);
                             addMessage({
-                                sender: "execution_worker",
+                                sender: "task_agent",
                                 text: formatted,
                             });
                         } else {
                             addMessage({
-                                sender: "execution_worker",
+                                sender: "task_agent",
                                 text: JSON.stringify(parsed, null, 2),
                             });
                         }
                     } catch (err) {
                         addMessage({
-                            sender: "execution_worker",
+                            sender: "task_agent",
                             text: content,
                         });
                     }
@@ -221,7 +228,22 @@ const AgentPage: React.FC = () => {
                                                 {msg.sender.toUpperCase()}
                                             </div>
                                             {msg.sender ===
-                                            "execution_worker" ? (
+                                            "summary_assistant" ? (
+                                                <div
+                                                    className="w-72 mb-4 text-wrap"
+                                                    style={{
+                                                        backgroundColor:
+                                                            "#e6f7ff",
+                                                        color: "#000",
+                                                        padding: "8px 12px",
+                                                        borderRadius: "4px",
+                                                    }}
+                                                >
+                                                    <ReactMarkdown>
+                                                        {msg.text}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            ) : msg.sender === "task_agent" ? (
                                                 <pre className="w-72 mb-4 p-3 text-xs font-mono bg-green-100 text-green-800 border border-secondary rounded overflow-x-auto text-wrap truncate">
                                                     {msg.text}
                                                 </pre>

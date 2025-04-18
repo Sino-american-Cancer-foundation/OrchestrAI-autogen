@@ -1,5 +1,11 @@
 import { Menu } from "antd";
-import { ListIcon, MessageCircleIcon, Upload, UploadIcon } from "lucide-react";
+import {
+    ListIcon,
+    MessageCircleIcon,
+    Upload,
+    UploadIcon,
+    ConstructionIcon,
+} from "lucide-react";
 import React from "react";
 
 interface ProviderSidebarProps {
@@ -32,6 +38,12 @@ const ProviderSidebar: React.FC<ProviderSidebarProps> = ({
             key: "chatbot",
             icon: <MessageCircleIcon />,
             label: "Agent",
+        },
+
+        {
+            key: "agentUpload",
+            icon: <ConstructionIcon />,
+            label: "Agent Upload",
         },
     ];
 
