@@ -34,24 +34,24 @@ class AppConfig(BaseModel):
         extra = "allow"  # Allow extra fields not defined in the model
 
     @classmethod
-    def load(cls, file_path: str = os.path.join(os.path.dirname(__file__), "config.yaml")) -> "AppConfig":
+    def load(cls, file_path: str = os.path.join(os.path.dirname(__file__), "./config.yaml")) -> "AppConfig":
         with open(file_path, "r") as file:
             config_data = yaml.safe_load(file)
             if "app_config" not in config_data:
                 raise ValueError("Config file must contain 'app_config' section")
-            
-            config_section = config_data["app_config"]
-            
-            cls.model_client = config_section["client_config"]
-            del config_section["client_config"]
 
-            cls.host = HostConfig(**config_section["host"])
-            del config_section["host"]
+            cls.model_client = config_data["client_config"]
 
-            cls.group_chat_manager = GroupChatManagerConfig(**config_section["group_chat_manager"])
-            del config_section["group_chat_manager"]
-            cls.ui_agent = UIAgentConfig(**config_section["ui_agent"])
-            del config_section["ui_agent"]
+            app_config = config_data["app_config"]
+            print(f"Config section: {app_config}", flush=True)
+
+            cls.host = HostConfig(**app_config["host"])
+            del app_config["host"]
+
+            cls.group_chat_manager = GroupChatManagerConfig(**app_config["group_chat_manager"])
+            del app_config["group_chat_manager"]
+            cls.ui_agent = UIAgentConfig(**app_config["ui_agent"])
+            del app_config["ui_agent"]
             # This was required as it couldn't automatically instantiate AzureOpenAIClientConfiguration
             aad_params = {}
             if len(cls.model_client.get("api_key", "")) == 0:
@@ -61,7 +61,8 @@ class AppConfig(BaseModel):
             cls.client_config = AzureOpenAIClientConfiguration(**cls.model_client, **aad_params)  # type: ignore[typeddict-item]
             # Remove the client_config from the config_section
             # Create a new instance with the config data
-            return cls.model_validate(config_section)
+
+            return cls
 
 
 

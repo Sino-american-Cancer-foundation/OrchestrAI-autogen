@@ -5,12 +5,25 @@ from messages import GroupChatMessage, GroupChatReply, ManagerSelectionRequest, 
 class GroupChatParticipantAgent(RoutedAgent):
     """Agent that participates in group chat discussions"""
     
-    def __init__(self, name: str, model_client, specialty: str):
-        super().__init__(f"{name} - {specialty} specialist")
-        self.model_client = model_client
-        self.name = name
-        self.specialty = specialty
+    name: str
+    specialty: str
+    model_client: any
+    conversation_history: list
+    
+    def __init__(self, description: str = ""):
+        super().__init__(description)
         self.conversation_history = []
+    
+    @classmethod
+    def create(cls, name: str, model_client, specialty: str):
+        """Factory method to create a participant agent"""
+        def factory():
+            agent = cls(f"{name} - {specialty} specialist")
+            agent.name = name
+            agent.specialty = specialty
+            agent.model_client = model_client
+            return agent
+        return factory
         
     @message_handler
     async def handle_group_message(self, message: GroupChatMessage, ctx: MessageContext) -> None:
@@ -35,12 +48,25 @@ class GroupChatParticipantAgent(RoutedAgent):
 class GroupChatManagerAgent(RoutedAgent):
     """Agent that manages the flow of conversation in group chat"""
     
-    def __init__(self, model_client, participants: list[str]):
-        super().__init__("Group Chat Manager")
-        self.model_client = model_client
-        self.participants = participants
+    model_client: any
+    participants: list[str]
+    conversation_history: list
+    turn_count: int
+    
+    def __init__(self, description: str = ""):
+        super().__init__(description)
         self.conversation_history = []
         self.turn_count = 0
+    
+    @classmethod
+    def create(cls, model_client, participants: list[str]):
+        """Factory method to create a manager agent"""
+        def factory():
+            agent = cls("Group Chat Manager")
+            agent.model_client = model_client
+            agent.participants = participants
+            return agent
+        return factory
         
     @message_handler
     async def handle_group_message(self, message: GroupChatMessage, ctx: MessageContext) -> None:
