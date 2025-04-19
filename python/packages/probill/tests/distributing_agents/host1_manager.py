@@ -13,7 +13,7 @@ async def main():
 
     # Load configuration
     config = AppConfig.load("./config.yaml")
-
+    print("Loaded configuration:", config.host.address, flush=True)
     # Connect to the central host server
     runtime = GrpcWorkerAgentRuntime(host_address="localhost:50051")
     
