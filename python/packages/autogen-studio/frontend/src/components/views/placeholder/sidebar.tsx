@@ -29,21 +29,21 @@ const ProviderSidebar: React.FC<ProviderSidebarProps> = ({
         //     label: "Current Contracts",
         // },
 
-        {
-            key: "teamUpload",
-            icon: <UploadIcon />,
-            label: "Team Upload",
-        },
-        {
-            key: "chatbot",
-            icon: <MessageCircleIcon />,
-            label: "Agent",
-        },
+        // {
+        //     key: "teamUpload",
+        //     icon: <UploadIcon />,
+        //     label: "Team Upload",
+        // },
 
         {
             key: "agentUpload",
             icon: <ConstructionIcon />,
             label: "Agent Upload",
+        },
+        {
+            key: "chatbot",
+            icon: <MessageCircleIcon />,
+            label: "Agent",
         },
     ];
 

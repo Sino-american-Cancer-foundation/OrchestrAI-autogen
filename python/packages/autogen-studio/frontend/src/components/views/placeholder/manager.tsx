@@ -43,7 +43,7 @@ const PlaceholderManager: React.FC = () => {
         }
     };
 
-    const [selectedKey, setSelectedKey] = useState<string>("teamUpload");
+    const [selectedKey, setSelectedKey] = useState<string>("agentUpload");
 
     const renderContent = () => {
         switch (selectedKey) {

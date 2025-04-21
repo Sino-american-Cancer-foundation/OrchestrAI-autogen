@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Divider, Input, List, Upload, notification } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
-
+import { CheckCircle, Loader2, Radio, XCircle } from "lucide-react";
+import { Button as HeadlessButton } from "@headlessui/react";
 interface ChatMessage {
     source: "System" | "User" | "Deployer" | "Executor";
     text: string;
@@ -12,8 +13,67 @@ const UploadAgentPage: React.FC = () => {
     const [inputValue, setInputValue] = useState<string>("");
     const [inputDisabled, setInputDisabled] = useState<boolean>(false);
     const [teamFile, setTeamFile] = useState<UploadFile | null>(null);
-    const wsRef = useRef<WebSocket | null>(null);
     const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+    const [wsStatus, setWsStatus] = useState<
+        "connecting" | "connected" | "disconnected"
+    >("disconnected");
+    const wsRef = useRef<WebSocket | null>(null);
+
+    const connectWebSocket = () => {
+        const BASE_URL = "ws://localhost:9001/ws";
+
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.close();
+        }
+
+        setWsStatus("connecting");
+        const ws = new WebSocket(BASE_URL);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+            if (wsRef.current === ws) {
+                console.log(`Connected to WebSocket at: ${BASE_URL}`);
+                setWsStatus("connected");
+            }
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const { text, source } = (
+                    typeof event.data === "string"
+                        ? JSON.parse(event.data)
+                        : event.data
+                ) as ChatMessage;
+
+                setMessages((prevMessages) => {
+                    if (
+                        source === "User" &&
+                        prevMessages.length > 0 &&
+                        prevMessages[prevMessages.length - 1].source ===
+                            "User" &&
+                        prevMessages[prevMessages.length - 1].text === text
+                    ) {
+                        return prevMessages;
+                    }
+                    return [...prevMessages, { source, text }];
+                });
+            } catch (err) {
+                console.error("Error parsing message:", err);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket error:", error);
+        };
+
+        ws.onclose = () => {
+            if (wsRef.current === ws) {
+                setWsStatus("disconnected");
+                console.log("WebSocket connection closed");
+            }
+        };
+    };
 
     const getMessageStyle = (source: string): React.CSSProperties => {
         switch (source) {
@@ -62,49 +122,10 @@ const UploadAgentPage: React.FC = () => {
     };
 
     useEffect(() => {
-        const BASE_URL = "ws://localhost:9001/ws";
-        const ws = new WebSocket(BASE_URL);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-            console.log(`Connected to WebSocket at: ${BASE_URL}`);
-        };
-
-        ws.onmessage = (event) => {
-            try {
-                const { text, source } = (
-                    typeof event.data === "string"
-                        ? JSON.parse(event.data)
-                        : event.data
-                ) as ChatMessage;
-
-                setMessages((prevMessages) => {
-                    if (
-                        source === "User" &&
-                        prevMessages.length > 0 &&
-                        prevMessages[prevMessages.length - 1].source ===
-                            "User" &&
-                        prevMessages[prevMessages.length - 1].text === text
-                    ) {
-                        return prevMessages;
-                    }
-                    return [...prevMessages, { source, text }];
-                });
-            } catch (err) {
-                console.error("Error parsing message:", err);
-            }
-        };
-
-        ws.onerror = (error) => {
-            console.error("WebSocket error:", error);
-        };
-
-        ws.onclose = () => {
-            console.log("WebSocket connection closed");
-        };
+        connectWebSocket();
 
         return () => {
-            ws.close();
+            wsRef.current?.close();
             console.log("WebSocket connection closed from client side");
         };
     }, []);
@@ -184,7 +205,7 @@ const UploadAgentPage: React.FC = () => {
         }
 
         const messageToSend = teamId
-            ? `${userMsg}. team json id: ${teamId}`
+            ? `${userMsg}, team json id: ${teamId}`
             : userMsg;
 
         // The distributed runtime actually returns the same message back to us lol, so no need to repeat the same message
@@ -200,7 +221,65 @@ const UploadAgentPage: React.FC = () => {
 
     return (
         <>
-            <div>Chatbot to Upload an Agentic Process as a Smart Contract</div>
+            <div className="flex flex-row items-center justify-between p-2">
+                <div className="flex flex-col">
+                    <div className="text-primary">
+                        Chatbot to Upload an Agentic Process as a Smart Contract
+                    </div>
+                    <div className="text-secondary text-xs uppercase">
+                        Requires: api-name, function-name(s), cost(s), and team
+                        json.
+                    </div>
+                </div>
+
+                <button
+                    onClick={connectWebSocket}
+                    disabled={wsStatus === "connected"}
+                    className={`
+                        inline-flex items-center justify-center
+                        px-4 py-2 rounded-sm
+                        rounded-lg text-sm border
+                        focus:outline-none focus:ring-2 focus:ring-offset-2
+                        disabled:cursor-not-allowed
+                        transition-colors duration-200 hover:text-white hover
+
+                        ${
+                            wsStatus === "connected"
+                                ? "border-green-500 text-green-500 hover:text-green-500"
+                                : ""
+                        }
+                        ${
+                            wsStatus === "connecting"
+                                ? "border-yellow-500 text-yellow-500 hover:bg-yellow-600 focus:ring-yellow-300"
+                                : ""
+                        }
+                        ${
+                            wsStatus === "disconnected"
+                                ? "border-red-500 text-red-500 hover:bg-red-600 focus:ring-red-300"
+                                : ""
+                        }
+                    `}
+                >
+                    <span
+                        className={`
+      inline-block w-2 h-2 rounded-full mr-2
+      ${
+          wsStatus === "connected"
+              ? "bg-green-500"
+              : wsStatus === "connecting"
+              ? "bg-yellow-500 animate-pulse"
+              : "bg-red-500"
+      }
+    `}
+                    />
+
+                    {wsStatus === "connected"
+                        ? "Connected"
+                        : wsStatus === "connecting"
+                        ? "Connecting..."
+                        : "Reconnect..."}
+                </button>
+            </div>
             <div className="px-2 flex h-full">
                 <div
                     style={{ width: 1200, maxWidth: "100%" }}
