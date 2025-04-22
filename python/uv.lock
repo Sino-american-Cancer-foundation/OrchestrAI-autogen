@@ -745,7 +745,6 @@ requires-dist = [
 
 [[package]]
 name = "autogenstudio"
-version = "0.4.2"
 source = { editable = "packages/autogen-studio" }
 dependencies = [
     { name = "aiofiles" },
