@@ -78,10 +78,15 @@ class GroupChatManagerAgent(RoutedAgent):
     """Agent that manages the flow of conversation in group chat"""
     
     model_client: ChatCompletionClient
+    model_client: ChatCompletionClient
     participants: list[str]
+    participant_descriptions: list[str]
     participant_descriptions: list[str]
     conversation_history: list
     turn_count: int
+    previous_participant: str | None
+
+    def __init__(self, description: str = "", participant_descriptions: list[str] = None):
     previous_participant: str | None
 
     def __init__(self, description: str = "", participant_descriptions: list[str] = None):
@@ -91,10 +96,15 @@ class GroupChatManagerAgent(RoutedAgent):
         self.participant_descriptions = participant_descriptions or []
         self.previous_participant = None
 
+        self.participant_descriptions = participant_descriptions or []
+        self.previous_participant = None
+
     @classmethod
+    def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
     def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
         """Factory method to create a manager agent"""
         def factory():
+            agent = cls("Group Chat Manager", participant_descriptions)
             agent = cls("Group Chat Manager", participant_descriptions)
             agent.model_client = model_client
             agent.participants = participants
