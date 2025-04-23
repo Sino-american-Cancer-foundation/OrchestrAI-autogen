@@ -1,8 +1,9 @@
 # chat_agents.py
 from autogen_core import RoutedAgent, MessageContext, AgentId, message_handler
-from autogen_core.models import ChatCompletionClient, LLMMessage, SystemMessage
+from autogen_core.models import ChatCompletionClient, UserMessage, SystemMessage
 from autogen_agentchat.messages import TextMessage
 from messages import GroupChatMessage, GroupChatReply, ManagerSelectionRequest, ManagerSelectionResponse
+import logging
 
 class GroupChatParticipantAgent(RoutedAgent):
     """Agent that participates in group chat discussions"""
@@ -11,6 +12,7 @@ class GroupChatParticipantAgent(RoutedAgent):
     specialty: str
     model_client: any
     conversation_history: list
+    model_client: ChatCompletionClient
     
     def __init__(self, description: str = ""):
         super().__init__(description)
@@ -30,29 +32,50 @@ class GroupChatParticipantAgent(RoutedAgent):
     @message_handler
     async def handle_group_message(self, message: GroupChatMessage, ctx: MessageContext) -> None:
         # Record the incoming message
-        self.conversation_history.append(message)
+        # Ensure message has sender_name attribute before appending
+        if hasattr(message, 'sender_name'):
+            self.conversation_history.append({"sender": message.sender_name, "content": message.content})
+        else:
+            # Handle cases where sender_name might be missing, e.g., initial message
+            # Or adjust message structure if sender_name is named differently
+            self.conversation_history.append({"sender": "Unknown", "content": message.content})
+
+
         # Only respond if we're mentioned or it's our turn (determined by manager)
-        if self.name.lower() in message.content.lower() or message.source == "GroupChatManager":
-            # Use structured messages if supported
-            from autogen_core.models import SystemMessage, UserMessage
+        # Check if message.sender_name exists before comparing
+        sender_name = getattr(message, 'sender_name', 'Unknown')
+        if self.name.lower() in message.content.lower() or sender_name == "GroupChatManager":
+            # Generate a response using the model
             system_msg = SystemMessage(content=f"You are {self.name}, an expert in {self.specialty}. Answer questions related to your expertise.")
-            # Use last 5 messages for context
-            history_msgs = [UserMessage(content=f"{msg.source}: {msg.content}") for msg in self.conversation_history[-5:]]
-            prompt_msgs = [system_msg] + history_msgs
-            # Call the model
-            if hasattr(self.model_client, "create"):
-                completion = await self.model_client.create(prompt_msgs)
-                response = completion.content if hasattr(completion, "content") else str(completion)
-            else:
-                # Fallback to old method
-                prompt = f"Conversation history:\n" + "\n".join([f"{msg.source}: {msg.content}" for msg in self.conversation_history[-5:]])
-                prompt += f"\nRespond as {self.name}:"
-                response = await self.model_client.generate(system_msg.content, prompt)
+
+            # Construct history using appropriate LLMMessage types
+            history_msgs = []
+            for msg_data in self.conversation_history[-5:]:
+                # Assuming UserMessage for non-agent messages and AssistantMessage for agent messages might be needed
+                # Adjust based on actual message sources and desired LLM interaction pattern
+                history_msgs.append(UserMessage(content=msg_data["content"], source=msg_data["sender"]))
+
+            # Combine system message and history for the prompt
+            llm_messages = [system_msg] + history_msgs
+            # Log that this agent is starting to generate answer
+            logging.info(f"Agent {self.name} starting to generate answer")
+            # Add the current request/instruction as the last UserMessage if appropriate
+            # This depends on how the flow is designed. If the incoming message IS the prompt, it's already in history.
+            # If a specific response instruction is needed, add it here.
+            # Example: llm_messages.append(UserMessage(content=f"Respond as {self.name}:", source="SystemInstruction"))
+
+
+            # Generate response using the model client's create method which expects a list of LLMMessages
+            response_completion = await self.model_client.create(messages=llm_messages)
+            response_content = response_completion.content if hasattr(response_completion, 'content') else str(response_completion) # Adapt based on actual response structure
+
+
             # Publish the response back to the group chat
             await self.publish_message(
-                GroupChatMessage(content=response, source=self.name), 
+                GroupChatMessage(content=response_content, source=self.name),
                 ctx.topic_id
             )
+
 
 class GroupChatManagerAgent(RoutedAgent):
     """Agent that manages the flow of conversation in group chat"""
@@ -98,7 +121,7 @@ class GroupChatManagerAgent(RoutedAgent):
         participants_left = [topic for topic in self.participants if topic != self.previous_participant]
         participants_str = str(participants_left)
 
-        selector_prompt = f"""You are in a role play game. The following roles are available:\n{roles}.\nRead the following conversation. Then select the next role from {participants_str} to play. Only return the role.\n\n{history}\n\nRead the above conversation. Then select the next role from {participants_str} to play. if you think it's enough talking (for example they have talked for 20 rounds), return 'FINISH'.\n"""
+        selector_prompt = f"""You are in a role play game. The following roles are available:\n{roles}.\nRead the following conversation. Then select the next role from {participants_str} to play. Only return the role.\n\n{history}\n\nRead the above conversation. Then select the next role from {participants_str} to play. if you think it's enough talking, let writer be the last speaker to generate the final report. Once the final report generated, return 'FINISH'.\n"""
         system_message = SystemMessage(content=selector_prompt)
         completion = await self.model_client.create([system_message])
         next_role = completion.content.strip() if hasattr(completion, 'content') else completion["content"].strip()
