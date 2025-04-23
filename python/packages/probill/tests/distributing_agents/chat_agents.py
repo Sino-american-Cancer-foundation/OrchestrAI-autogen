@@ -1,6 +1,6 @@
 # chat_agents.py
 from autogen_core import RoutedAgent, MessageContext, AgentId, message_handler
-from autogen_core.models import ChatCompletionClient, UserMessage, SystemMessage
+from autogen_core.models import UserMessage, SystemMessage, ChatCompletionClient # Import necessary message types
 from autogen_agentchat.messages import TextMessage
 from messages import GroupChatMessage, GroupChatReply, ManagerSelectionRequest, ManagerSelectionResponse
 import logging
@@ -12,6 +12,7 @@ class GroupChatParticipantAgent(RoutedAgent):
     specialty: str
     model_client: any
     conversation_history: list
+    model_client: ChatCompletionClient
     model_client: ChatCompletionClient
     
     def __init__(self, description: str = ""):
@@ -81,10 +82,15 @@ class GroupChatManagerAgent(RoutedAgent):
     """Agent that manages the flow of conversation in group chat"""
     
     model_client: ChatCompletionClient
+    model_client: ChatCompletionClient
     participants: list[str]
+    participant_descriptions: list[str]
     participant_descriptions: list[str]
     conversation_history: list
     turn_count: int
+    previous_participant: str | None
+
+    def __init__(self, description: str = "", participant_descriptions: list[str] = None):
     previous_participant: str | None
 
     def __init__(self, description: str = "", participant_descriptions: list[str] = None):
@@ -94,10 +100,15 @@ class GroupChatManagerAgent(RoutedAgent):
         self.participant_descriptions = participant_descriptions or []
         self.previous_participant = None
 
+        self.participant_descriptions = participant_descriptions or []
+        self.previous_participant = None
+
     @classmethod
+    def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
     def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
         """Factory method to create a manager agent"""
         def factory():
+            agent = cls("Group Chat Manager", participant_descriptions)
             agent = cls("Group Chat Manager", participant_descriptions)
             agent.model_client = model_client
             agent.participants = participants
@@ -106,48 +117,55 @@ class GroupChatManagerAgent(RoutedAgent):
         
     @message_handler
     async def handle_group_message(self, message: GroupChatMessage, ctx: MessageContext) -> None:
-        self.conversation_history.append(message)
+        # Record the message
+        # Ensure message has sender_name attribute before appending
+        if hasattr(message, 'sender_name'):
+            self.conversation_history.append({"sender": message.sender_name, "content": message.content})
+        else:
+            self.conversation_history.append({"sender": "Unknown", "content": message.content})
         self.turn_count += 1
 
-        # Format message history
-        messages = [f"{msg.source}: {msg.content}" for msg in self.conversation_history]
-        history = "\n".join(messages)
-        # Format roles
-        roles = "\n".join(
-            f"{topic}: {desc}".strip()
-            for topic, desc in zip(self.participants, self.participant_descriptions)
-            if topic != self.previous_participant
-        )
-        participants_left = [topic for topic in self.participants if topic != self.previous_participant]
-        participants_str = str(participants_left)
+        # Use the model to determine who should speak next
+        if self.turn_count < 20:  # Limit conversation length
+            system_msg = SystemMessage(content="You are a group chat manager. Select the next person who should speak. Let the Writer speak last.")
+            participant_list = ", ".join(self.participants)
 
-        selector_prompt = f"""You are in a role play game. The following roles are available:\n{roles}.\nRead the following conversation. Then select the next role from {participants_str} to play. Only return the role.\n\n{history}\n\nRead the above conversation. Then select the next role from {participants_str} to play. if you think it's enough talking, let writer be the last speaker to generate the final report. Once the final report generated, return 'FINISH'.\n"""
-        system_message = SystemMessage(content=selector_prompt)
-        completion = await self.model_client.create([system_message])
-        next_role = completion.content.strip() if hasattr(completion, 'content') else completion["content"].strip()
+            # Construct history using appropriate LLMMessage types
+            history_msgs = []
+            for msg_data in self.conversation_history[-5:]:
+                history_msgs.append(UserMessage(content=msg_data["content"], source=msg_data["sender"]))
 
-        if next_role.upper() == "FINISH":
-            finish_msg = "I think it's enough iterations on the story! Thanks for collaborating!"
+            # Add the instruction to select the next speaker
+            selection_prompt = UserMessage(content=f"Based on the conversation, who should speak next? Choose from: {participant_list}", source="SystemInstruction")
+
+            llm_messages = [system_msg] + history_msgs + [selection_prompt]
+
+            # Generate response using the model client's create method
+            next_speaker_completion = await self.model_client.create(messages=llm_messages)
+            next_speaker_text = next_speaker_completion.content if hasattr(next_speaker_completion, 'content') else str(next_speaker_completion)
+
+
+            # Clean up the response to get just the name
+            next_speaker = "Unknown" # Default if no participant found
+            for participant in self.participants:
+                if participant.lower() in next_speaker_text.lower():
+                    next_speaker = participant
+                    break
+
+            # Direct the conversation to the next speaker
             await self.publish_message(
-                GroupChatMessage(content=finish_msg, source="GroupChatManager"),
+                GroupChatMessage(
+                    content=f"I'd like to hear from {next_speaker} on this topic.",
+                    sender_name="GroupChatManager"
+                ),
                 ctx.topic_id
             )
-            return
-
-        selected_participant = None
-        for topic in self.participants:
-            if topic.lower() in next_role.lower():
-                selected_participant = topic
-                self.previous_participant = selected_participant
-                break
-        if not selected_participant:
-            # fallback: pick the first
-            selected_participant = self.participants[0]
-            self.previous_participant = selected_participant
-        await self.publish_message(
-            GroupChatMessage(
-                content=f"I'd like to hear from {selected_participant} on this topic.",
-                source="GroupChatManager"
-            ),
-            ctx.topic_id
-        )
+        else:
+            # End the conversation after maximum turns
+            await self.publish_message(
+                GroupChatMessage(
+                    content="Thank you all for the discussion. Let's conclude here.",
+                    sender_name="GroupChatManager"
+                ),
+                ctx.topic_id
+            )
