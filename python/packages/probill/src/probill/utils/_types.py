@@ -1,12 +1,11 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Any
 
 from autogen_core.models import (
     LLMMessage,
 )
 from autogen_ext.models.openai.config import AzureOpenAIClientConfiguration
 from pydantic import BaseModel
-from probill.agents import McpHostAgentConfig
 
 class GroupChatMessage(BaseModel):
     """Implements a sample message sent by an LLM agent"""

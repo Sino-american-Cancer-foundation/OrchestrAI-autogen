@@ -112,20 +112,25 @@ def create_stdio_server(config: Dict[str, Any]) -> Any:
     """
     from autogen_ext.tools.mcp import StdioServerParams
     
+    # Make sure type is set for Pydantic validation
+    config_copy = config.copy()
+    if "type" not in config_copy:
+        config_copy["type"] = "StdioServerParams"
+    
     return StdioServerParams(
-        command=config.get("command"),
-        args=config.get("args", []),
-        env=config.get("env", {}),
-        read_timeout_seconds=config.get("read_timeout_seconds", 5),
+        command=config_copy.get("command"),
+        args=config_copy.get("args", []),
+        env=config_copy.get("env", {}),
+        read_timeout_seconds=config_copy.get("read_timeout_seconds", 5),
     )
 
 
 def export_component(c: Component)->Dict:
     try:
         _component = c.dump_component()
-        _component.label = _component.config["name"]
-        _component.description = _component.config["description"]
-        return _component
+        _component.label = _component.config.get("name", "unknown name")
+        _component.description = _component.config.get("description", "unknown description")
+        return _component.model_dump_json(indent=2)
     except Exception as e:
         print(f"ERROR: {e}")
         return None
