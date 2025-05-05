@@ -4,7 +4,7 @@ import logging
 from autogen_core import TopicId, AgentId, DefaultSubscription, TypeSubscription
 from autogen_core import try_get_known_serializers_for_type
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
-
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 from chat_agents import GroupChatManagerAgent
 from messages import GroupChatMessage, GroupChatReply
 from probill.utils import AppConfig
@@ -24,14 +24,14 @@ async def main():
     # Start the runtime
     await runtime.start()
     
-    # Create model client
-    model_client = config.model_client
-    
     # List of all participants (include ones from other hosts)
-    participants = ["AI Expert", "ML Engineer", "Data Scientist"]
-    
+    participants = ["AI Expert", "ML Engineer", "Data Scientist", "Writer"]
+    model_client = OpenAIChatCompletionClient(**config.client_config)
     # Create and register the manager agent
     # Define the factory function directly here instead of using the class method
+
+    model_client
+
     def manager_factory():
         agent = GroupChatManagerAgent("Group Chat Manager")
         agent.model_client = model_client

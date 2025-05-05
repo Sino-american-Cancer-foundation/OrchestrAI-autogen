@@ -1,30 +1,28 @@
 
-You are an expert detective with a deep understanding of complex investigations and the ability to solve intricate puzzles. You are adept at helping people unravel mysteries involving high-stakes situations, such as stolen artifacts and royal scandals, by employing keen observation skills and strategic thinking.
+<think>
+Okay, let's see. The user wants a 3-4 sentence description of an expert who can help with the task mentioned. The task is to identify relations and structure of a community of interest. The sample text provided is from Sherlock Holmes stories, so the domain is detective fiction.
+
+First, I need to figure out what kind of expert would be best for analyzing community structures. Maybe a social network analyst or a sociologist? But since the example is from literature, perhaps a literary analyst or a data scientist who works with social networks.
+
+The user's example uses a format like "You are an expert {role}. You are skilled at {skills}. You are adept at helping with {task}." So I need to follow that structure.
+
+The task is about identifying relations and structure within a community. The sample text is from a story where Holmes deduces relationships and structures. So the expert should have skills in analyzing relationships, maybe using data analysis or social network analysis. They should be good at mapping connections and understanding community dynamics.
+
+I should mention skills like data analysis, social network mapping, and pattern recognition. The specific task here is analyzing community structures, so the expert should be adept at that. Maybe call them a "Social Network Analyst" or "Community Structure Expert."
+
+Putting it all together: The expert role would be something like "Social Network Analyst and Community Structure Expert." Their skills would include data analysis, mapping relationships, and identifying patterns. They help with understanding community dynamics and connections. That fits the task and the example given.
+</think>
+
+You are an expert **Social Network Analyst and Community Structure Expert**. You are skilled at **mapping relationships, identifying hierarchical patterns, and analyzing interconnected systems**. You are adept at helping people with **uncovering hidden connections, defining group dynamics, and structuring complex communities** through data-driven insights and relational modeling. Your expertise bridges sociology, data science, and systems theory to decode intricate networks.
 Using your expertise, you're asked to generate a comprehensive summary of the data provided below.
 Given one or two entities, and a list of descriptions, all related to the same entity or group of entities.
-Please concatenate all of these into a single, concise description in The text you've provided is a passage from Sir Arthur Conan Doyle's famous Sherlock Holmes series. The language used is characteristic of late 19th-century English literature, marked by formal and somewhat archaic phrasing. Here are some key features:
+Please concatenate all of these into a single, concise description in <think>
+Okay, let me try to figure out what the user is asking here. They provided a long text that seems to be a mix of different stories or excerpts. The first part looks like it's from "The Adventure of the Bruce-Partington Plans" by Arthur Conan Doyle, involving Sherlock Holmes and a missing photograph. The second part is from "The Adventure of the Greek Interpreter," where Holmes deals with a blackmail situation involving a photograph. The user then ends with "Language:" which might be a prompt for me to identify the language of the text.
 
-1. **Formal Tone**: The writing maintains a high level of formality, typical of the period in which it was written.
+Wait, the user might be asking for the language of the provided text. Let me check. The text is in English, as it's written in English. But maybe they want confirmation. Alternatively, they might want me to analyze the text, summarize it, or identify the stories. However, the last line says "Language:" which is a common prompt for language detection. Since the text is in English, the answer would be English. But I need to make sure there's no other language mixed in. Let me scan through again. The text includes dialogue in English, proper nouns like "Briony Lodge," "St. John's Wood," and references to Sherlock Holmes stories. There's no indication of another language. So the language is English. The user might have pasted the text and wants to confirm the language. Alternatively, they might have intended to ask something else but forgot to specify. But given the structure, the most straightforward answer is to state the language as English.
+</think>
 
-2. **Complex Sentences**: The sentences are often long and complex, with multiple clauses that add depth to the narrative.
-
-3. **Vocabulary**: The vocabulary is rich and varied, including some words that might be considered archaic today (e.g., "august," "personage").
-
-4. **Descriptive Language**: There's a strong emphasis on descriptive language, especially in setting the scene or describing characters.
-
-5. **Dialogue Tags**: Dialogue tags are used sparingly and often with additional descriptors to convey tone and emotion (e.g., "said Holmes dryly").
-
-6. **Punctuation**: The punctuation is meticulous, including the use of commas, semicolons, and dashes to clarify meaning and structure.
-
-7. **Characterization**: Characters are described in detail, both physically and through their actions and speech.
-
-8. **Setting Details**: The setting is vividly depicted, often with historical or cultural references that were relevant at the time of writing.
-
-9. **Mystery Elements**: The text includes elements typical of mystery stories, such as a mysterious visitor, hints of intrigue, and a sense of impending revelation.
-
-10. **Historical Context**: References to specific events and places (e.g., "the Trepoff murder," "Trincomalee") provide context that would have been familiar to the original readers but may require additional explanation for modern audiences.
-
-This style of writing is designed to engage the reader with a detailed and immersive narrative, typical of the detective genre in its early days.. Make sure to include information collected from all the descriptions.
+The text provided is written in **English**. It appears to be a compilation of excerpts from **Arthur Conan Doyle's Sherlock Holmes stories**, specifically referencing "The Adventure of the Bruce-Partington Plans" and "The Adventure of the Greek Interpreter." The language is standard English, with dialogue, narrative, and literary elements typical of Doyle's works.. Make sure to include information collected from all the descriptions.
 If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
 Make sure it is written in third person, and include the entity names so we have the full context.
 

@@ -1,8 +1,15 @@
 # Use Open AI with key
 provider: autogen_ext.models.openai.OpenAIChatCompletionClient
 config:
-  model: gpt-4o
-  api_key: REPLACE_WITH_YOUR_API_KEY
+  model: qwen3:32b-fp16
+  base_url: http://10.0.40.100:11434/v1
+  api_key: sk-xxx  
+  model_info:
+    vision: false
+    function_calling: true
+    json_output: true
+    family: r1
+    structured_output: true    
 # Use Azure Open AI with key
 # provider: autogen_ext.models.openai.AzureOpenAIChatCompletionClient
 # config:

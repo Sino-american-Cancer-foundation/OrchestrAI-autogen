@@ -4,8 +4,8 @@ PageLogger:
   path: ./pagelogs/teachability
 
 StdioServerParams:
-  command: uvx
-  args: ["mcp-obsidian"]
+  command: mcp-nccn
+  args: []
   env: 
     OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
   read_timeout_seconds: 30
@@ -13,22 +13,58 @@ StdioServerParams:
 Obsidian:
   api_key: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
 
+McpTools:
+  mcp-obsidian:
+    type: StdioServerParams
+    params:
+      command: uvx
+      args: ["mcp-obsidian"]
+      env: 
+        OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+      read_timeout_seconds: 30
+  mcp-nccn-evaluation:
+    type: StdioServerParams
+    params:
+      command: mcp-nccn
+      args: []
+      env:
+      read_timeout_seconds: 30
+
 client:
-  model: hhao/qwen2.5-coder-tools:32b
+  model: qwen3:32b
   base_url: http://10.0.40.49:11434/v1
   api_key: sk-xxx  
   model_info:
     vision: false
     function_calling: true
     json_output: true
-    family: Unknown
+    family: r1
     structured_output: true  
+    model_client_stream: true
   temperature: 0.0
-  max_completion_tokens: 4096
+  max_completion_tokens: 65536
   presence_penalty: 0.0
   frequency_penalty: 0.0
   top_p: 0.4
   max_retries: 65535
+  model_stream: true
+
+# client:
+#   model: hhao/qwen2.5-coder-tools:32b
+#   base_url: http://10.0.40.49:11434/v1
+#   api_key: sk-xxx  
+#   model_info:
+#     vision: false
+#     function_calling: true
+#     json_output: true
+#     family: Unknown
+#     structured_output: true  
+#   temperature: 0.0
+#   max_completion_tokens: 4096
+#   presence_penalty: 0.0
+#   frequency_penalty: 0.0
+#   top_p: 0.4
+#   max_retries: 65535
 
 Apprentice:
   name_of_agent_or_team: AssistantAgent  # AssistantAgent or MagenticOneGroupChat

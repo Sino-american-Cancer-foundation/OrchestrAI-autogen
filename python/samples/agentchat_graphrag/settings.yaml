@@ -7,8 +7,8 @@
 encoding_model: cl100k_base # this needs to be matched to your model!
 
 llm:
-  model: llama3.3:70b-instruct-q6_K
-  api_base: http://10.0.40.100:11434/v1
+  model: qwen3:32b
+  api_base: http://10.0.40.49:11434/v1
   api_key: sk-xxx  
   model_supports_json: true
   model_info:
@@ -17,6 +17,7 @@ llm:
     json_output: true
     family: r1
     structured_output: true  
+    max_retries: 65535
   # audience: "https://cognitiveservices.azure.com/.default"
   # api_base: https://<resource-name>.openai.azure.com
   # api_version: 2024-08-01-preview

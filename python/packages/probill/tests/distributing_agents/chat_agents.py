@@ -91,9 +91,6 @@ class GroupChatManagerAgent(RoutedAgent):
     previous_participant: str | None
 
     def __init__(self, description: str = "", participant_descriptions: list[str] = None):
-    previous_participant: str | None
-
-    def __init__(self, description: str = "", participant_descriptions: list[str] = None):
         super().__init__(description)
         self.conversation_history = []
         self.turn_count = 0
@@ -104,7 +101,6 @@ class GroupChatManagerAgent(RoutedAgent):
         self.previous_participant = None
 
     @classmethod
-    def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
     def create(cls, model_client, participants: list[str], participant_descriptions: list[str]):
         """Factory method to create a manager agent"""
         def factory():

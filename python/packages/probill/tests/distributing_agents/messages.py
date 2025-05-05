@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class GroupChatMessage:
     """Message sent in group chat"""
     content: str
-    sender_name: str
+    source: str
 
 @dataclass
 class GroupChatReply:
