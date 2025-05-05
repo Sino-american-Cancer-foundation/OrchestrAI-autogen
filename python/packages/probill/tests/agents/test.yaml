@@ -14,13 +14,19 @@ Obsidian:
   api_key: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
 
 McpTools:
+  # mcp-obsidian:
+  #   type: StdioServerParams
+  #   params:
+  #     command: uvx
+  #     args: ["mcp-obsidian"]
+  #     env: 
+  #       OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+  #     read_timeout_seconds: 30
   mcp-obsidian:
-    type: StdioServerParams
+    type: SseServerParams
     params:
-      command: uvx
-      args: ["mcp-obsidian"]
-      env: 
-        OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+      url: "http://localhost:9009/sse"
+      headers: {"OBSIDIAN_API_KEY": "37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c"}
       read_timeout_seconds: 30
   mcp-nccn-evaluation:
     type: StdioServerParams
