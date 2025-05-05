@@ -23,6 +23,10 @@ interface ServerParamsFormState {
   // Stdio specific
   command?: string;
   args?: string;
+  env?: string; // JSON string representation of environment variables
+  cwd?: string; // Current working directory
+  encoding?: string;
+  encodingErrorHandler?: "strict" | "ignore" | "replace";
   // SSE specific
   url?: string;
 }
@@ -57,6 +61,10 @@ export const WorkbenchFields: React.FC<WorkbenchFieldsProps> = ({
     serverType: "stdio",
     command: "",
     args: "",
+    env: "", // Initialize env
+    cwd: "", // Initialize cwd
+    encoding: "utf-8", // Initialize encoding with default
+    encodingErrorHandler: "strict", // Initialize encodingErrorHandler with default
   });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
@@ -108,6 +116,33 @@ export const WorkbenchFields: React.FC<WorkbenchFieldsProps> = ({
         command,
         args: args ? args.split(" ") : [],
       };
+      
+      // Add optional parameters if they exist
+      if (serverParams.env) {
+        try {
+          const parsed = JSON.parse(serverParams.env);
+          if (parsed && typeof parsed === 'object') {
+            serverParamsObj.env = parsed;
+          } else {
+            console.error("Environment variables must be a valid JSON object");
+          }
+        } catch (e) {
+          console.error("Invalid JSON for env:", e);
+          // Don't add invalid JSON to server params
+        }
+      }
+      
+      if (serverParams.cwd) {
+        serverParamsObj.cwd = serverParams.cwd;
+      }
+      
+      if (serverParams.encoding && serverParams.encoding !== "utf-8") {
+        serverParamsObj.encoding = serverParams.encoding;
+      }
+      
+      if (serverParams.encodingErrorHandler && serverParams.encodingErrorHandler !== "strict") {
+        serverParamsObj.encoding_error_handler = serverParams.encodingErrorHandler;
+      }
     } else if (serverType === "sse") {
       if (!url) {
         // Show error
@@ -142,6 +177,10 @@ export const WorkbenchFields: React.FC<WorkbenchFieldsProps> = ({
       serverType: "stdio",
       command: "",
       args: "",
+      env: "",
+      cwd: "",
+      encoding: "utf-8", 
+      encodingErrorHandler: "strict",
     });
     setIsAddingServer(false);
     setEditingIndex(null);
@@ -168,6 +207,10 @@ export const WorkbenchFields: React.FC<WorkbenchFieldsProps> = ({
       newParams.args = Array.isArray(server.server_params.args) 
         ? server.server_params.args.join(" ") 
         : "";
+      newParams.env = server.server_params.env ? JSON.stringify(server.server_params.env, null, 2) : "";
+      newParams.cwd = server.server_params.cwd || "";
+      newParams.encoding = server.server_params.encoding || "utf-8";
+      newParams.encodingErrorHandler = server.server_params.encoding_error_handler || "strict";
     } else {
       newParams.url = server.server_params.url;
     }

@@ -644,64 +644,6 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </InputWithTooltip>
-
-              {/* Tools Section */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-primary">
-                    Tools
-                  </span>
-                  <Button
-                    type="dashed"
-                    size="small"
-                    onClick={handleAddTool}
-                    icon={<PlusCircle className="w-4 h-4" />}
-                  >
-                    Add Tool
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {component.config.tools?.map((tool, index) => (
-                    <div
-                      key={(tool.label || "") + index}
-                      className="bg-secondary p-1 px-2 rounded-md"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">
-                          {tool.config.name || tool.label || ""}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {onNavigate && (
-                            <Button
-                              type="text"
-                              icon={<Edit className="w-4 h-4" />}
-                              onClick={() =>
-                                onNavigate(
-                                  "tool",
-                                  tool.config.name || tool.label || "",
-                                  "tools"
-                                )
-                              }
-                            />
-                          )}
-                          <Button
-                            type="text"
-                            danger
-                            icon={<Trash2 className="w-4 h-4" />}
-                            onClick={() => handleRemoveTool(index)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {(!component.config.tools ||
-                    component.config.tools.length === 0) && (
-                    <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
-                      No tools configured
-                    </div>
-                  )}
-                </div>
-              </div>
               
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary">

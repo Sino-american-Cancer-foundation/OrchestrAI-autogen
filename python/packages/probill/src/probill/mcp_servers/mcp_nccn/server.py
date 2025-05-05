@@ -263,7 +263,7 @@ async def load_nccn_page(page: int) -> List:
         page (int): Page number to convert from PDF
         
     Returns:
-        List: A list containing a success message and the converted image in PNG format
+        str: The converted image in Base64 string format
     """
     # Convert single page to image
     images = convert_from_path(
@@ -278,12 +278,13 @@ async def load_nccn_page(page: int) -> List:
     image_bytes = Image(data=img_byte_arr.getvalue(), format="png")
 
     return [
-        f"Loaded page {page} successfully ...",
-        image_bytes
+        image_bytes,
+        f"Page {page} loaded successfully",
+        f"Image size: {images[0].size}",
     ]
 
 @mcp.tool()
-async def evaluate_patient_guidelines(evaluation: NCCNEvaluation) -> Dict[str, Any]:
+async def evaluate_patient(evaluation: NCCNEvaluation) -> Dict[str, Any]:
     """
     Evaluates patient guidelines based on provided NCCN evaluation criteria.
     This tool processes patient data against NCCN guidelines and returns evaluation results. It handles validation, 

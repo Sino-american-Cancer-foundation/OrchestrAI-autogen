@@ -219,3 +219,5 @@ python/packages/probill/tests/nccn/
 python/packages/probill/tests/memory_bank/
 python/packages/probill/tests/myapp/
 python/packages/probill/tests/agents/memory_bank/
+python/samples/
+python/packages/probill/tests/.myapp/

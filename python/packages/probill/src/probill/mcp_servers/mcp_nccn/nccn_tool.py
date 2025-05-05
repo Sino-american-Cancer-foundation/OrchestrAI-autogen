@@ -373,7 +373,6 @@ class DecisionLoader(BaseModel):
             final_result = steps
 
             if missing_data:
-                
                 final_result.append(str({"MissingData":content_to_str(missing_data)}))
                 
             if therapy_options:
