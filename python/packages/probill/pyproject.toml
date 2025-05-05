@@ -21,7 +21,7 @@ dependencies = [
     "autogenstudio",
     "component-schema-gen",
     "magentic-one-cli",
-    "mcp>=1.6.0",
+    "mcp",
     "neo4j>=5.26.0",
     "markitdown>=0.0.1a3",
 ]
@@ -77,5 +77,6 @@ check = ["fmt", "lint", "pyright", "test"]
 
 [dependency-groups]
 dev = [
+    "fastmcp",
     "neo4j-graphrag>=1.4.0",
 ]

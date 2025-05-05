@@ -1792,6 +1792,23 @@ wheels = [
 ]
 
 [[package]]
+name = "fastmcp"
+version = "1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/af/21/747cf7181ff6028e6d57bf2deb54fda1bd09c19098dc4bb2d11f8e4443de/fastmcp-1.0.tar.gz", hash = "sha256:202f454e82cb68460a2b7372f975901e78e03b27734ce3a16c4d1d3e3cdbc519", size = 785693, upload-time = "2025-04-11T15:16:24.623Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/bf/0a77688242f30f81e3633d3765289966d9c7e408f9dcb4928a85852b9fde/fastmcp-1.0-py3-none-any.whl", hash = "sha256:88f0c5acc2af06f22cf46dd26c1a1c4c54f1479ef09e5f871fdfbade6defe3a6", size = 35376, upload-time = "2025-04-11T15:16:22.855Z" },
+]
+
+[[package]]
 name = "feedfinder2"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -4983,6 +5000,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "fastmcp" },
     { name = "neo4j-graphrag" },
 ]
 
@@ -4995,12 +5013,15 @@ requires-dist = [
     { name = "component-schema-gen", editable = "packages/component-schema-gen" },
     { name = "magentic-one-cli", editable = "packages/magentic-one-cli" },
     { name = "markitdown", specifier = ">=0.0.1a3" },
-    { name = "mcp", specifier = ">=1.6.0" },
+    { name = "mcp" },
     { name = "neo4j", specifier = ">=5.26.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "neo4j-graphrag", specifier = ">=1.4.0" }]
+dev = [
+    { name = "fastmcp" },
+    { name = "neo4j-graphrag", specifier = ">=1.4.0" },
+]
 
 [[package]]
 name = "prompt-toolkit"
