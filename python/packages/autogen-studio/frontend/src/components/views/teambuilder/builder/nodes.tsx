@@ -21,8 +21,25 @@ import { CustomNode } from "./types";
 import {
   AgentConfig,
   TeamConfig,
-  ComponentTypes,
-  Component,
+  Component      headerContent={
+        <div className="flex gap-2 mt-2">
+          {(isAssistantAgent(component) || isMcpHostAgent(component)) && (
+            <>
+              <ConnectionBadge connected={hasModel} label="Model" />
+              <ConnectionBadge
+                connected={toolCount > 0}
+                label={`${toolCount} Tool${toolCount !== 1 ? "s" : ""}`}
+              />
+            </>
+          )}
+          {isMcpHostAgent(component) && (
+            <ConnectionBadge
+              connected={hasWorkbench}
+              label="Workbench"
+            />
+          )}
+        </div>
+      }onent,
   ComponentConfig,
 } from "../../../types/datamodel";
 import { useDroppable } from "@dnd-kit/core";
@@ -334,10 +351,11 @@ TeamNode.displayName = "TeamNode";
 export const AgentNode = memo<NodeProps<CustomNode>>((props) => {
   const component = props.data.component as Component<AgentConfig>;
   const hasModel =
-    isAssistantAgent(component) && !!component.config.model_client;
-  const toolCount = isAssistantAgent(component)
+    (isAssistantAgent(component) || isMcpHostAgent(component)) && !!component.config.model_client;
+  const toolCount = (isAssistantAgent(component) || isMcpHostAgent(component))
     ? component.config.tools?.length || 0
     : 0;
+  const hasWorkbench = isMcpHostAgent(component) && !!component.config.workbench;
 
   return (
     <BaseNode

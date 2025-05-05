@@ -49,32 +49,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadUser = async () => {
       try {
+        console.log("Checking auth type...");
         // Check auth type first
         const { type } = await authAPI.checkAuthType();
+        console.log("Auth type:", type);
         setAuthType(type);
 
         // If auth is disabled, set default user and complete loading
         if (type === "none") {
-          setUser({
+          console.log("Auth is disabled, setting default user");
+          const defaultUser = {
             id: "guestuser@gmail.com",
             name: "Guest User",
-          });
+          };
+          setUser(defaultUser);
           setIsLoading(false);
           return;
         }
 
         const token = getToken();
         if (!token) {
+          console.log("No auth token found");
           setIsLoading(false);
           return;
         }
 
         // Load user data with token
+        console.log("Loading user data with token");
         const userData = await authAPI.getCurrentUser(token);
+        console.log("User data loaded:", userData);
         setUser(userData);
       } catch (error) {
         console.error("Failed to load user:", error);
         removeToken(); // Clear invalid token
+        
+        // Set default user if auth type is none
+        if (authType === "none") {
+          console.log("Setting default user after error (auth type is none)");
+          setUser({
+            id: "guestuser@gmail.com",
+            name: "Guest User",
+          });
+        }
       } finally {
         setIsLoading(false);
       }

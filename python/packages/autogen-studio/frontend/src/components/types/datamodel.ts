@@ -6,7 +6,7 @@ export type ComponentTypes =
   | "model"
   | "tool"
   | "termination"
-  | "mcp";
+  | "workbench";
 export interface Component<T extends ComponentConfig> {
   provider: string;
   component_type: ComponentTypes;
@@ -95,41 +95,6 @@ export interface FromModuleImport {
 // Import can be either a string (direct import) or a FromModuleImport
 export type Import = string | FromModuleImport;
 
-// MCP Tool Types
-export interface StdioServerParams {
-  command: string;
-  args?: string[];
-  encoding?: string;
-  encoding_error_handler?: string;
-}
-
-export interface SseServerParams {
-  url: string;
-  headers?: Record<string, string> | null;
-  timeout?: number;
-  sse_read_timeout?: number;
-}
-
-export interface Tool {
-  name: string;
-  description?: string | null;
-  inputSchema: Record<string, any>;
-}
-
-export interface StdioMcpToolAdapterConfig {
-  server_params: StdioServerParams;
-  tool: Tool;
-  name: string;
-  description: string;
-}
-
-export interface SseMcpToolAdapterConfig {
-  server_params: SseServerParams;
-  tool: Tool;
-  name: string;
-  description: string;
-}
-
 // Code Executor Base Config
 export interface CodeExecutorBaseConfig {
   timeout?: number;
@@ -182,44 +147,6 @@ export interface FunctionToolConfig {
   has_cancellation_support: boolean;
 }
 
-export interface MCPServerParams {
-  host: string;
-  port: number;
-  use_sub_urls?: boolean;
-}
-
-export interface StdioMCPToolConfig {
-  name: string;
-  description: string;
-  server_params: MCPServerParams;
-  subprocess_timeout?: number;
-}
-
-export interface SSEMCPToolConfig {
-  name: string;
-  description: string;
-  server_params: MCPServerParams;
-}
-
-// Base MCP Tool types
-export interface MCPServerParams {
-  host: string;
-  port: number;
-  use_sub_urls?: boolean;
-}
-
-export interface MCPToolConfig {
-  name: string;
-  description: string;
-  server_params: MCPServerParams;
-}
-
-export interface StdioMCPToolConfig extends MCPToolConfig {
-  subprocess_timeout?: number;
-}
-
-export interface SSEMCPToolConfig extends MCPToolConfig {}
-
 // Provider-based Configs
 export interface SelectorGroupChatConfig {
   participants: Component<AgentConfig>[];
@@ -236,15 +163,6 @@ export interface RoundRobinGroupChatConfig {
   max_turns?: number;
 }
 
-export interface MagenticOneGroupChatConfig {
-  participants: Component<AgentConfig>[];
-  model_client: Component<ModelConfig>;
-  termination_condition?: Component<TerminationConfig>;
-  max_turns?: number;
-  max_stalls: number;
-  final_answer_prompt: string;
-}
-
 export interface MultimodalWebSurferConfig {
   name: string;
   model_client: Component<ModelConfig>;
@@ -259,7 +177,22 @@ export interface MultimodalWebSurferConfig {
   browser_channel?: string;
   browser_data_dir?: string;
   to_resize_viewport?: boolean;
-  test_value?: string;
+}
+
+
+export interface McpHostAgentConfig {
+  name: string;
+  model_client: Component<ModelConfig>;
+  workbench?: Component<any>;
+  tools?: Component<ToolConfig>[];
+  handoffs?: any[];
+  memory?: Component<any>[];
+  description?: string;
+  system_message?: string;
+  model_client_stream?: boolean;
+  reflect_on_tool_use?: boolean;
+  tool_call_summary_format?: string;
+  metadata?: Record<string, string>;
 }
 
 export interface AssistantAgentConfig {
@@ -273,33 +206,6 @@ export interface AssistantAgentConfig {
   reflect_on_tool_use: boolean;
   tool_call_summary_format: string;
   model_client_stream: boolean;
-}
-
-export interface McpServerParamsConfig {
-  command?: string[];
-  working_directory?: string;
-  environment?: Record<string, string>;
-  base_url?: string;
-  timeout?: number;
-  headers?: Record<string, string>;
-  cookies?: Record<string, string>;
-  auth?: Record<string, string>;
-}
-
-export interface McpHostAgentConfig {
-  name: string;
-  model_client: Component<ModelConfig>;
-  tools?: Component<ToolConfig>[];
-  handoffs?: any[]; // HandoffBase | str equivalent
-  model_context?: Component<ChatCompletionContextConfig>;
-  memory?: Component<any>[];
-  description?: string;
-  system_message?: string;
-  server_params?: McpServerParamsConfig;
-  reflect_on_tool_use: boolean;
-  model_client_stream: boolean;
-  tool_call_summary_format: string;
-  metadata?: Record<string, string>;
 }
 
 export interface UserProxyAgentConfig {
@@ -394,11 +300,17 @@ export interface TextMentionTerminationConfig {
   text: string;
 }
 
+export interface McpsServerParams {
+  server_id: string;
+  server_params: any; // Generic parameter type for server params
+}
+
+export interface McpsWorkbenchConfig {
+  server_params_list: McpsServerParams[];
+}
+
 // Config type unions based on provider
-export type TeamConfig = 
-  | SelectorGroupChatConfig 
-  | RoundRobinGroupChatConfig
-  | MagenticOneGroupChatConfig;
+export type TeamConfig = SelectorGroupChatConfig | RoundRobinGroupChatConfig;
 
 export type AgentConfig =
   | MultimodalWebSurferConfig
@@ -411,25 +323,17 @@ export type ModelConfig =
   | AzureOpenAIClientConfig
   | AnthropicClientConfig;
 
-export type ToolConfig = 
-  | FunctionToolConfig
-  | StdioMcpToolAdapterConfig
-  | SseMcpToolAdapterConfig;
+export type ToolConfig = FunctionToolConfig | PythonCodeExecutionToolConfig;
 
 export type ChatCompletionContextConfig = UnboundedChatCompletionContextConfig;
+
+export type WorkbenchConfig = McpsWorkbenchConfig;
 
 export type TerminationConfig =
   | OrTerminationConfig
   | AndTerminationConfig
   | MaxMessageTerminationConfig
   | TextMentionTerminationConfig;
-
-export interface McpServerConfig {
-  name: string;
-  description: string;
-  url?: string;
-  port?: number;
-}
 
 export type ComponentConfig =
   | TeamConfig
@@ -438,7 +342,7 @@ export type ComponentConfig =
   | ToolConfig
   | TerminationConfig
   | ChatCompletionContextConfig
-  | McpServerConfig;
+  | WorkbenchConfig;
 
 // DB Models
 export interface DBModel {
@@ -572,7 +476,7 @@ export interface GalleryConfig {
     models: Component<ModelConfig>[];
     tools: Component<ToolConfig>[];
     terminations: Component<TerminationConfig>[];
-    mcpservers: Component<ComponentConfig>[];
+    workbenches: Component<WorkbenchConfig>[];
   };
 }
 

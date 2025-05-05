@@ -9,6 +9,7 @@ import {
   isAssistantAgent,
   isUserProxyAgent,
   isWebSurferAgent,
+  isMcpHostAgent,
 } from "../../../types/guards";
 import { CustomNode, CustomEdge } from "./types";
 
@@ -93,7 +94,23 @@ const calculateNodeHeight = (component: Component<ComponentConfig>): number => {
       if (isWebSurferAgent(component)) {
         height += 100;
       }
-
+      if (isMcpHostAgent(component)) {
+        height += 300; // Additional height for workbench and memory sections
+        // Add height for tools section and items
+        if (component.config.tools?.length) {
+          height += LAYOUT_CONFIG.CONTENT_HEIGHTS.TOOL_SECTION;
+          height +=
+            component.config.tools.length *
+            LAYOUT_CONFIG.CONTENT_HEIGHTS.TOOL_ITEM;
+        }
+        // Add height for memory items if present
+        if (component.config.memory?.length) {
+          height += LAYOUT_CONFIG.CONTENT_HEIGHTS.TOOL_SECTION;
+          height +=
+            component.config.memory.length *
+            LAYOUT_CONFIG.CONTENT_HEIGHTS.TOOL_ITEM;
+        }
+      }
       if (isUserProxyAgent(component)) {
         height += -100;
       }

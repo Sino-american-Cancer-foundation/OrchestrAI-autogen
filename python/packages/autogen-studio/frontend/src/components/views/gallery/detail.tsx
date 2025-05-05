@@ -24,7 +24,23 @@ import {
 } from "../../types/datamodel";
 import TextArea from "antd/es/input/TextArea";
 
-type CategoryKey = `${ComponentTypes}s` | "mcpservers";
+// Map between component type and category key
+const componentToCategoryMap: Record<ComponentTypes, string> = {
+  team: "teams",
+  agent: "agents",
+  model: "models",
+  tool: "tools",
+  termination: "terminations",
+  workbench: "workbenches",
+};
+
+type CategoryKey = 
+  | "teams"
+  | "agents"
+  | "models"
+  | "tools"
+  | "terminations"
+  | "workbenches";
 
 interface CardActions {
   onEdit: (component: Component<ComponentConfig>, index: number) => void;
@@ -124,7 +140,7 @@ const iconMap = {
   tool: Wrench,
   model: Brain,
   termination: Timer,
-  mcpserver: Server,
+  workbench: Globe,
 } as const;
 
 // Add default configurations for each component type
@@ -140,18 +156,7 @@ const defaultConfigs: Record<ComponentTypes, ComponentConfig> = {
     has_cancellation_support: false,
   },
   termination: { max_messages: 1 },
-  mcpserver: { name: "New MCP Server", description: "A new MCP Server" } as any,
-};
-
-// Define the explicit order of tabs
-const tabOrder: ComponentTypes[] = ["team", "agent", "tool", "mcpserver", "model", "termination"];
-
-// Helper function to get the category key safely
-const getCategoryKey = (componentType: ComponentTypes): CategoryKey => {
-  if (componentType === 'mcpserver') {
-    return 'mcpservers';
-  }
-  return `${componentType}s` as CategoryKey;
+  workbench: { server_params_list: [] },
 };
 
 export const GalleryDetail: React.FC<{
@@ -159,24 +164,12 @@ export const GalleryDetail: React.FC<{
   onSave: (updates: Partial<Gallery>) => void;
   onDirtyStateChange: (isDirty: boolean) => void;
 }> = ({ gallery, onSave, onDirtyStateChange }) => {
+  console.log("GalleryDetail rendering with gallery:", gallery);
+  
   if (!gallery.config.components) {
+    console.error("No components found in gallery config:", gallery);
     return <div className="text-secondary">No components found</div>;
   }
-  
-  // Initialize all component arrays
-  const initializeGalleryComponents = () => {
-    // Make sure all component arrays exist
-    tabOrder.forEach(componentType => {
-      const category = getCategoryKey(componentType);
-      if (!gallery.config.components[category]) {
-        gallery.config.components[category] = [];
-      }
-    });
-  };
-  
-  // Initialize all component arrays
-  initializeGalleryComponents();
-  
   const [editingComponent, setEditingComponent] = useState<{
     component: Component<ComponentConfig>;
     category: CategoryKey;
@@ -194,6 +187,35 @@ export const GalleryDetail: React.FC<{
     setTempDescription(gallery.config.metadata.description);
     setActiveTab("team");
     setEditingComponent(null);
+
+    // Initialize workbenches array if it doesn't exist
+    if (!gallery.config.components.workbenches) {
+      console.log("Initializing workbenches array - it doesn't exist");
+      const updatedGallery = {
+        ...gallery,
+        config: {
+          ...gallery.config,
+          components: {
+            ...gallery.config.components,
+            workbenches: [],
+          },
+        },
+      };
+      console.log("Updated gallery with workbenches:", updatedGallery);
+      onSave(updatedGallery);
+    } else {
+      console.log("Workbenches array already exists:", gallery.config.components.workbenches);
+    }
+    
+    // Debug log - show all component categories
+    console.log("Gallery components:", {
+      teams: gallery.config.components.teams?.length || 0,
+      agents: gallery.config.components.agents?.length || 0,
+      models: gallery.config.components.models?.length || 0,
+      tools: gallery.config.components.tools?.length || 0,
+      terminations: gallery.config.components.terminations?.length || 0,
+      workbenches: gallery.config.components.workbenches?.length || 0
+    });
   }, [gallery.id]);
 
   const updateGallery = (
@@ -202,21 +224,47 @@ export const GalleryDetail: React.FC<{
       components: Component<ComponentConfig>[]
     ) => Component<ComponentConfig>[]
   ) => {
-    // Ensure the category array exists
-    if (!gallery.config.components[category]) {
-      gallery.config.components[category] = [];
-    }
-
+    console.log("Updating gallery category:", category);
+    
+    // Get components using our helper function
+    const currentComponents = getComponentsArray(category);
+    const updatedComponents = updater(currentComponents);
+    
+    // Create updated gallery with the new components
     const updatedGallery = {
       ...gallery,
       config: {
         ...gallery.config,
         components: {
           ...gallery.config.components,
-          [category]: updater(gallery.config.components[category]),
-        },
-      },
+        }
+      }
     };
+    
+    // Type assertions for each category to satisfy TypeScript
+    switch(category) {
+      case 'teams':
+        updatedGallery.config.components.teams = updatedComponents as any;
+        break;
+      case 'agents':
+        updatedGallery.config.components.agents = updatedComponents as any;
+        break;
+      case 'models':
+        updatedGallery.config.components.models = updatedComponents as any;
+        break;
+      case 'tools':
+        updatedGallery.config.components.tools = updatedComponents as any;
+        break;
+      case 'terminations':
+        updatedGallery.config.components.terminations = updatedComponents as any;
+        break;
+      case 'workbenches':
+        updatedGallery.config.components.workbenches = updatedComponents as any;
+        break;
+    }
+    
+    // Save the updated gallery
+    console.log("Saving updated gallery:", updatedGallery);
     onSave(updatedGallery);
     onDirtyStateChange(true);
   };
@@ -225,15 +273,15 @@ export const GalleryDetail: React.FC<{
     onEdit: (component: Component<ComponentConfig>, index: number) => {
       setEditingComponent({
         component,
-        category: getCategoryKey(activeTab),
+        category: componentToCategoryMap[activeTab] as CategoryKey,
         index,
       });
     },
 
     onDuplicate: (component: Component<ComponentConfig>, index: number) => {
-      const category = getCategoryKey(activeTab);
+      const category = componentToCategoryMap[activeTab] as CategoryKey;
       const baseLabel = component.label?.replace(/_\d+$/, "");
-      const components = gallery.config.components[category];
+      const components = getComponentsArray(category);
 
       const nextNumber =
         Math.max(
@@ -255,7 +303,7 @@ export const GalleryDetail: React.FC<{
     },
 
     onDelete: (component: Component<ComponentConfig>, index: number) => {
-      const category = getCategoryKey(activeTab);
+      const category = componentToCategoryMap[activeTab] as CategoryKey;
       updateGallery(category, (components) =>
         components.filter((_, i) => i !== index)
       );
@@ -263,10 +311,11 @@ export const GalleryDetail: React.FC<{
   };
 
   const handleAdd = () => {
-    const category = getCategoryKey(activeTab);
+    const category = componentToCategoryMap[activeTab] as CategoryKey;
     
-    // Ensure the category array exists
+    // Ensure the category exists
     if (!gallery.config.components[category]) {
+      console.log(`Initializing missing category ${category}`);
       gallery.config.components[category] = [];
     }
     
@@ -276,7 +325,7 @@ export const GalleryDetail: React.FC<{
       activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
     }`;
 
-    if (components.length > 0) {
+    if (components && components.length > 0) {
       // Clone the entire component and just modify the label
       newComponent = {
         ...components[0], // This preserves all fields (provider, version, description, etc.)
@@ -285,7 +334,7 @@ export const GalleryDetail: React.FC<{
     } else {
       // Only for empty categories, use default config
       newComponent = {
-        provider: "new",
+        provider: activeTab === "workbench" ? "probill.tools.mcp.McpsWorkbench" : "new",
         component_type: activeTab,
         config: defaultConfigs[activeTab],
         label: newLabel,
@@ -293,7 +342,7 @@ export const GalleryDetail: React.FC<{
     }
 
     updateGallery(category, (components) => {
-      const newComponents = [...components, newComponent];
+      const newComponents = [...(components || []), newComponent];
       setEditingComponent({
         component: newComponent,
         category,
@@ -348,45 +397,84 @@ export const GalleryDetail: React.FC<{
     URL.revokeObjectURL(url);
   };
 
-  const tabItems = Object.entries(iconMap).map(([key, Icon]) => ({
-    key,
-    label: (
-      <span className="flex items-center gap-2">
-        <Icon className="w-5 h-5" />
-        {key.charAt(0).toUpperCase() + key.slice(1)}s
-        <span className="text-xs font-light text-secondary">
-          ({gallery.config.components[`${key}s` as CategoryKey].length})
+  const getComponentsArray = (category: CategoryKey): Component<ComponentConfig>[] => {
+    let result: Component<ComponentConfig>[] = [];
+    switch (category) {
+      case 'teams':
+        result = gallery.config.components.teams || [];
+        break;
+      case 'agents':
+        result = gallery.config.components.agents || [];
+        break;
+      case 'models':
+        result = gallery.config.components.models || [];
+        break;
+      case 'tools':
+        result = gallery.config.components.tools || [];
+        break;
+      case 'terminations':
+        result = gallery.config.components.terminations || [];
+        break;
+      case 'workbenches':
+        result = gallery.config.components.workbenches || [];
+        break;
+    }
+    return result as Component<ComponentConfig>[];
+  };
+
+  const tabItems = Object.entries(iconMap).map(([key, Icon]) => {
+    const componentType = key as ComponentTypes;
+    const categoryKey = componentToCategoryMap[componentType] as CategoryKey;
+    
+    // Ensure the category exists in gallery.config.components
+    if (!gallery.config.components[categoryKey]) {
+      console.warn(`Category ${categoryKey} doesn't exist in gallery.config.components, initializing empty array`);
+      gallery.config.components[categoryKey] = [];
+    }
+    
+    // Get components using the helper function
+    const items = getComponentsArray(categoryKey);
+    
+    return {
+      key,
+      label: (
+        <span className="flex items-center gap-2">
+          <Icon className="w-5 h-5" />
+          {key.charAt(0).toUpperCase() + key.slice(1)}s
+          <span className="text-xs font-light text-secondary">
+            ({items.length})
+          </span>
         </span>
-      </span>
-    ),
-    children: (
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-medium">
-            {gallery.config.components[`${key}s` as CategoryKey].length}{" "}
-            {gallery.config.components[`${key}s` as CategoryKey].length === 1
-              ? key.charAt(0).toUpperCase() + key.slice(1)
-              : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
-          </h3>
-          <Button
-            type="primary"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => {
-              setActiveTab(key as ComponentTypes);
-              handleAdd();
-            }}
-          >
-            {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
-          </Button>
+      ),
+      children: (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-medium">
+              {items.length}{" "}
+              {items.length === 1
+                ? key.charAt(0).toUpperCase() + key.slice(1)
+                : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
+            </h3>
+            <Button
+              type="primary"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => {
+                setActiveTab(key as ComponentTypes);
+                handleAdd();
+              }}
+            >
+              {`Add ${key.charAt(0).toUpperCase() + key.slice(1)}`}
+            </Button>
+          </div>
+          <ComponentGrid
+            items={items}
+            title={key}
+            {...handlers}
+          />
         </div>
-        <ComponentGrid
-          items={gallery.config.components[`${key}s` as CategoryKey]}
-          title={key}
-          {...handlers}
-        />
-      </div>
-    ),
-  }));
+      ),
+    };
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4">

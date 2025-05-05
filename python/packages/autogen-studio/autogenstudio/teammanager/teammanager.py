@@ -114,7 +114,7 @@ class TeamManager:
 
         # Setup logger correctly
         logger = logging.getLogger(EVENT_LOGGER_NAME)
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.INFO)
         llm_event_logger = RunEventLogger()
         logger.handlers = [llm_event_logger]  # Replace all handlers
 

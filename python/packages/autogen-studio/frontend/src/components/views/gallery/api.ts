@@ -3,16 +3,35 @@ import { BaseAPI } from "../../utils/baseapi";
 
 export class GalleryAPI extends BaseAPI {
   async listGalleries(userId: string): Promise<Gallery[]> {
-    const response = await fetch(
-      `${this.getBaseUrl()}/gallery/?user_id=${userId}`,
-      {
+    console.log(`Fetching galleries for user ${userId}`);
+    try {
+      const url = `${this.getBaseUrl()}/gallery/?user_id=${userId}`;
+      console.log("Gallery API request URL:", url);
+      
+      const response = await fetch(url, {
         headers: this.getHeaders(),
+      });
+      
+      console.log("Gallery API response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Gallery API error response:", errorText);
+        throw new Error(`HTTP error ${response.status}: ${errorText}`);
       }
-    );
-    const data = await response.json();
-    if (!data.status)
-      throw new Error(data.message || "Failed to fetch galleries");
-    return data.data;
+      
+      const data = await response.json();
+      console.log("Gallery API response data:", data);
+      
+      if (!data.status) {
+        throw new Error(data.message || "Failed to fetch galleries");
+      }
+      
+      return data.data;
+    } catch (error) {
+      console.error("Error in listGalleries:", error);
+      throw error;
+    }
   }
 
   async getGallery(galleryId: number, userId: string): Promise<Gallery> {

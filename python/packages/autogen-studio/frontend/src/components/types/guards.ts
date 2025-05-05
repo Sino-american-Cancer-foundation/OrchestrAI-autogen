@@ -20,11 +20,10 @@ import type {
   TextMentionTerminationConfig,
   UnboundedChatCompletionContextConfig,
   AnthropicClientConfig,
-  MagenticOneGroupChatConfig,
-  StdioMcpToolAdapterConfig,
-  SseMcpToolAdapterConfig,
   AndTerminationConfig,
   McpHostAgentConfig,
+  WorkbenchConfig,
+  McpsWorkbenchConfig,
 } from "./datamodel";
 
 // Provider constants
@@ -32,13 +31,12 @@ const PROVIDERS = {
   // Teams
   ROUND_ROBIN_TEAM: "autogen_agentchat.teams.RoundRobinGroupChat",
   SELECTOR_TEAM: "autogen_agentchat.teams.SelectorGroupChat",
-  MAGENTIC_ONE_TEAM: "autogen_agentchat.teams.MagenticOneGroupChat",
 
   // Agents
   ASSISTANT_AGENT: "autogen_agentchat.agents.AssistantAgent",
   USER_PROXY: "autogen_agentchat.agents.UserProxyAgent",
   WEB_SURFER: "autogen_ext.agents.web_surfer.MultimodalWebSurfer",
-  MCP_HOST_AGENT: "probill.agents.mcp_host_agent.McpHostAgent",
+  MCP_HOST_AGENT: "probill.agents.McpHostAgent",
 
   // Models
   OPENAI: "autogen_ext.models.openai.OpenAIChatCompletionClient",
@@ -47,8 +45,9 @@ const PROVIDERS = {
 
   // Tools
   FUNCTION_TOOL: "autogen_core.tools.FunctionTool",
-  STDIO_MCP_TOOL: "autogen_ext.tools.mcp.StdioMcpToolAdapter",
-  SSE_MCP_TOOL: "autogen_ext.tools.mcp.SseMcpToolAdapter",
+  
+  // Workbenches
+  MCPS_WORKBENCH: "probill.tools.mcp.McpsWorkbench",
 
   // Termination
   OR_TERMINATION: "autogen_agentchat.base.OrTerminationCondition",
@@ -57,49 +56,11 @@ const PROVIDERS = {
   TEXT_MENTION: "autogen_agentchat.conditions.TextMentionTermination",
 
   // Contexts
-  UNBOUNDED_CONTEXT:
-    "autogen_core.model_context.UnboundedChatCompletionContext",
+  UNBOUNDED_CONTEXT: "autogen_core.model_context.UnboundedChatCompletionContext",
 } as const;
 
-// Provider type and mapping
+// Provider type
 export type Provider = (typeof PROVIDERS)[keyof typeof PROVIDERS];
-
-type ProviderToConfig = {
-  // Teams
-  [PROVIDERS.SELECTOR_TEAM]: SelectorGroupChatConfig;
-  [PROVIDERS.ROUND_ROBIN_TEAM]: RoundRobinGroupChatConfig;
-  [PROVIDERS.MAGENTIC_ONE_TEAM]: MagenticOneGroupChatConfig;
-  [PROVIDERS.ANTHROPIC]: AnthropicClientConfig;
-
-  // Agents
-  [PROVIDERS.ASSISTANT_AGENT]: AssistantAgentConfig;
-  [PROVIDERS.USER_PROXY]: UserProxyAgentConfig;
-  [PROVIDERS.WEB_SURFER]: MultimodalWebSurferConfig;
-  [PROVIDERS.MCP_HOST_AGENT]: McpHostAgentConfig;
-
-  // Models
-  [PROVIDERS.OPENAI]: OpenAIClientConfig;
-  [PROVIDERS.AZURE_OPENAI]: AzureOpenAIClientConfig;
-
-  // Tools
-  [PROVIDERS.FUNCTION_TOOL]: FunctionToolConfig;
-  [PROVIDERS.STDIO_MCP_TOOL]: StdioMcpToolAdapterConfig;
-  [PROVIDERS.SSE_MCP_TOOL]: SseMcpToolAdapterConfig;
-
-  // Termination
-  [PROVIDERS.OR_TERMINATION]: OrTerminationConfig;
-  [PROVIDERS.AND_TERMINATION]: AndTerminationConfig;
-  [PROVIDERS.MAX_MESSAGE]: MaxMessageTerminationConfig;
-  [PROVIDERS.TEXT_MENTION]: TextMentionTerminationConfig;
-
-  // Contexts
-  [PROVIDERS.UNBOUNDED_CONTEXT]: UnboundedChatCompletionContextConfig;
-};
-
-// Helper type to get config type from provider
-type ConfigForProvider<P extends Provider> = P extends keyof ProviderToConfig
-  ? ProviderToConfig[P]
-  : never;
 
 export function isComponent(value: any): value is Component<ComponentConfig> {
   return (
@@ -110,11 +71,12 @@ export function isComponent(value: any): value is Component<ComponentConfig> {
     "config" in value
   );
 }
-// Generic component type guard
-function isComponentOfType<P extends Provider>(
+
+// Generic component type guard without using ProviderToConfig
+function isComponentOfType(
   component: Component<ComponentConfig>,
-  provider: P
-): component is Component<ConfigForProvider<P>> {
+  provider: Provider
+): boolean {
   return component.provider === provider;
 }
 
@@ -149,12 +111,6 @@ export function isTerminationComponent(
   return component.component_type === "termination";
 }
 
-// export function isChatCompletionContextComponent(
-//   component: Component<ComponentConfig>
-// ): component is Component<ChatCompletionContextConfig> {
-//   return component.component_type === "chat_completion_context";
-// }
-
 // Team provider guards with proper type narrowing
 export function isRoundRobinTeam(
   component: Component<ComponentConfig>
@@ -166,12 +122,6 @@ export function isSelectorTeam(
   component: Component<ComponentConfig>
 ): component is Component<SelectorGroupChatConfig> {
   return isComponentOfType(component, PROVIDERS.SELECTOR_TEAM);
-}
-
-export function isMagenticOneTeam(
-  component: Component<ComponentConfig>
-): component is Component<MagenticOneGroupChatConfig> {
-  return isComponentOfType(component, PROVIDERS.MAGENTIC_ONE_TEAM);
 }
 
 // Agent provider guards with proper type narrowing
@@ -211,6 +161,7 @@ export function isAzureOpenAIModel(
 ): component is Component<AzureOpenAIClientConfig> {
   return isComponentOfType(component, PROVIDERS.AZURE_OPENAI);
 }
+
 export function isAnthropicModel(
   component: Component<ComponentConfig>
 ): component is Component<AnthropicClientConfig> {
@@ -222,18 +173,6 @@ export function isFunctionTool(
   component: Component<ComponentConfig>
 ): component is Component<FunctionToolConfig> {
   return isComponentOfType(component, PROVIDERS.FUNCTION_TOOL);
-}
-
-export function isStdioMcpTool(
-  component: Component<ComponentConfig>
-): component is Component<StdioMcpToolAdapterConfig> {
-  return isComponentOfType(component, PROVIDERS.STDIO_MCP_TOOL);
-}
-
-export function isSseMcpTool(
-  component: Component<ComponentConfig>
-): component is Component<SseMcpToolAdapterConfig> {
-  return isComponentOfType(component, PROVIDERS.SSE_MCP_TOOL);
 }
 
 // Termination provider guards with proper type narrowing
@@ -271,6 +210,19 @@ export function isTextMentionTermination(
   return isComponentOfType(component, PROVIDERS.TEXT_MENTION);
 }
 
+// Workbench provider guards with proper type narrowing
+export function isMcpsWorkbench(
+  component: Component<ComponentConfig>
+): component is Component<McpsWorkbenchConfig> {
+  return isComponentOfType(component, PROVIDERS.MCPS_WORKBENCH);
+}
+
+export function isWorkbenchComponent(
+  component: Component<ComponentConfig>
+): component is Component<WorkbenchConfig> {
+  return component.component_type === "workbench";
+}
+
 // Context provider guards with proper type narrowing
 export function isUnboundedContext(
   component: Component<ComponentConfig>
@@ -279,10 +231,10 @@ export function isUnboundedContext(
 }
 
 // Runtime assertions
-export function assertComponentType<P extends Provider>(
+export function assertComponentType(
   component: Component<ComponentConfig>,
-  provider: P
-): asserts component is Component<ConfigForProvider<P>> {
+  provider: Provider
+): asserts component is Component<any> {
   if (!isComponentOfType(component, provider)) {
     throw new Error(
       `Expected component with provider ${provider}, got ${component.provider}`

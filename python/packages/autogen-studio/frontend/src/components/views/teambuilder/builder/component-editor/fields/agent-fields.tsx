@@ -12,6 +12,7 @@ import {
   isUserProxyAgent,
   isWebSurferAgent,
   isMcpHostAgent,
+  isMcpsWorkbench,
 } from "../../../../../types/guards";
 import DetailGroup from "../detailgroup";
 
@@ -87,7 +88,7 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
 
   const handleRemoveTool = useCallback(
     (toolIndex: number) => {
-      if (!isAssistantAgent(component) && !isMcpHostAgent(component)) return;
+      if (!isAssistantAgent(component)) return;
       const newTools = [...(component.config.tools || [])];
       newTools.splice(toolIndex, 1);
       handleConfigUpdate("tools", newTools);
@@ -96,7 +97,7 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
   );
 
   const handleAddTool = useCallback(() => {
-    if (!isAssistantAgent(component) && !isMcpHostAgent(component)) return;
+    if (!isAssistantAgent(component)) return;
 
     const blankTool: Component<FunctionToolConfig> = {
       provider: "autogen_core.tools.FunctionTool",
@@ -504,17 +505,6 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </InputWithTooltip>
-              <InputWithTooltip
-                label="Test Value"
-                tooltip="a test for customized value"
-              >
-                <Input
-                  value={component.config.test_value || ""}
-                  onChange={(e) =>
-                    handleConfigUpdate("test_value", e.target.value)
-                  }
-                />
-              </InputWithTooltip>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary">
                   Resize Viewport
@@ -550,12 +540,11 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                 {component.config.model_client ? (
                   <div className="bg-secondary p-1 px-2 rounded-md">
                     <div className="flex items-center justify-between">
-                      {" "}
                       <span className="text-sm">
                         {component.config.model_client.config.model}
                       </span>
                       <div className="flex items-center justify-between">
-                        {component.config.model_client && onNavigate && (
+                        {onNavigate && (
                           <Button
                             type="text"
                             icon={<Edit className="w-4 h-4" />}
@@ -580,6 +569,69 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                 )}
               </div>
 
+              {/* Workbench Section */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-primary">
+                  MCP Workbench
+                </span>
+                {component.config.workbench ? (
+                  <div className="bg-secondary p-1 px-2 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm">
+                        {component.config.workbench.config?.server_params_list ? 
+                          `${component.config.workbench.config.server_params_list.length} MCP servers configured` : 
+                          "Workbench configured"}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        {onNavigate && (
+                          <Button
+                            type="text"
+                            icon={<Edit className="w-4 h-4" />}
+                            onClick={() =>
+                              onNavigate(
+                                "workbench",
+                                component.config.workbench?.label || "",
+                                "workbench"
+                              )
+                            }
+                          >
+                            Configure Servers
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {component.config.workbench.config?.server_params_list?.length > 0 && (
+                      <div className="mt-2 mb-1 space-y-1.5">
+                        {component.config.workbench.config.server_params_list.map((server: any, idx: number) => (
+                          <div key={idx} className="p-1.5 bg-tertiary/30 rounded text-xs">
+                            <div className="font-medium">{server.server_id}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {server.server_params?.command ? (
+                                <>
+                                  {server.server_params.command}{" "}
+                                  {Array.isArray(server.server_params.args)
+                                    ? server.server_params.args.join(" ")
+                                    : ""}
+                                </>
+                              ) : server.server_params?.url ? (
+                                server.server_params.url
+                              ) : (
+                                "Server configured"
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
+                    No MCP workbench configured
+                  </div>
+                )}
+              </div>
+
               <InputWithTooltip
                 label="System Message"
                 tooltip="System message for the agent"
@@ -592,137 +644,6 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </InputWithTooltip>
-
-              {/* Server Parameters Section */}
-              <DetailGroup title="MCP Server Parameters">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-primary">
-                      Connection Type
-                    </span>
-                    <div className="flex gap-2">
-                      <Button
-                        type={
-                          component.config.server_params?.command
-                            ? "primary"
-                            : "default"
-                        }
-                        size="small"
-                        onClick={() => {
-                          const currentParams = component.config.server_params || {};
-                          handleConfigUpdate("server_params", {
-                            ...currentParams,
-                            command: currentParams.command || [""],
-                            working_directory: currentParams.working_directory,
-                            environment: currentParams.environment,
-                            base_url: undefined,
-                            timeout: undefined,
-                            headers: undefined,
-                            cookies: undefined,
-                            auth: undefined,
-                          });
-                        }}
-                      >
-                        Stdio
-                      </Button>
-                      <Button
-                        type={
-                          component.config.server_params?.base_url
-                            ? "primary"
-                            : "default"
-                        }
-                        size="small"
-                        onClick={() => {
-                          const currentParams = component.config.server_params || {};
-                          handleConfigUpdate("server_params", {
-                            ...currentParams,
-                            base_url: currentParams.base_url || "",
-                            timeout: currentParams.timeout || 30.0,
-                            headers: currentParams.headers,
-                            cookies: currentParams.cookies,
-                            auth: currentParams.auth,
-                            command: undefined,
-                            working_directory: undefined,
-                            environment: undefined,
-                          });
-                        }}
-                      >
-                        SSE
-                      </Button>
-                    </div>
-                  </div>
-
-                  {component.config.server_params?.command && (
-                    <>
-                      <InputWithTooltip
-                        label="Command"
-                        tooltip="Command to execute the MCP server"
-                      >
-                        <Input
-                          value={Array.isArray(component.config.server_params.command) 
-                            ? component.config.server_params.command.join(" ") 
-                            : (component.config.server_params.command || "")}
-                          onChange={(e) => {
-                            const commands = e.target.value.split(" ").filter(Boolean);
-                            handleConfigUpdate("server_params", {
-                              ...component.config.server_params,
-                              command: commands,
-                            });
-                          }}
-                        />
-                      </InputWithTooltip>
-                      <InputWithTooltip
-                        label="Working Directory"
-                        tooltip="Working directory for the MCP server"
-                      >
-                        <Input
-                          value={component.config.server_params.working_directory || ""}
-                          onChange={(e) => {
-                            handleConfigUpdate("server_params", {
-                              ...component.config.server_params,
-                              working_directory: e.target.value,
-                            });
-                          }}
-                        />
-                      </InputWithTooltip>
-                    </>
-                  )}
-
-                  {component.config.server_params?.base_url && (
-                    <>
-                      <InputWithTooltip
-                        label="Base URL"
-                        tooltip="Base URL for the MCP server"
-                      >
-                        <Input
-                          value={component.config.server_params.base_url}
-                          onChange={(e) => {
-                            handleConfigUpdate("server_params", {
-                              ...component.config.server_params,
-                              base_url: e.target.value,
-                            });
-                          }}
-                        />
-                      </InputWithTooltip>
-                      <InputWithTooltip
-                        label="Timeout"
-                        tooltip="Timeout in seconds for MCP server requests"
-                      >
-                        <Input
-                          type="number"
-                          value={component.config.server_params.timeout || 30.0}
-                          onChange={(e) => {
-                            handleConfigUpdate("server_params", {
-                              ...component.config.server_params,
-                              timeout: parseFloat(e.target.value),
-                            });
-                          }}
-                        />
-                      </InputWithTooltip>
-                    </>
-                  )}
-                </div>
-              </DetailGroup>
 
               {/* Tools Section */}
               <div className="space-y-2">
@@ -781,7 +702,7 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   )}
                 </div>
               </div>
-
+              
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary">
                   Reflect on Tool Use
