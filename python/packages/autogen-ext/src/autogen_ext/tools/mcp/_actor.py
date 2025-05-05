@@ -53,7 +53,7 @@ class McpSessionActor(ComponentBase[BaseModel], Component[McpSessionActorConfig]
         if self._actor_task and self._actor_task.done():
             raise RuntimeError("MCP actor task crashed", self._actor_task.exception())
         fut: asyncio.Future[McpFuture] = asyncio.Future()
-        if type in {"list_tools", "shutdown"}:
+        if type in {"list_tools", "shutdown", "list_prompts"}:
             await self._command_queue.put({"type": type, "future": fut})
             res = await fut
         elif type == "call_tool":
@@ -83,6 +83,7 @@ class McpSessionActor(ComponentBase[BaseModel], Component[McpSessionActorConfig]
         try:
             async with create_mcp_server_session(self.server_params) as session:
                 await session.initialize()
+                self._session = session
                 while True:
                     cmd = await self._command_queue.get()
                     if cmd["type"] == "shutdown":
@@ -97,6 +98,12 @@ class McpSessionActor(ComponentBase[BaseModel], Component[McpSessionActorConfig]
                     elif cmd["type"] == "list_tools":
                         try:
                             result = session.list_tools()
+                            cmd["future"].set_result(result)
+                        except Exception as e:
+                            cmd["future"].set_exception(e)
+                    elif cmd["type"] == "list_prompts":
+                        try:
+                            result = session.list_prompts()
                             cmd["future"].set_result(result)
                         except Exception as e:
                             cmd["future"].set_exception(e)

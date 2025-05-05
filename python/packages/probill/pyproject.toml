@@ -15,7 +15,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "autogen-core>=0.4.9",
+    "autogen-core",
     "autogen-ext",
     "autogen-test-utils",
     "autogenstudio",
