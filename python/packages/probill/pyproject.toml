@@ -74,3 +74,8 @@ lint = "ruff check . --fix"
 pyright = "pyright"
 test = "pytest -n auto"
 check = ["fmt", "lint", "pyright", "test"]
+
+[dependency-groups]
+dev = [
+    "neo4j-graphrag>=1.4.0",
+]
