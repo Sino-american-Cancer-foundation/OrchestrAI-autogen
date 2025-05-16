@@ -2,7 +2,7 @@ import asyncio
 import logging
 import warnings
 
-from _agents import DomainAgent, input_adapter, output_adapter
+from _agents import DomainAgent, BidirectionalAdapter
 from _types import AppConfig, UserMessage, AssistantMessage, MessageChunk
 from _utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import ClosureAgent, TypeSubscription
@@ -40,33 +40,22 @@ async def main(config: AppConfig):
             knowledge_file="prompts/domain_knowledge.txt",
         ),
     )
+
+    bidirectional_adapter_type = await BidirectionalAdapter.register(
+        domain_runtime,
+        "bidirectional_adapter",
+        lambda: BidirectionalAdapter(),
+    )
+
     
     # Set up domain agent subscription for direct messages
     await domain_runtime.add_subscription(
         TypeSubscription(topic_type=config.domain_agent.topic_type, agent_type=domain_agent_type.type)
     )
     
-    # Register Input Adapter
-    await ClosureAgent.register_closure(
-        domain_runtime,
-        "input_adapter",
-        input_adapter,
-        subscriptions=lambda: [TypeSubscription(topic_type="domain_input", agent_type="input_adapter")],
-    )
-
-    # Register Output Adapter
-    # Subscribe to ALL messages from the domain agent topic type
-    await ClosureAgent.register_closure(
-        domain_runtime,
-        "output_adapter",
-        output_adapter,
-        subscriptions=lambda: [TypeSubscription(topic_type=config.domain_agent.topic_type, agent_type="output_adapter")],
-    )
-
-
-    # Also add a debug subscription to see all messages
+    # Set up subscription for the bidirectional adapter
     await domain_runtime.add_subscription(
-        TypeSubscription(topic_type=config.ui_agent.topic_type, agent_type="output_adapter")
+        TypeSubscription(topic_type="domain_input", agent_type=bidirectional_adapter_type.type)
     )
     
     # Wait until stopped

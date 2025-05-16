@@ -1,3 +1,4 @@
+import os
 import asyncio
 import random
 import json
@@ -38,6 +39,8 @@ class DomainAgent(RoutedAgent):
         super().__init__(description=description)
         
         # Load domain knowledge
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        knowledge_file = os.path.join(current_dir, knowledge_file)
         domain_knowledge = ""
         try:
             with open(knowledge_file, 'r', encoding='utf-8') as file:
@@ -47,6 +50,8 @@ class DomainAgent(RoutedAgent):
         
         # Combine system message with domain knowledge
         full_system_message = f"{system_message}\n\nDomain Knowledge:\n{domain_knowledge}"
+        full_system_message = f"\n\nDomain Knowledge:\n{domain_knowledge}"
+        print(f"--- Domain knowledge loaded: {domain_knowledge[:50]}...")
         self._system_message = SystemMessage(content=full_system_message)
         
         self._model_client = model_client
@@ -68,18 +73,12 @@ class DomainAgent(RoutedAgent):
         # Extract content
         assert isinstance(completion.content, str)
         response_content = completion.content
-        
         # Add to chat history
         self._chat_history.append(LLMAssistantMessage(content=response_content, source=self.id.type))
         
         # Return response
         print(f"--- DomainAgent responding with: {response_content[:50]}...")
         return AssistantMessage(content=response_content, source=self.id.type)
-    
-    async def send_message(self, message, recipient=None, **kwargs):
-        """Override send_message to log all outgoing messages."""
-        print(f"DEBUG: DomainAgent sending message to {recipient}: {message}")
-        return await super().send_message(message, recipient, **kwargs)
 
 class FormatProxyAgent(RoutedAgent):
     """Format Proxy Agent that handles WebSocket connections and audio transcription."""
@@ -300,45 +299,34 @@ class UIAgent(RoutedAgent):
     async def handle_message_chunk(self, message: MessageChunk, ctx: MessageContext) -> None:
         await self._on_message_chunk_func(message)
 
-
-# Closure Functions for Adapters
-async def input_adapter(ctx: ClosureContext, message: Any, msg_ctx: MessageContext) -> None:
-    """Input adapter: domain_input topic → domain agent
+class BidirectionalAdapter(RoutedAgent):
+    """A bidirectional adapter that connects Format Proxy Agent with Domain Agent."""
     
-    Intercepts all messages on domain_input topic and routes them to the domain agent.
-    """
-    # Only handle messages with a topic ID of domain_input
-    if not msg_ctx.topic_id or msg_ctx.topic_id.type != "domain_input":
-        return
+    def __init__(self, description: str = "Bidirectional Adapter") -> None:
+        super().__init__(description=description)
     
-    # Get the call_id from topic source
-    call_id = msg_ctx.topic_id.source
-    if is_call_id(call_id):
-        print(f"--- InputAdapter forwarding message to domain agent with key {call_id}")
+    @message_handler
+    async def handle_domain_input(self, message: UserMessage, ctx: MessageContext) -> None:
+        """Handle messages from domain_input topic and forward to domain agent."""
+        # Only process messages with the right topic type
+        if not ctx.topic_id or ctx.topic_id.type != "domain_input":
+            return
         
-        # Forward the message to domain agent with the call_id as the agent key
-        await ctx.send_message(message, AgentId("domain_agent", call_id))
-
-
-async def output_adapter(ctx: ClosureAgent, message: Any, msg_ctx: MessageContext) -> None:
-    """Domain Agent Output Monitor
-    
-    Monitors ALL responses from domain agent by topic subscription, not by direct message.
-    Uses agent key to determine if it's call-related.
-    """
-    # Check if this is a response from the domain agent - this might be ANY type of message
-    if not msg_ctx.sender:
-        return
-    
-    print(f"--- OutputAdapter received message from {msg_ctx.sender.type}:{msg_ctx.sender.key}")
-    
-    # If this is from the domain agent and has a call_id as the key, route it to domain_output
-    if msg_ctx.sender.type == "domain_agent" and is_call_id(msg_ctx.sender.key):
-        call_id = msg_ctx.sender.key
-        print(f"--- OutputAdapter publishing domain agent response to domain_output topic for {call_id}")
-        
-        # Forward the message to the domain_output topic
-        await ctx.publish_message(message, DefaultTopicId(type="domain_output", source=call_id))
+        # Get the call_id from topic source
+        call_id = ctx.topic_id.source
+        if is_call_id(call_id):
+            print(f"--- BidirectionalAdapter forwarding message to domain agent with key {call_id}")
+            
+            # Forward message to domain agent and get response
+            response = await self.send_message(message, AgentId("domain_agent", call_id))
+            
+            # Publish response to domain_output topic
+            if response:
+                print(f"--- BidirectionalAdapter publishing response to domain_output for {call_id}")
+                await self.publish_message(
+                    response, 
+                    DefaultTopicId(type="domain_output", source=call_id)
+                )
 
 
 # Helper Functions

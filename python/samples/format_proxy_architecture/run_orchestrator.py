@@ -50,9 +50,11 @@ async def main(config: AppConfig):
     # Send a test message to start the conversation (optional)
     await asyncio.sleep(5)  # Give time for other runtimes to start
     
+    input = "Hi make a phone call for me."
+    # input = "Hi, tell me a joke"
     Console().print("Sending initial test request to GroupChatManager...")
     await orchestrator_runtime.publish_message(
-        UserMessage(content="Hi make a phone call for me.", source="User"),
+        UserMessage(content=input, source="User"),
         DefaultTopicId(type=config.orchestrator.topic_type),
     )
     
