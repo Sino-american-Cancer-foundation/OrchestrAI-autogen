@@ -25,8 +25,7 @@ async def main(config: AppConfig):
     Console().print(Markdown("Starting **`Format Proxy Agent`**"))
     await fpa_runtime.start()
     
-    # Initialize MCP Workbench (in real implementation, this would connect to a real MCP server)
-    # In this simplified example, we'll create a workbench but won't connect it to a real server
+    # Initialize MCP Workbench
     workbench = McpWorkbench(SseServerParams(url="http://localhost:8931/sse"))
     await workbench.start()
     

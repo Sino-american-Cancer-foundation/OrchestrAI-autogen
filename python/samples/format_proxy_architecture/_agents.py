@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 import random
 import json
@@ -9,7 +10,7 @@ from typing import Dict, List, Callable, Awaitable, Optional, Any
 
 from autogen_core import (
     AgentId, DefaultTopicId, MessageContext, RoutedAgent, ClosureAgent, 
-    ClosureContext, message_handler, TypeSubscription
+    ClosureContext, message_handler, TypeSubscription, CancellationToken
 )
 from autogen_core.models import (
     AssistantMessage as LLMAssistantMessage, 
@@ -92,6 +93,7 @@ class FormatProxyAgent(RoutedAgent):
         super().__init__(description=description)
         self.workbench = workbench
         self.connections: Dict[str, websockets.WebSocketClientProtocol] = {}
+        self.running_calls: Dict[str, bool] = {}
         self._ui_config = ui_config
     
     @message_handler
@@ -108,104 +110,319 @@ class FormatProxyAgent(RoutedAgent):
                 ui_config=self._ui_config
             )
             
-            # TODO: Implement actual MCP tool call
-            # Mock WebSocket URL in this example - in production this would come from a real backend
-            websocket_url = f"ws://localhost:8080/calls/{message.call_id}"
-            print(f"--- Would connect to WebSocket URL: {websocket_url}")
+            # Use the MCP tool to make the call
+            call_result = await self.workbench.call_tool(
+                "make_call", 
+                arguments={
+                    "to_number": message.to_number,
+                    "information": message.context
+                },
+                cancellation_token=ctx.cancellation_token
+            )
             
-            # In a real implementation, we would connect to the WebSocket and keep receiving messages chunks and processing them to the domain agent
+            # Process the result properly
+            if call_result.is_error:
+                error_msg = "Call failed to initiate"
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=self.id.type,
+                    user_message=f"Error: {error_msg}",
+                    ui_config=self._ui_config
+                )
+                return AssistantMessage(content=json.dumps({"status": "error", "message": error_msg}), source=self.id.type)
             
-            # Since we're just simulating, create a mock message
-            await asyncio.sleep(2)  # Simulate connection delay
+            # Parse the result as JSON (assuming it's a JSON string)
+            try:
+                result_text = call_result.to_text()
+                call_data = json.loads(result_text)
+                
+                # Extract call details
+                call_sid = call_data.get("call_sid", "unknown")
+                websocket_url = call_data.get("websocket_url", "")
+                
+                if not websocket_url:
+                    error_msg = "No WebSocket URL returned from make_call"
+                    await publish_message_to_ui(
+                        runtime=self,
+                        source=self.id.type,
+                        user_message=f"Error: {error_msg}",
+                        ui_config=self._ui_config
+                    )
+                    return AssistantMessage(content=json.dumps({"status": "error", "message": error_msg}), source=self.id.type)
+                
+            except json.JSONDecodeError:
+                # If result is not JSON, use it as is
+                error_msg = f"Invalid response from make_call: {result_text}"
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=self.id.type,
+                    user_message=f"Error: {error_msg}",
+                    ui_config=self._ui_config
+                )
+                return AssistantMessage(content=json.dumps({"status": "error", "message": error_msg}), source=self.id.type)
             
-            # Publish a mock transcript
-            mock_transcript = "Hello, if you are using English, please press 1. If you are using Spanish, please press 2."
+            await publish_message_to_ui(
+                runtime=self,
+                source=self.id.type,
+                user_message=f"Call initiated with SID: {call_sid}",
+                ui_config=self._ui_config
+            )
+            
+            # Connect to the WebSocket
+            try:
+                self.connections[message.call_id] = await websockets.connect(websocket_url)
+                self.running_calls[message.call_id] = True
+                
+                # Start message processing for this call
+                asyncio.create_task(self._process_websocket_messages(message.call_id))
+                
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=self.id.type,
+                    user_message=f"Connected to WebSocket for call {message.call_id[:8]}",
+                    ui_config=self._ui_config
+                )
+                
+            except Exception as e:
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=self.id.type,
+                    user_message=f"WebSocket connection error: {str(e)}",
+                    ui_config=self._ui_config
+                )
+                return AssistantMessage(
+                    content=json.dumps({"status": "error", "message": f"WebSocket connection failed: {str(e)}"}),
+                    source=self.id.type
+                )
+            
+            # Return success response
+            return AssistantMessage(
+                content=json.dumps({
+                    "status": "success", 
+                    "call_id": message.call_id,
+                    "call_sid": call_sid
+                }),
+                source=self.id.type
+            )
+            
+        except Exception as e:
+            error_message = f"Error in call request handling: {str(e)}"
+            print(error_message)
+            await publish_message_to_ui(
+                runtime=self,
+                source=self.id.type,
+                user_message=error_message,
+                ui_config=self._ui_config
+            )
+            return AssistantMessage(
+                content=json.dumps({"status": "error", "message": error_message}),
+                source=self.id.type
+            )
+    
+    async def _process_websocket_messages(self, call_id: str) -> None:
+        """Process WebSocket messages for a specific call."""
+        if call_id not in self.connections or not self.connections[call_id]:
+            print(f"No WebSocket connection for call {call_id}")
+            return
+            
+        websocket = self.connections[call_id]
+        
+        try:
+            while self.running_calls.get(call_id, False):
+                # Wait for a message
+                try:
+                    message = await websocket.recv()
+                    data = json.loads(message)
+                except websockets.exceptions.ConnectionClosed:
+                    print(f"WebSocket connection closed for call {call_id}")
+                    self.running_calls[call_id] = False
+                    break
+                
+                # Process based on message type
+                msg_type = data.get('type')
+                
+                if msg_type == "speech_segment":
+                    # Process complete speech segment
+                    await self._handle_speech_segment(data, call_id)
+                    
+                elif msg_type == "call_started":
+                    stream_sid = data.get('data', {}).get('stream_sid', 'unknown')
+                    print(f"Call {call_id} started with stream SID: {stream_sid}")
+                    await publish_message_to_ui(
+                        runtime=self,
+                        source=f"{self.id.type} (Call {call_id[:8]})",
+                        user_message=f"Call started with stream SID: {stream_sid}",
+                        ui_config=self._ui_config
+                    )
+                    
+                elif msg_type == "call_status" and data.get('data', {}).get('status') == "terminating":
+                    eligibility = data.get('data', {}).get('eligibility', 'unknown')
+                    print(f"Call {call_id} terminating with eligibility: {eligibility}")
+                    await publish_message_to_ui(
+                        runtime=self,
+                        source=f"{self.id.type} (Call {call_id[:8]})",
+                        user_message=f"Call terminating with eligibility: {eligibility}",
+                        ui_config=self._ui_config
+                    )
+                    self.running_calls[call_id] = False
+                    
+                elif msg_type == "call_ended":
+                    status = data.get('data', {}).get('status', 'unknown')
+                    print(f"Call {call_id} ended with status: {status}")
+                    await publish_message_to_ui(
+                        runtime=self,
+                        source=f"{self.id.type} (Call {call_id[:8]})",
+                        user_message=f"Call ended with status: {status}",
+                        ui_config=self._ui_config
+                    )
+                    self.running_calls[call_id] = False
+                    
+        except Exception as e:
+            print(f"Error processing WebSocket messages for call {call_id}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            self.running_calls[call_id] = False
+        finally:
+            # Clean up resources
+            if call_id in self.connections and self.connections[call_id]:
+                await self.connections[call_id].close()
+                self.connections[call_id] = None
+
+    async def _handle_speech_segment(self, data: dict, call_id: str) -> None:
+        """Process a speech segment and route to domain agent."""
+        try:
+            # Extract audio data
+            payload = data.get('data', {}).get('payload')
+            if not payload:
+                print(f"No audio payload in speech segment for call {call_id}")
+                return
+                
+            # Use MCP tool to transcribe the audio
+            transcribe_result = await self.workbench.call_tool(
+                "transcribe_audio", 
+                arguments={
+                    "audio_data": payload,
+                    "model": "whisper"  # Use default model
+                },
+                cancellation_token=CancellationToken()
+            )
+            
+            if transcribe_result.is_error:
+                print(f"Transcription error for call {call_id}")
+                return
+                
+            # Parse the result as JSON
+            try:
+                result_text = transcribe_result.to_text()
+                result_data = json.loads(result_text)
+                transcript = result_data.get("text", "")
+            except json.JSONDecodeError:
+                # Use the raw text if not JSON
+                transcript = result_text
+            
+            if not transcript:
+                print(f"Empty transcript for call {call_id}")
+                return
+                
+            print(f"🎤 Transcribed for call {call_id}: {transcript}")
+            
+            # Send to UI
+            await publish_message_to_ui(
+                runtime=self,
+                source=f"Caller (Call {call_id[:8]})",
+                user_message=transcript,
+                ui_config=self._ui_config
+            )
+            
+            # Signal that we're generating a response
+            if call_id in self.connections and self.connections[call_id]:
+                await self.connections[call_id].send(json.dumps({
+                    "type": "generating_response",
+                    "data": {}
+                }))
             
             # Publish to domain_input topic with call_id as source
             await self.publish_message(
-                UserMessage(content=mock_transcript, source=message.call_id),
-                DefaultTopicId(type="domain_input", source=message.call_id)
+                UserMessage(content=transcript, source=call_id),
+                DefaultTopicId(type="domain_input", source=call_id)
             )
-            
-            # Send to UI that call is connected
-            await publish_message_to_ui(
-                runtime=self,
-                source=self.id.type,
-                user_message=f"Call connected! Received: '{mock_transcript}'",
-                ui_config=self._ui_config
-            )
-
-            # Return status as AssistantMessage instead of dict
-            status_content = json.dumps({"status": "success", "call_id": message.call_id})
-            return AssistantMessage(content=status_content, source=self.id.type)
             
         except Exception as e:
-            print(f"Error in call request handling: {e}")
-            await publish_message_to_ui(
-                runtime=self,
-                source=self.id.type,
-                user_message=f"Error initiating call: {str(e)}",
-                ui_config=self._ui_config
-            )
-            # Return error info as AssistantMessage
-            error_content = json.dumps({"status": "error", "message": str(e)})
-            return AssistantMessage(content=error_content, source=self.id.type)
-    
+            print(f"Error handling speech segment for call {call_id}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
     @message_handler
-    async def handle_domain_response(self, message: AssistantMessage, ctx: MessageContext) -> AssistantMessage:
+    async def handle_domain_response(self, message: AssistantMessage, ctx: MessageContext) -> None:
         """Handle responses from domain agents via domain_output topic."""
         
         if not ctx.topic_id or ctx.topic_id.type != "domain_output":
-            # Return empty response if not handled
-            return AssistantMessage(content="", source=self.id.type)
+            # Not handling this message
+            return
         
         call_id = ctx.topic_id.source
         if not is_call_id(call_id):
-            # Return empty response if not a call ID
-            return AssistantMessage(content="", source=self.id.type)
+            # Not a call ID
+            return
         
-        # Extract message content, regardless of message type
-        message_content = ""
-        if hasattr(message, "content"):
-            message_content = message.content
-        else:
-            # Try to convert message to string if it's not a recognized format
-            try:
-                message_content = str(message)
-            except:
-                message_content = "Received response in unknown format"
+        # Extract response content
+        response_content = message.content
+        
+        print(f"🤖 Domain agent response for call {call_id}: {response_content[:50]}...")
+        
+        # Send to UI
+        await publish_message_to_ui(
+            runtime=self,
+            source=f"Agent (Call {call_id[:8]})",
+            user_message=response_content,
+            ui_config=self._ui_config
+        )
+        
+        # Check if the WebSocket is still connected
+        if call_id not in self.connections or not self.connections[call_id]:
+            print(f"Cannot send response: WebSocket closed for call {call_id}")
+            return
             
-        print(f"--- FormatProxyAgent received response for call {call_id}: {message_content[:50]}...")
-        
-        # TODO: Implement actual WebSocket send
-        # In a real implementation we would send this to the WebSocket
-        # if call_id in self.connections:
-        #     await self.connections[call_id].send(json.dumps({
-        #         "type": "text_response", 
-        #         "data": {"text": message_content}
-        #     }))
-        
-        # Since we're just simulating, in real implementation UI would not receive this intermidiate message
-        await publish_message_to_ui(
-            runtime=self,
-            source=f"{self.id.type} (Call {call_id[:8]})",
-            user_message=f"Sending response to client: '{message_content}'",
-            ui_config=self._ui_config
-        )
-        
-        # TODO: Add some checking WebSocket connection status logic to handle the termination
-        # Simulate call ending after response
-        await asyncio.sleep(3)
-        await publish_message_to_ui(
-            runtime=self,
-            source=self.id.type,
-            user_message=f"Call {call_id[:8]} ended",
-            ui_config=self._ui_config
-        )
-
-        # Return successful response as AssistantMessage
-        status_content = json.dumps({"status": "success", "call_id": call_id})
-        return AssistantMessage(content=status_content, source=self.id.type)
+        try:
+            # Process response sentence by sentence for streaming
+            current_sentence = ""
+            for char in response_content:
+                current_sentence += char
+                
+                # Check for sentence completion (ends with period, question mark, or exclamation)
+                if re.search(r'[.!?]\s*$', current_sentence):
+                    # Send each complete sentence as it comes in
+                    await self.connections[call_id].send(json.dumps({
+                        "type": "partial_response",
+                        "data": {
+                            "text": current_sentence.strip()
+                        }
+                    }))
+                    # Small delay to simulate streaming
+                    await asyncio.sleep(0.1)
+                    current_sentence = ""
+            
+            # Send any remaining text as a final sentence
+            if current_sentence.strip():
+                await self.connections[call_id].send(json.dumps({
+                    "type": "partial_response",
+                    "data": {
+                        "text": current_sentence.strip()
+                    }
+                }))
+            
+            # Send the complete response
+            await self.connections[call_id].send(json.dumps({
+                "type": "text_response",
+                "data": {
+                    "text": response_content
+                }
+            }))
+            
+        except Exception as e:
+            print(f"Error sending response to WebSocket for call {call_id}: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 class GroupChatManager(RoutedAgent):
     """Orchestrator that routes requests to either FPA or domain agent."""
@@ -239,7 +456,7 @@ class GroupChatManager(RoutedAgent):
         if task_type == "call_request":
             # SCENARIO 1: Phone call request
             # Extract phone number and context (simplified)
-            phone_number = "+1234567890"  # Mock phone number
+            phone_number = "+12132841509"  # Mock phone number
             context = message.content
             
             # Generate unique call ID
