@@ -237,9 +237,10 @@ class FormatProxyAgent(RoutedAgent):
                     print(f"WebSocket connection closed for call {call_id}")
                     self.running_calls[call_id] = False
                     break
-                
+
                 # Process based on message type
                 msg_type = data.get('type')
+                print(f"Received message for call {call_id}: {msg_type}")
                 
                 if msg_type == "speech_segment":
                     # Process complete speech segment
@@ -285,6 +286,7 @@ class FormatProxyAgent(RoutedAgent):
         finally:
             # Clean up resources
             if call_id in self.connections and self.connections[call_id]:
+                print(f"DEBUG: Closing WebSocket connection for call {call_id}")
                 await self.connections[call_id].close()
                 self.connections[call_id] = None
 
@@ -349,8 +351,6 @@ class FormatProxyAgent(RoutedAgent):
             
         except Exception as e:
             print(f"Error handling speech segment for call {call_id}: {str(e)}")
-            import traceback
-            traceback.print_exc()
 
     @message_handler
     async def handle_domain_response(self, message: AssistantMessage, ctx: MessageContext) -> None:
@@ -358,11 +358,13 @@ class FormatProxyAgent(RoutedAgent):
         
         if not ctx.topic_id or ctx.topic_id.type != "domain_output":
             # Not handling this message
+            print(f"DEBUG: message not for domain_output topic: {ctx.topic_id}")
             return
         
-        call_id = ctx.topic_id.source
+        call_id = message.source
         if not is_call_id(call_id):
             # Not a call ID
+            print(f"DEBUG: message not for call_id: {call_id}")
             return
         
         # Extract response content
@@ -378,38 +380,38 @@ class FormatProxyAgent(RoutedAgent):
             ui_config=self._ui_config
         )
         
-        # Check if the WebSocket is still connected
+        # # Check if the WebSocket is still connected
         if call_id not in self.connections or not self.connections[call_id]:
             print(f"Cannot send response: WebSocket closed for call {call_id}")
             return
             
         try:
-            # Process response sentence by sentence for streaming
-            current_sentence = ""
-            for char in response_content:
-                current_sentence += char
+            # # Process response sentence by sentence for streaming
+            # current_sentence = ""
+            # for char in response_content:
+            #     current_sentence += char
                 
-                # Check for sentence completion (ends with period, question mark, or exclamation)
-                if re.search(r'[.!?]\s*$', current_sentence):
-                    # Send each complete sentence as it comes in
-                    await self.connections[call_id].send(json.dumps({
-                        "type": "partial_response",
-                        "data": {
-                            "text": current_sentence.strip()
-                        }
-                    }))
-                    # Small delay to simulate streaming
-                    await asyncio.sleep(0.1)
-                    current_sentence = ""
+            #     # Check for sentence completion (ends with period, question mark, or exclamation)
+            #     if re.search(r'[.!?]\s*$', current_sentence):
+            #         # Send each complete sentence as it comes in
+            #         await self.connections[call_id].send(json.dumps({
+            #             "type": "partial_response",
+            #             "data": {
+            #                 "text": current_sentence.strip()
+            #             }
+            #         }))
+            #         # Small delay to simulate streaming
+            #         await asyncio.sleep(0.1)
+            #         current_sentence = ""
             
-            # Send any remaining text as a final sentence
-            if current_sentence.strip():
-                await self.connections[call_id].send(json.dumps({
-                    "type": "partial_response",
-                    "data": {
-                        "text": current_sentence.strip()
-                    }
-                }))
+            # # Send any remaining text as a final sentence
+            # if current_sentence.strip():
+            #     await self.connections[call_id].send(json.dumps({
+            #         "type": "partial_response",
+            #         "data": {
+            #             "text": current_sentence.strip()
+            #         }
+            #     }))
             
             # Send the complete response
             await self.connections[call_id].send(json.dumps({
@@ -418,6 +420,7 @@ class FormatProxyAgent(RoutedAgent):
                     "text": response_content
                 }
             }))
+            print(f"Sent response to WebSocket for call {call_id}")
             
         except Exception as e:
             print(f"Error sending response to WebSocket for call {call_id}: {str(e)}")
@@ -534,6 +537,7 @@ class BidirectionalAdapter(RoutedAgent):
         if is_call_id(call_id):
             print(f"--- BidirectionalAdapter forwarding message to domain agent with key {call_id}")
             
+            # TODO: Make this response STREAMING
             # Forward message to domain agent and get response
             response = await self.send_message(message, AgentId("domain_agent", call_id))
             
@@ -541,8 +545,12 @@ class BidirectionalAdapter(RoutedAgent):
             if response:
                 print(f"--- BidirectionalAdapter publishing response to domain_output for {call_id}")
                 await self.publish_message(
-                    response, 
-                    DefaultTopicId(type="domain_output", source=call_id)
+                    AssistantMessage(
+                        content=response.content,
+                        # Embed the call_id in the message itself 
+                        source=call_id
+                    ), 
+                    DefaultTopicId(type="domain_output", source="default")
                 )
 
 
