@@ -2,10 +2,10 @@ import asyncio
 import logging
 import warnings
 
-from _agents import DomainAgent, BidirectionalAdapter
+from _agents import DomainAgent
 from _types import AppConfig, UserMessage, AssistantMessage, MessageChunk
 from _utils import get_serializers, load_config, set_all_log_levels
-from autogen_core import ClosureAgent, TypeSubscription
+from autogen_core import TypeSubscription
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from rich.console import Console
@@ -14,7 +14,7 @@ from rich.markdown import Markdown
 set_all_log_levels(logging.WARNING)
 
 async def main(config: AppConfig):
-    """Start the Domain Agent runtime with adapters."""
+    """Start the Domain Agent runtime."""
     # Initialize runtime
     domain_runtime = GrpcWorkerAgentRuntime(host_address=config.host.address)
     domain_runtime.add_message_serializer(
@@ -22,7 +22,7 @@ async def main(config: AppConfig):
     )
     
     # Start runtime
-    Console().print(Markdown("Starting **`Domain Agent with Adapters`**"))
+    Console().print(Markdown("Starting **`Domain Agent`**"))
     await domain_runtime.start()
     
     # Initialize model client
@@ -40,22 +40,10 @@ async def main(config: AppConfig):
             knowledge_file="prompts/domain_knowledge.txt",
         ),
     )
-
-    bidirectional_adapter_type = await BidirectionalAdapter.register(
-        domain_runtime,
-        "bidirectional_adapter",
-        lambda: BidirectionalAdapter(),
-    )
-
     
     # Set up domain agent subscription for direct messages
     await domain_runtime.add_subscription(
         TypeSubscription(topic_type=config.domain_agent.topic_type, agent_type=domain_agent_type.type)
-    )
-    
-    # Set up subscription for the bidirectional adapter
-    await domain_runtime.add_subscription(
-        TypeSubscription(topic_type="domain_input", agent_type=bidirectional_adapter_type.type)
     )
     
     # Wait until stopped

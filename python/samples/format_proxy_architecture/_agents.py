@@ -9,8 +9,8 @@ import base64
 from typing import Dict, List, Callable, Awaitable, Optional, Any
 
 from autogen_core import (
-    AgentId, DefaultTopicId, MessageContext, RoutedAgent, ClosureAgent, 
-    ClosureContext, message_handler, TypeSubscription, CancellationToken
+    AgentId, DefaultTopicId, MessageContext, RoutedAgent, 
+    message_handler, CancellationToken
 )
 from autogen_core.models import (
     AssistantMessage as LLMAssistantMessage, 
@@ -20,7 +20,7 @@ from autogen_core.models import (
 from autogen_ext.tools.mcp import McpWorkbench
 
 from _types import (
-    MessageChunk, UserMessage, AssistantMessage, GroupChatMessage, CallRequest,
+    MessageChunk, UserMessage, AssistantMessage, CallRequest,
     UIAgentConfig
 )
 from _utils import is_call_id
@@ -291,7 +291,7 @@ class FormatProxyAgent(RoutedAgent):
                 self.connections[call_id] = None
 
     async def _handle_speech_segment(self, data: dict, call_id: str) -> None:
-        """Process a speech segment and route to domain agent."""
+        """Process a speech segment and directly communicate with domain agent."""
         try:
             # Extract audio data
             payload = data.get('data', {}).get('payload')
@@ -304,7 +304,7 @@ class FormatProxyAgent(RoutedAgent):
                 "transcribe_audio", 
                 arguments={
                     "audio_data": payload,
-                    "model": "whisper"  # Use default model
+                    "model": "whisper"
                 },
                 cancellation_token=CancellationToken()
             )
@@ -313,13 +313,12 @@ class FormatProxyAgent(RoutedAgent):
                 print(f"Transcription error for call {call_id}")
                 return
                 
-            # Parse the result as JSON
+            # Parse the result
             try:
                 result_text = transcribe_result.to_text()
                 result_data = json.loads(result_text)
                 transcript = result_data.get("text", "")
             except json.JSONDecodeError:
-                # Use the raw text if not JSON
                 transcript = result_text
             
             if not transcript:
@@ -343,87 +342,37 @@ class FormatProxyAgent(RoutedAgent):
                     "data": {}
                 }))
             
-            # Publish to domain_input topic with call_id as source
-            await self.publish_message(
+            # DIRECT COMMUNICATION: Send directly to domain agent and get response
+            response = await self.send_message(
                 UserMessage(content=transcript, source=call_id),
-                DefaultTopicId(type="domain_input", source=call_id)
+                AgentId("domain_agent", call_id)
             )
+            
+            # Process response directly
+            if response:
+                response_content = response.content
+                print(f"🤖 Domain agent response for call {call_id}: {response_content[:50]}...")
+                
+                # Send to UI
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=f"Agent (Call {call_id[:8]})",
+                    user_message=response_content,
+                    ui_config=self._ui_config
+                )
+                
+                # Send to WebSocket
+                if call_id in self.connections and self.connections[call_id]:
+                    await self.connections[call_id].send(json.dumps({
+                        "type": "text_response",
+                        "data": {
+                            "text": response_content
+                        }
+                    }))
+                    print(f"Sent response to WebSocket for call {call_id}")
             
         except Exception as e:
             print(f"Error handling speech segment for call {call_id}: {str(e)}")
-
-    @message_handler
-    async def handle_domain_response(self, message: AssistantMessage, ctx: MessageContext) -> None:
-        """Handle responses from domain agents via domain_output topic."""
-        
-        if not ctx.topic_id or ctx.topic_id.type != "domain_output":
-            # Not handling this message
-            print(f"DEBUG: message not for domain_output topic: {ctx.topic_id}")
-            return
-        
-        call_id = message.source
-        if not is_call_id(call_id):
-            # Not a call ID
-            print(f"DEBUG: message not for call_id: {call_id}")
-            return
-        
-        # Extract response content
-        response_content = message.content
-        
-        print(f"🤖 Domain agent response for call {call_id}: {response_content[:50]}...")
-        
-        # Send to UI
-        await publish_message_to_ui(
-            runtime=self,
-            source=f"Agent (Call {call_id[:8]})",
-            user_message=response_content,
-            ui_config=self._ui_config
-        )
-        
-        # # Check if the WebSocket is still connected
-        if call_id not in self.connections or not self.connections[call_id]:
-            print(f"Cannot send response: WebSocket closed for call {call_id}")
-            return
-            
-        try:
-            # # Process response sentence by sentence for streaming
-            # current_sentence = ""
-            # for char in response_content:
-            #     current_sentence += char
-                
-            #     # Check for sentence completion (ends with period, question mark, or exclamation)
-            #     if re.search(r'[.!?]\s*$', current_sentence):
-            #         # Send each complete sentence as it comes in
-            #         await self.connections[call_id].send(json.dumps({
-            #             "type": "partial_response",
-            #             "data": {
-            #                 "text": current_sentence.strip()
-            #             }
-            #         }))
-            #         # Small delay to simulate streaming
-            #         await asyncio.sleep(0.1)
-            #         current_sentence = ""
-            
-            # # Send any remaining text as a final sentence
-            # if current_sentence.strip():
-            #     await self.connections[call_id].send(json.dumps({
-            #         "type": "partial_response",
-            #         "data": {
-            #             "text": current_sentence.strip()
-            #         }
-            #     }))
-            
-            # Send the complete response
-            await self.connections[call_id].send(json.dumps({
-                "type": "text_response",
-                "data": {
-                    "text": response_content
-                }
-            }))
-            print(f"Sent response to WebSocket for call {call_id}")
-            
-        except Exception as e:
-            print(f"Error sending response to WebSocket for call {call_id}: {str(e)}")
             import traceback
             traceback.print_exc()
 
@@ -518,40 +467,6 @@ class UIAgent(RoutedAgent):
     @message_handler
     async def handle_message_chunk(self, message: MessageChunk, ctx: MessageContext) -> None:
         await self._on_message_chunk_func(message)
-
-class BidirectionalAdapter(RoutedAgent):
-    """A bidirectional adapter that connects Format Proxy Agent with Domain Agent."""
-    
-    def __init__(self, description: str = "Bidirectional Adapter") -> None:
-        super().__init__(description=description)
-    
-    @message_handler
-    async def handle_domain_input(self, message: UserMessage, ctx: MessageContext) -> None:
-        """Handle messages from domain_input topic and forward to domain agent."""
-        # Only process messages with the right topic type
-        if not ctx.topic_id or ctx.topic_id.type != "domain_input":
-            return
-        
-        # Get the call_id from topic source
-        call_id = ctx.topic_id.source
-        if is_call_id(call_id):
-            print(f"--- BidirectionalAdapter forwarding message to domain agent with key {call_id}")
-            
-            # TODO: Make this response STREAMING
-            # Forward message to domain agent and get response
-            response = await self.send_message(message, AgentId("domain_agent", call_id))
-            
-            # Publish response to domain_output topic
-            if response:
-                print(f"--- BidirectionalAdapter publishing response to domain_output for {call_id}")
-                await self.publish_message(
-                    AssistantMessage(
-                        content=response.content,
-                        # Embed the call_id in the message itself 
-                        source=call_id
-                    ), 
-                    DefaultTopicId(type="domain_output", source="default")
-                )
 
 
 # Helper Functions

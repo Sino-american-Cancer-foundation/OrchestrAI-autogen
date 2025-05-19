@@ -40,12 +40,9 @@ async def main(config: AppConfig):
         ),
     )
     
-    # Set up subscriptions
+    # Set up subscriptions - removed domain_output subscription
     await fpa_runtime.add_subscription(
         TypeSubscription(topic_type=config.fpa.topic_type, agent_type=fpa_agent_type.type)
-    )
-    await fpa_runtime.add_subscription(
-        TypeSubscription(topic_type="domain_output", agent_type=fpa_agent_type.type)
     )
     await fpa_runtime.add_subscription(
         TypeSubscription(topic_type=config.ui_agent.topic_type, agent_type=fpa_agent_type.type)
@@ -54,6 +51,7 @@ async def main(config: AppConfig):
     # Wait until stopped
     await fpa_runtime.stop_when_signal()
     await workbench.stop()
+
 
 if __name__ == "__main__":
     warnings.filterwarnings("ignore", category=UserWarning)
