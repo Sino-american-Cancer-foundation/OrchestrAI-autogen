@@ -30,6 +30,8 @@ class CallRequest(BaseModel):
     call_id: str
     to_number: str
     context: str
+    instruction_prompt_id: Optional[str] = None
+    patient_info_prompt_id: Optional[str] = None
 
 
 class GroupChatMessage(BaseModel):

@@ -52,13 +52,8 @@ async def main(config: AppConfig):
     
     input = """
             You are calling to check eligibility for patient Lisa Silina with Blue Cross Blue Shield.
-            Date of birth: August 3, 1988
-            Member ID: E01257465
-            Physician: Dr. Lev Gertsik
-            NPI: 1659517803
-            Contact number: 626-676-5402
             """
-    input = "Hi, tell me a joke"
+    # input = "Hi, tell me a joke"
     Console().print("Sending initial test request to GroupChatManager...")
     await orchestrator_runtime.publish_message(
         UserMessage(content=input, source="User"),

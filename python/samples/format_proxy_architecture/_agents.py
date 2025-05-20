@@ -95,12 +95,17 @@ class FormatProxyAgent(RoutedAgent):
         self.connections: Dict[str, websockets.WebSocketClientProtocol] = {}
         self.running_calls: Dict[str, bool] = {}
         self._ui_config = ui_config
+        self.call_prompts: Dict[str, Dict[str, str]] = {}
     
     @message_handler
     async def handle_call_request(self, message: CallRequest, ctx: MessageContext) -> AssistantMessage:
         """Handle call requests from the orchestrator."""
         print(f"\n--- FormatProxyAgent handling call request: {message.call_id}")
-        
+        # Load prompts for this call if specified
+        if hasattr(message, 'instruction_prompt_id') and message.instruction_prompt_id or \
+           hasattr(message, 'patient_info_prompt_id') and message.patient_info_prompt_id:
+            await self._load_prompts_for_call(message.call_id, message)
+
         try:
             # Send to UI that we're initiating a call
             await publish_message_to_ui(
@@ -218,7 +223,7 @@ class FormatProxyAgent(RoutedAgent):
                 content=json.dumps({"status": "error", "message": error_message}),
                 source=self.id.type
             )
-    
+
     async def _process_websocket_messages(self, call_id: str) -> None:
         """Process WebSocket messages for a specific call."""
         if call_id not in self.connections or not self.connections[call_id]:
@@ -334,10 +339,19 @@ class FormatProxyAgent(RoutedAgent):
                 user_message=transcript,
                 ui_config=self._ui_config
             )
+
+            # Add instruction/personal info prompt if available
+            if call_id in self.call_prompts:
+                composed_message = self._compose_prompt(transcript, call_id)
+                print(f"Composed message with prompts for call {call_id}")
+            else:
+                composed_message = transcript
+            
+            print(f"Composed message for call {call_id}: {composed_message[:50]}...")
             
             # DIRECT COMMUNICATION: Send directly to domain agent and get response
             response = await self.send_message(
-                UserMessage(content=transcript, source=call_id),
+                UserMessage(content=composed_message, source=call_id),
                 AgentId("domain_agent", call_id)
             )
             
@@ -368,6 +382,57 @@ class FormatProxyAgent(RoutedAgent):
             print(f"Error handling speech segment for call {call_id}: {str(e)}")
             import traceback
             traceback.print_exc()
+        
+    async def _load_prompts_for_call(self, call_id: str, request: CallRequest):
+        """Load prompts from MCP for this call."""
+        self.call_prompts[call_id] = {}
+        
+        # Load instruction prompt if specified
+        if hasattr(request, 'instruction_prompt_id') and request.instruction_prompt_id:
+            result = await self.workbench.call_tool(
+                "prompt_get",
+                arguments={"id": request.instruction_prompt_id},
+                cancellation_token=CancellationToken()
+            )
+            print(f"Result from prompt_get: {result}")
+            if not result.is_error:
+                data = json.loads(result.to_text())
+                if data.get("status") == "success":
+                    self.call_prompts[call_id]["instruction"] = data.get("content", "")
+                    print(f"Loaded instruction prompt for call {call_id}")
+        
+        # Load patient info prompt if specified
+        if hasattr(request, 'patient_info_prompt_id') and request.patient_info_prompt_id:
+            result = await self.workbench.call_tool(
+                "prompt_get",
+                arguments={"id": request.patient_info_prompt_id},
+                cancellation_token=CancellationToken()
+            )
+            if not result.is_error:
+                data = json.loads(result.to_text())
+                if data.get("status") == "success":
+                    self.call_prompts[call_id]["patient_info"] = data.get("content", "")
+                    print(f"Loaded patient info prompt for call {call_id}")
+    
+    def _compose_prompt(self, transcript: str, call_id: str) -> str:
+        """Compose a full prompt including instructions and patient info."""
+        prompts = self.call_prompts.get(call_id, {})
+        
+        composed = ""
+        
+        # Add instruction prompt if available
+        if "instruction" in prompts:
+            composed += f"INSTRUCTIONS:\n{prompts['instruction']}\n\n"
+            
+        # Add patient info if available
+        if "patient_info" in prompts:
+            composed += f"PATIENT INFORMATION:\n{prompts['patient_info']}\n\n"
+            
+        # Add the actual transcript
+        composed += f"CALLER SAID:\n{transcript}"
+        
+        return composed
+
 
 class GroupChatManager(RoutedAgent):
     """Orchestrator that routes requests to either FPA or domain agent."""
@@ -407,17 +472,27 @@ class GroupChatManager(RoutedAgent):
             # Generate unique call ID
             call_id = str(uuid.uuid4())
             
+            # Select appropriate prompts for this call
+            instruction_prompt_id = "eligibility_check"
+            patient_info_prompt_id = "sample_patient"
+            
             # Inform UI
             await publish_message_to_ui(
                 runtime=self,
                 source=self.id.type,
-                user_message=f"Initiating call scenario with ID {call_id[:8]}",
+                user_message=f"Initiating call scenario with ID {call_id[:8]} using prompts: {instruction_prompt_id}, {patient_info_prompt_id}",
                 ui_config=self._ui_config
             )
             
-            # Route through FormatProxyAgent
+            # Route through FormatProxyAgent with prompt IDs
             await self.send_message(
-                CallRequest(call_id=call_id, to_number=phone_number, context=context),
+                CallRequest(
+                    call_id=call_id, 
+                    to_number=phone_number, 
+                    context=context,
+                    instruction_prompt_id=instruction_prompt_id,
+                    patient_info_prompt_id=patient_info_prompt_id
+                ),
                 AgentId("format_proxy", "default")
             )
             
