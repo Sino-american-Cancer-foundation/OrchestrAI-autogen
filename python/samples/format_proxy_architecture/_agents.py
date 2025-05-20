@@ -96,6 +96,8 @@ class FormatProxyAgent(RoutedAgent):
         self.running_calls: Dict[str, bool] = {}
         self._ui_config = ui_config
         self.call_prompts: Dict[str, Dict[str, str]] = {}
+        # Add conversation history tracking
+        self.call_conversations: Dict[str, List[Dict[str, str]]] = {}
     
     @message_handler
     async def handle_call_request(self, message: CallRequest, ctx: MessageContext) -> AssistantMessage:
@@ -261,27 +263,19 @@ class FormatProxyAgent(RoutedAgent):
                         ui_config=self._ui_config
                     )
                     
-                elif msg_type == "call_status" and data.get('data', {}).get('status') == "terminating":
+                elif msg_type == "call_ended":
                     eligibility = data.get('data', {}).get('eligibility', 'unknown')
-                    print(f"Call {call_id} terminating with eligibility: {eligibility}")
+                    print(f"Call {call_id} erminating with eligibility: {eligibility}")
                     await publish_message_to_ui(
                         runtime=self,
                         source=f"{self.id.type} (Call {call_id[:8]})",
-                        user_message=f"Call terminating with eligibility: {eligibility}",
+                        user_message=f"Call {call_id} ended with eligibility: {eligibility}",
                         ui_config=self._ui_config
                     )
                     self.running_calls[call_id] = False
                     
-                elif msg_type == "call_ended":
-                    status = data.get('data', {}).get('status', 'unknown')
-                    print(f"Call {call_id} ended with status: {status}")
-                    await publish_message_to_ui(
-                        runtime=self,
-                        source=f"{self.id.type} (Call {call_id[:8]})",
-                        user_message=f"Call ended with status: {status}",
-                        ui_config=self._ui_config
-                    )
-                    self.running_calls[call_id] = False
+                    # Generate and send summary
+                    await self._generate_call_summary(call_id)
                     
         except Exception as e:
             print(f"Error processing WebSocket messages for call {call_id}: {str(e)}")
@@ -294,6 +288,11 @@ class FormatProxyAgent(RoutedAgent):
                 print(f"DEBUG: Closing WebSocket connection for call {call_id}")
                 await self.connections[call_id].close()
                 self.connections[call_id] = None
+                
+            # Conversation history cleanup
+            if call_id in self.call_conversations:
+                print(f"DEBUG: Cleaning up conversation history for call {call_id}")
+                del self.call_conversations[call_id]
 
     async def _handle_speech_segment(self, data: dict, call_id: str) -> None:
         """Process a speech segment and directly communicate with domain agent."""
@@ -347,19 +346,33 @@ class FormatProxyAgent(RoutedAgent):
             else:
                 composed_message = transcript
             
-            print(f"Composed message for call {call_id}: {composed_message[:50]}...")
             
             # DIRECT COMMUNICATION: Send directly to domain agent and get response
             response = await self.send_message(
                 UserMessage(content=composed_message, source=call_id),
                 AgentId("domain_agent", call_id)
             )
+
+
             
             # Process response directly
             if response:
                 response_content = response.content
                 print(f"🤖 Domain agent response for call {call_id}: {response_content[:50]}...")
                 
+                # Store conversation turn in history
+                if call_id not in self.call_conversations:
+                    self.call_conversations[call_id] = []
+                
+                self.call_conversations[call_id].append({
+                    "role": "Callee",
+                    "content": transcript
+                })
+                self.call_conversations[call_id].append({
+                    "role": "assistant", 
+                    "content": response_content
+                })
+
                 # Send to UI
                 await publish_message_to_ui(
                     runtime=self,
@@ -432,6 +445,52 @@ class FormatProxyAgent(RoutedAgent):
         composed += f"CALLER SAID:\n{transcript}"
         
         return composed
+    
+    async def _generate_call_summary(self, call_id: str) -> None:
+        """Generate a summary of the call and send it to UI."""
+        if call_id not in self.call_conversations or not self.call_conversations[call_id]:
+            await publish_message_to_ui(
+                runtime=self,
+                source=f"Summary (Call {call_id[:8]})",
+                user_message="No conversation data available to summarize.",
+                ui_config=self._ui_config
+            )
+            return
+        
+        # Create a prompt for the domain agent to generate a summary
+        conversation = self.call_conversations[call_id]
+        summary_prompt = f"Please provide a concise summary of our conversation, including key points and outcomes. CONVERSATION:\n {conversation}"
+        
+        try:
+            # Request summary from domain agent
+            summary_response = await self.send_message(
+                UserMessage(content=summary_prompt, source=call_id),
+                AgentId("domain_agent", call_id)
+            )
+            
+            if summary_response:
+                summary_content = summary_response.content
+                
+                # Send the summary to UI
+                await publish_message_to_ui(
+                    runtime=self,
+                    source=f"Call Summary ({call_id[:8]})",
+                    user_message=f"📝 **CALL SUMMARY**\n\n{summary_content}",
+                    ui_config=self._ui_config
+                )
+                
+                # Clean up conversation history
+                del self.call_conversations[call_id]
+                
+        except Exception as e:
+            error_message = f"Error generating call summary: {str(e)}"
+            print(error_message)
+            await publish_message_to_ui(
+                runtime=self,
+                source=f"Summary (Call {call_id[:8]})",
+                user_message=f"Error generating summary: {str(e)}",
+                ui_config=self._ui_config
+            )
 
 
 class GroupChatManager(RoutedAgent):

@@ -51,9 +51,9 @@ async def main(config: AppConfig):
     await asyncio.sleep(5)  # Give time for other runtimes to start
     
     input = """
-            You are calling to check eligibility for patient Lisa Silina with Blue Cross Blue Shield.
+            You are calling to check eligibility for patient John Doe with Blue Cross Blue Shield.
             """
-    # input = "Hi, tell me a joke"
+    # input = "Hi, tell me something about health insurance."
     Console().print("Sending initial test request to GroupChatManager...")
     await orchestrator_runtime.publish_message(
         UserMessage(content=input, source="User"),
