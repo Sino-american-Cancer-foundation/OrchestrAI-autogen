@@ -335,13 +335,6 @@ class FormatProxyAgent(RoutedAgent):
                 ui_config=self._ui_config
             )
             
-            # Signal that we're generating a response
-            if call_id in self.connections and self.connections[call_id]:
-                await self.connections[call_id].send(json.dumps({
-                    "type": "generating_response",
-                    "data": {}
-                }))
-            
             # DIRECT COMMUNICATION: Send directly to domain agent and get response
             response = await self.send_message(
                 UserMessage(content=transcript, source=call_id),
