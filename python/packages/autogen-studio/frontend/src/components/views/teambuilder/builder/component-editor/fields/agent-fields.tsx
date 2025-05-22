@@ -11,6 +11,8 @@ import {
   isAssistantAgent,
   isUserProxyAgent,
   isWebSurferAgent,
+  isMcpHostAgent,
+  isMcpsWorkbench,
 } from "../../../../../types/guards";
 import DetailGroup from "../detailgroup";
 
@@ -503,17 +505,6 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </InputWithTooltip>
-              <InputWithTooltip
-                label="Test Value"
-                tooltip="a test for customized value"
-              >
-                <Input
-                  value={component.config.test_value || ""}
-                  onChange={(e) =>
-                    handleConfigUpdate("test_value", e.target.value)
-                  }
-                />
-              </InputWithTooltip>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-primary">
                   Resize Viewport
@@ -525,6 +516,173 @@ export const AgentFields: React.FC<AgentFieldsProps> = ({
                   }
                 />
               </div>
+            </>
+          )}
+
+          {isMcpHostAgent(component) && (
+            <>
+              <InputWithTooltip
+                label="Name"
+                tooltip="Name of the MCP host agent"
+                required
+              >
+                <Input
+                  value={component.config.name}
+                  onChange={(e) => handleConfigUpdate("name", e.target.value)}
+                />
+              </InputWithTooltip>
+
+              {/* Model Client Section */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-primary">
+                  Model Client
+                </span>
+                {component.config.model_client ? (
+                  <div className="bg-secondary p-1 px-2 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">
+                        {component.config.model_client.config.model}
+                      </span>
+                      <div className="flex items-center justify-between">
+                        {onNavigate && (
+                          <Button
+                            type="text"
+                            icon={<Edit className="w-4 h-4" />}
+                            onClick={() =>
+                              onNavigate(
+                                "model",
+                                component.config.model_client?.label || "",
+                                "model_client"
+                              )
+                            }
+                          >
+                            Configure Model
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
+                    No model configured
+                  </div>
+                )}
+              </div>
+
+              {/* Workbench Section */}
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-primary">
+                  MCP Workbench
+                </span>
+                {component.config.workbench ? (
+                  <div className="bg-secondary p-1 px-2 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm">
+                        {component.config.workbench.config?.server_params_list ? 
+                          `${component.config.workbench.config.server_params_list.length} MCP servers configured` : 
+                          "Workbench configured"}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        {onNavigate && (
+                          <Button
+                            type="text"
+                            icon={<Edit className="w-4 h-4" />}
+                            onClick={() =>
+                              onNavigate(
+                                "workbench",
+                                component.config.workbench?.label || "",
+                                "workbench"
+                              )
+                            }
+                          >
+                            Configure Servers
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {component.config.workbench.config?.server_params_list?.length > 0 && (
+                      <div className="mt-2 mb-1 space-y-1.5">
+                        {component.config.workbench.config.server_params_list.map((server: any, idx: number) => (
+                          <div key={idx} className="p-1.5 bg-tertiary/30 rounded text-xs">
+                            <div className="font-medium">{server.server_id}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {server.server_params?.command ? (
+                                <>
+                                  {server.server_params.command}{" "}
+                                  {Array.isArray(server.server_params.args)
+                                    ? server.server_params.args.join(" ")
+                                    : ""}
+                                </>
+                              ) : server.server_params?.url ? (
+                                server.server_params.url
+                              ) : (
+                                "Server configured"
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-secondary text-center bg-secondary/50 p-4 rounded-md">
+                    No MCP workbench configured
+                  </div>
+                )}
+              </div>
+
+              <InputWithTooltip
+                label="System Message"
+                tooltip="System message for the agent"
+              >
+                <TextArea
+                  rows={4}
+                  value={component.config.system_message}
+                  onChange={(e) =>
+                    handleConfigUpdate("system_message", e.target.value)
+                  }
+                />
+              </InputWithTooltip>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  Reflect on Tool Use
+                </span>
+                <Switch
+                  checked={component.config.reflect_on_tool_use}
+                  onChange={(checked) =>
+                    handleConfigUpdate("reflect_on_tool_use", checked)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  Stream Model Client
+                </span>
+                <Switch
+                  checked={component.config.model_client_stream}
+                  onChange={(checked) =>
+                    handleConfigUpdate("model_client_stream", checked)
+                  }
+                />
+              </div>
+
+              <InputWithTooltip
+                label="Tool Call Summary Format"
+                tooltip="Format for tool call summaries"
+              >
+                <Input
+                  value={component.config.tool_call_summary_format}
+                  onChange={(e) =>
+                    handleConfigUpdate(
+                      "tool_call_summary_format",
+                      e.target.value
+                    )
+                  }
+                />
+              </InputWithTooltip>
             </>
           )}
         </div>

@@ -1,0 +1,89 @@
+
+PageLogger:
+  level: DEBUG  # DEBUG, INFO, WARNING, ERROR, CRITICAL, or NONE.
+  path: ./pagelogs/teachability
+
+StdioServerParams:
+  command: mcp-nccn
+  args: []
+  env: 
+    OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+  read_timeout_seconds: 30
+
+Obsidian:
+  api_key: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+
+McpTools:
+  # mcp-obsidian:
+  #   type: StdioServerParams
+  #   params:
+  #     command: uvx
+  #     args: ["mcp-obsidian"]
+  #     env: 
+  #       OBSIDIAN_API_KEY: 37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c
+  #     read_timeout_seconds: 30
+  mcp-obsidian:
+    type: SseServerParams
+    params:
+      url: "http://localhost:9009/sse"
+      headers: {"OBSIDIAN_API_KEY": "37d8b00e7e67bd386a2961c37aaf451dc1424ea5d88c37e0c71c7c93eeb04f7c"}
+      read_timeout_seconds: 30
+  mcp-nccn-evaluation:
+    type: StdioServerParams
+    params:
+      command: mcp-nccn
+      args: []
+      env:
+      read_timeout_seconds: 30
+
+client:
+  model: qwen3:32b
+  base_url: http://10.0.40.49:11434/v1
+  api_key: sk-xxx  
+  model_info:
+    vision: false
+    function_calling: true
+    json_output: true
+    family: r1
+    structured_output: true  
+    model_client_stream: true
+  temperature: 0.0
+  max_completion_tokens: 65536
+  presence_penalty: 0.0
+  frequency_penalty: 0.0
+  top_p: 0.4
+  max_retries: 65535
+  model_stream: true
+
+# client:
+#   model: hhao/qwen2.5-coder-tools:32b
+#   base_url: http://10.0.40.49:11434/v1
+#   api_key: sk-xxx  
+#   model_info:
+#     vision: false
+#     function_calling: true
+#     json_output: true
+#     family: Unknown
+#     structured_output: true  
+#   temperature: 0.0
+#   max_completion_tokens: 4096
+#   presence_penalty: 0.0
+#   frequency_penalty: 0.0
+#   top_p: 0.4
+#   max_retries: 65535
+
+Apprentice:
+  name_of_agent_or_team: AssistantAgent  # AssistantAgent or MagenticOneGroupChat
+  disable_prefix_caching: 1  # If true, prepends a small random string to the context, to decorrelate repeated runs.
+  MemoryController:
+    max_train_trials: 10
+    max_test_trials: 3
+    MemoryBank:
+      path: ./memory_bank/teachability
+      relevance_conversion_threshold: 1.7
+      n_results: 25
+      distance_threshold: 100
+
+test:
+  task_file: data_files/tasks/autogen_package.yaml  # The task being tested.
+  insight_file: data_files/insights/add_topic.yaml  # Advice provided to help solve the task.

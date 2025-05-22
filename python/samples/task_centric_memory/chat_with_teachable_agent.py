@@ -34,7 +34,7 @@ async def main():
     memory_controller = MemoryController(reset=False, client=client)
 
     # Wrap the memory controller in a Teachability instance
-    teachability = Teachability(memory_controller=memory_controller)
+    teachability = Teachability(memory_controller=memory_controller, name="test01")
 
     # Create an AssistantAgent, and attach teachability as its memory
     assistant_agent = AssistantAgent(

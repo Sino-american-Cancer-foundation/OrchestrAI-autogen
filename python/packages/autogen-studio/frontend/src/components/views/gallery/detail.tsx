@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, Button, Tooltip, Drawer, Input } from "antd";
 import {
   Package,
@@ -12,7 +12,7 @@ import {
   Copy,
   Trash,
   Plus,
-  Server,
+  Download,
 } from "lucide-react";
 import { ComponentEditor } from "../teambuilder/builder/component-editor/component-editor";
 import { TruncatableText } from "../atoms";
@@ -24,7 +24,23 @@ import {
 } from "../../types/datamodel";
 import TextArea from "antd/es/input/TextArea";
 
-type CategoryKey = `${ComponentTypes}s` | "mcpservers";
+// Map between component type and category key
+const componentToCategoryMap: Record<ComponentTypes, string> = {
+  team: "teams",
+  agent: "agents",
+  model: "models",
+  tool: "tools",
+  termination: "terminations",
+  workbench: "workbenches",
+};
+
+type CategoryKey = 
+  | "teams"
+  | "agents"
+  | "models"
+  | "tools"
+  | "terminations"
+  | "workbenches";
 
 interface CardActions {
   onEdit: (component: Component<ComponentConfig>, index: number) => void;
@@ -124,7 +140,7 @@ const iconMap = {
   tool: Wrench,
   model: Brain,
   termination: Timer,
-  mcpserver: Server,
+  workbench: Globe,
 } as const;
 
 // Add default configurations for each component type
@@ -140,18 +156,7 @@ const defaultConfigs: Record<ComponentTypes, ComponentConfig> = {
     has_cancellation_support: false,
   },
   termination: { max_messages: 1 },
-  mcpserver: { name: "New MCP Server", description: "A new MCP Server" } as any,
-};
-
-// Define the explicit order of tabs
-const tabOrder: ComponentTypes[] = ["team", "agent", "tool", "mcpserver", "model", "termination"];
-
-// Helper function to get the category key safely
-const getCategoryKey = (componentType: ComponentTypes): CategoryKey => {
-  if (componentType === 'mcpserver') {
-    return 'mcpservers';
-  }
-  return `${componentType}s` as CategoryKey;
+  workbench: { server_params_list: [] },
 };
 
 export const GalleryDetail: React.FC<{
@@ -159,24 +164,12 @@ export const GalleryDetail: React.FC<{
   onSave: (updates: Partial<Gallery>) => void;
   onDirtyStateChange: (isDirty: boolean) => void;
 }> = ({ gallery, onSave, onDirtyStateChange }) => {
+  console.log("GalleryDetail rendering with gallery:", gallery);
+  
   if (!gallery.config.components) {
+    console.error("No components found in gallery config:", gallery);
     return <div className="text-secondary">No components found</div>;
   }
-  
-  // Initialize all component arrays
-  const initializeGalleryComponents = () => {
-    // Make sure all component arrays exist
-    tabOrder.forEach(componentType => {
-      const category = getCategoryKey(componentType);
-      if (!gallery.config.components[category]) {
-        gallery.config.components[category] = [];
-      }
-    });
-  };
-  
-  // Initialize all component arrays
-  initializeGalleryComponents();
-  
   const [editingComponent, setEditingComponent] = useState<{
     component: Component<ComponentConfig>;
     category: CategoryKey;
@@ -189,27 +182,89 @@ export const GalleryDetail: React.FC<{
     gallery.config.metadata.description
   );
 
+  useEffect(() => {
+    setTempName(gallery.config.name);
+    setTempDescription(gallery.config.metadata.description);
+    setActiveTab("team");
+    setEditingComponent(null);
+
+    // Initialize workbenches array if it doesn't exist
+    if (!gallery.config.components.workbenches) {
+      console.log("Initializing workbenches array - it doesn't exist");
+      const updatedGallery = {
+        ...gallery,
+        config: {
+          ...gallery.config,
+          components: {
+            ...gallery.config.components,
+            workbenches: [],
+          },
+        },
+      };
+      console.log("Updated gallery with workbenches:", updatedGallery);
+      onSave(updatedGallery);
+    } else {
+      console.log("Workbenches array already exists:", gallery.config.components.workbenches);
+    }
+    
+    // Debug log - show all component categories
+    console.log("Gallery components:", {
+      teams: gallery.config.components.teams?.length || 0,
+      agents: gallery.config.components.agents?.length || 0,
+      models: gallery.config.components.models?.length || 0,
+      tools: gallery.config.components.tools?.length || 0,
+      terminations: gallery.config.components.terminations?.length || 0,
+      workbenches: gallery.config.components.workbenches?.length || 0
+    });
+  }, [gallery.id]);
+
   const updateGallery = (
     category: CategoryKey,
     updater: (
       components: Component<ComponentConfig>[]
     ) => Component<ComponentConfig>[]
   ) => {
-    // Ensure the category array exists
-    if (!gallery.config.components[category]) {
-      gallery.config.components[category] = [];
-    }
-
+    console.log("Updating gallery category:", category);
+    
+    // Get components using our helper function
+    const currentComponents = getComponentsArray(category);
+    const updatedComponents = updater(currentComponents);
+    
+    // Create updated gallery with the new components
     const updatedGallery = {
       ...gallery,
       config: {
         ...gallery.config,
         components: {
           ...gallery.config.components,
-          [category]: updater(gallery.config.components[category]),
-        },
-      },
+        }
+      }
     };
+    
+    // Type assertions for each category to satisfy TypeScript
+    switch(category) {
+      case 'teams':
+        updatedGallery.config.components.teams = updatedComponents as any;
+        break;
+      case 'agents':
+        updatedGallery.config.components.agents = updatedComponents as any;
+        break;
+      case 'models':
+        updatedGallery.config.components.models = updatedComponents as any;
+        break;
+      case 'tools':
+        updatedGallery.config.components.tools = updatedComponents as any;
+        break;
+      case 'terminations':
+        updatedGallery.config.components.terminations = updatedComponents as any;
+        break;
+      case 'workbenches':
+        updatedGallery.config.components.workbenches = updatedComponents as any;
+        break;
+    }
+    
+    // Save the updated gallery
+    console.log("Saving updated gallery:", updatedGallery);
     onSave(updatedGallery);
     onDirtyStateChange(true);
   };
@@ -218,15 +273,15 @@ export const GalleryDetail: React.FC<{
     onEdit: (component: Component<ComponentConfig>, index: number) => {
       setEditingComponent({
         component,
-        category: getCategoryKey(activeTab),
+        category: componentToCategoryMap[activeTab] as CategoryKey,
         index,
       });
     },
 
     onDuplicate: (component: Component<ComponentConfig>, index: number) => {
-      const category = getCategoryKey(activeTab);
+      const category = componentToCategoryMap[activeTab] as CategoryKey;
       const baseLabel = component.label?.replace(/_\d+$/, "");
-      const components = gallery.config.components[category];
+      const components = getComponentsArray(category);
 
       const nextNumber =
         Math.max(
@@ -248,7 +303,7 @@ export const GalleryDetail: React.FC<{
     },
 
     onDelete: (component: Component<ComponentConfig>, index: number) => {
-      const category = getCategoryKey(activeTab);
+      const category = componentToCategoryMap[activeTab] as CategoryKey;
       updateGallery(category, (components) =>
         components.filter((_, i) => i !== index)
       );
@@ -256,10 +311,11 @@ export const GalleryDetail: React.FC<{
   };
 
   const handleAdd = () => {
-    const category = getCategoryKey(activeTab);
+    const category = componentToCategoryMap[activeTab] as CategoryKey;
     
-    // Ensure the category array exists
+    // Ensure the category exists
     if (!gallery.config.components[category]) {
+      console.log(`Initializing missing category ${category}`);
       gallery.config.components[category] = [];
     }
     
@@ -269,7 +325,7 @@ export const GalleryDetail: React.FC<{
       activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
     }`;
 
-    if (components.length > 0) {
+    if (components && components.length > 0) {
       // Clone the entire component and just modify the label
       newComponent = {
         ...components[0], // This preserves all fields (provider, version, description, etc.)
@@ -278,7 +334,7 @@ export const GalleryDetail: React.FC<{
     } else {
       // Only for empty categories, use default config
       newComponent = {
-        provider: "new",
+        provider: activeTab === "workbench" ? "probill.tools.mcp.McpsWorkbench" : "new",
         component_type: activeTab,
         config: defaultConfigs[activeTab],
         label: newLabel,
@@ -286,7 +342,7 @@ export const GalleryDetail: React.FC<{
     }
 
     updateGallery(category, (components) => {
-      const newComponents = [...components, newComponent];
+      const newComponents = [...(components || []), newComponent];
       setEditingComponent({
         component: newComponent,
         category,
@@ -326,16 +382,58 @@ export const GalleryDetail: React.FC<{
     setIsEditingDetails(false);
   };
 
-  // Build tabItems with the defined order
-  const validTabs = tabOrder.filter(key => {
-    const categoryKey = getCategoryKey(key);
-    return Boolean(gallery.config.components[categoryKey]);
-  });
+  const handleDownload = () => {
+    const dataStr = JSON.stringify(gallery, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${gallery.config.name
+      .toLowerCase()
+      .replace(/\s+/g, "_")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
-  const tabItems = validTabs.map(key => {
-    const Icon = iconMap[key as keyof typeof iconMap];
-    // Ensure that the component array exists with a default empty array
-    const componentArray = gallery.config.components[getCategoryKey(key)] || [];
+  const getComponentsArray = (category: CategoryKey): Component<ComponentConfig>[] => {
+    let result: Component<ComponentConfig>[] = [];
+    switch (category) {
+      case 'teams':
+        result = gallery.config.components.teams || [];
+        break;
+      case 'agents':
+        result = gallery.config.components.agents || [];
+        break;
+      case 'models':
+        result = gallery.config.components.models || [];
+        break;
+      case 'tools':
+        result = gallery.config.components.tools || [];
+        break;
+      case 'terminations':
+        result = gallery.config.components.terminations || [];
+        break;
+      case 'workbenches':
+        result = gallery.config.components.workbenches || [];
+        break;
+    }
+    return result as Component<ComponentConfig>[];
+  };
+
+  const tabItems = Object.entries(iconMap).map(([key, Icon]) => {
+    const componentType = key as ComponentTypes;
+    const categoryKey = componentToCategoryMap[componentType] as CategoryKey;
+    
+    // Ensure the category exists in gallery.config.components
+    if (!gallery.config.components[categoryKey]) {
+      console.warn(`Category ${categoryKey} doesn't exist in gallery.config.components, initializing empty array`);
+      gallery.config.components[categoryKey] = [];
+    }
+    
+    // Get components using the helper function
+    const items = getComponentsArray(categoryKey);
     
     return {
       key,
@@ -344,7 +442,7 @@ export const GalleryDetail: React.FC<{
           <Icon className="w-5 h-5" />
           {key.charAt(0).toUpperCase() + key.slice(1)}s
           <span className="text-xs font-light text-secondary">
-            ({componentArray.length})
+            ({items.length})
           </span>
         </span>
       ),
@@ -352,8 +450,8 @@ export const GalleryDetail: React.FC<{
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-base font-medium">
-              {componentArray.length}{" "}
-              {componentArray.length === 1
+              {items.length}{" "}
+              {items.length === 1
                 ? key.charAt(0).toUpperCase() + key.slice(1)
                 : key.charAt(0).toUpperCase() + key.slice(1) + "s"}
             </h3>
@@ -369,7 +467,7 @@ export const GalleryDetail: React.FC<{
             </Button>
           </div>
           <ComponentGrid
-            items={componentArray}
+            items={items}
             title={key}
             {...handlers}
           />
@@ -407,25 +505,6 @@ export const GalleryDetail: React.FC<{
                   </Tooltip>
                 )}
               </div>
-              {!isEditingDetails ? (
-                <Button
-                  icon={<Edit className="w-4 h-4" />}
-                  onClick={() => setIsEditingDetails(true)}
-                  type="text"
-                  className="text-white hover:text-white/80"
-                >
-                  Edit
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button onClick={() => setIsEditingDetails(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="primary" onClick={handleDetailsSave}>
-                    Save
-                  </Button>
-                </div>
-              )}
             </div>
             {isEditingDetails ? (
               <TextArea
@@ -435,9 +514,39 @@ export const GalleryDetail: React.FC<{
                 rows={2}
               />
             ) : (
-              <p className="text-secondary w-1/2 mt-2 line-clamp-2">
-                {gallery.config.metadata.description}
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="text-secondary w-1/2 mt-2 line-clamp-2">
+                  {gallery.config.metadata.description}
+                </p>
+                <div className="flex gap-0">
+                  <Tooltip title="Edit Gallery">
+                    <Button
+                      icon={<Edit className="w-4 h-4" />}
+                      onClick={() => setIsEditingDetails(true)}
+                      type="text"
+                      className="text-white hover:text-white/80"
+                    />
+                  </Tooltip>
+                  <Tooltip title="Download Gallery">
+                    <Button
+                      icon={<Download className="w-4 h-4" />}
+                      onClick={handleDownload}
+                      type="text"
+                      className="text-white hover:text-white/80"
+                    />
+                  </Tooltip>
+                </div>
+              </div>
+            )}
+            {isEditingDetails && (
+              <div className="flex gap-2 mt-2">
+                <Button onClick={() => setIsEditingDetails(false)}>
+                  Cancel
+                </Button>
+                <Button type="primary" onClick={handleDetailsSave}>
+                  Save
+                </Button>
+              </div>
             )}
           </div>
           <div className="flex gap-2">

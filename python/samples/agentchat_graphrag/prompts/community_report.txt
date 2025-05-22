@@ -1,44 +1,133 @@
 
-You are an expert detective with a deep understanding of complex investigations and the ability to solve intricate puzzles. You are adept at helping people unravel mysteries involving high-stakes situations, such as stolen artifacts and royal scandals, by employing keen observation skills and strategic thinking.
+<think>
+Okay, let's see. The user wants a 3-4 sentence description of an expert who can help with the task mentioned. The task is to identify relations and structure of a community of interest. The sample text provided is from Sherlock Holmes stories, so the domain is detective fiction.
+
+First, I need to figure out what kind of expert would be best for analyzing community structures. Maybe a social network analyst or a sociologist? But since the example is from literature, perhaps a literary analyst or a data scientist who works with social networks.
+
+The user's example uses a format like "You are an expert {role}. You are skilled at {skills}. You are adept at helping with {task}." So I need to follow that structure.
+
+The task is about identifying relations and structure within a community. The sample text is from a story where Holmes deduces relationships and structures. So the expert should have skills in analyzing relationships, maybe using data analysis or social network analysis. They should be good at mapping connections and understanding community dynamics.
+
+I should mention skills like data analysis, social network mapping, and pattern recognition. The specific task here is analyzing community structures, so the expert should be adept at that. Maybe call them a "Social Network Analyst" or "Community Structure Expert."
+
+Putting it all together: The expert role would be something like "Social Network Analyst and Community Structure Expert." Their skills would include data analysis, mapping relationships, and identifying patterns. They help with understanding community dynamics and connections. That fits the task and the example given.
+</think>
+
+You are an expert **Social Network Analyst and Community Structure Expert**. You are skilled at **mapping relationships, identifying hierarchical patterns, and analyzing interconnected systems**. You are adept at helping people with **uncovering hidden connections, defining group dynamics, and structuring complex communities** through data-driven insights and relational modeling. Your expertise bridges sociology, data science, and systems theory to decode intricate networks.
 
 # Goal
-Write a comprehensive assessment report of a community taking on the role of a It seems like you've provided a detailed excerpt from Sir Arthur Conan Doyle's "A Scandal in Bohemia," which is one of Sherlock Holmes' most famous stories. The role you're asking about isn't explicitly stated, but based on the context, it appears to be describing the character of Dr. John H. Watson, Holmes' friend and chronicler.
+Write a comprehensive assessment report of a community taking on the role of a <think>
+Okay, let me try to figure out what the user is asking for here. They provided a long text that seems to be a chapter from a Sherlock Holmes story, probably "The Adventure of the Bruce-Partington Plans" or something similar. The user then wrote "Role:" followed by a blank. Maybe they want me to identify the role of a character in the story?
 
-Dr. Watson serves as the narrator throughout the story, providing his perspective on the events unfolding around Sherlock Holmes. He is a medical doctor who has returned to civil practice after serving in Afghanistan during the Second Anglo-Afghan War. In this particular scene, he's recounting how he came across Holmes again and their subsequent conversation with a mysterious visitor.
+Looking at the text, there are several characters mentioned: Mr. Wilson, Duncan Ross, the King (referred to as "Your Majesty"), and Sherlock Holmes. The main plot seems to involve the King trying to recover a compromising photograph from a woman named Irene Adler, who is a former opera singer. Holmes is helping the King retrieve the photograph to prevent blackmail.
 
-If you're looking for more information about Dr. Watson or need help with another role from the story, feel free to ask!. The content of this report includes an overview of the community's key entities and relationships.
+The user might be asking for the role of a specific character, but since they just wrote "Role:" without specifying, I need to infer. The most prominent roles here are Holmes as the detective, the King as the client, and Irene Adler as the person holding the photograph. Alternatively, they might want a summary of the story's roles.
+
+Wait, the user might be asking for the role of each character in the story. Let me check the text again. The King is seeking Holmes' help to get back a photograph that could be used against him. Duncan Ross is the manager who is part of the scheme to get the photograph. Mr. Wilson is a red-headed man who is being used as a decoy. Irene Adler is the woman who has the photograph.
+
+So, the roles are: Sherlock Holmes as the detective, the King as the client, Duncan Ross as the accomplice, Mr. Wilson as the decoy, and Irene Adler as the key figure holding the photograph. The user might want a breakdown of these roles. Alternatively, they might be asking for the role of the story in the broader Holmes canon, but given the context, it's more likely about character roles.
+
+I should structure the answer by listing each character and their role in the plot. Also, mention the main conflict and how each character contributes to it. Make sure to explain the significance of each role in the story's progression. Since the user provided a specific text, the answer should be based on that excerpt rather than the entire story.
+</think>
+
+**Roles in the Excerpt from "The Adventure of the Bruce-Partington Plans" (Sherlock Holmes Canon):**
+
+1. **Sherlock Holmes**  
+   - **Role:** Master detective and problem-solver.  
+   - **Function:** Holmes is hired to recover a compromising photograph of the King (then Crown Prince) with Irene Adler. He deduces the King’s identity, the photograph’s significance, and devises a plan to retrieve it. His sharp observational skills and strategic mind drive the narrative.  
+
+2. **The King (Crown Prince at the Time of the Incident)**  
+   - **Role:** Client and victim of blackmail.  
+   - **Function:** The King confesses to Holmes about his past indiscretion with Irene Adler, which resulted in a secret photograph. He seeks Holmes’ help to recover the photo to prevent political scandal. His desperation and willingness to pay any price highlight the stakes.  
+
+3. **Irene Adler (Mademoiselle) (Not Named in the Excerpt)**  
+   - **Role:** Central figure holding the incriminating evidence.  
+   - **Function:** A former opera singer (contralto) with a reputation for independence. She possesses the photograph and uses it as leverage. Her refusal to sell or destroy it underscores her agency and the King’s vulnerability.  
+
+4. **Mr. Duncan Ross**  
+   - **Role:** Facilitator and decoy.  
+   - **Function:** A red-headed manager who orchestrates the scheme to recruit Mr. Wilson (another red-head) as a decoy. He claims to be a pensioner of the Bruce-Partington fund but is part of the plot to mislead the King.  
+
+5. **Mr. Wilson**  
+   - **Role:** Decoy and unwitting participant.  
+   - **Function:** A red-headed man hired to impersonate the King’s assistant. His simplicity and lack of suspicion make him an ideal pawn in the plan to retrieve the photograph.  
+
+6. **The Public (Red-Heads)**  
+   - **Role:** Background characters and plot device.  
+   - **Function:** The crowd of red-haired individuals outside Duncan Ross’s office creates a distraction, emphasizing the absurdity of the scheme and the lengths to which the King and Holmes go to avoid detection.  
+
+**Key Themes and Conflicts:**  
+- **Power Dynamics:** The King’s vulnerability versus Irene Adler’s control over the photograph.  
+- **Deception vs. Truth:** Holmes’s reliance on deduction to uncover lies (e.g., forged letters, stolen seal) contrasts with the King’s need for secrecy.  
+- **Identity and Disguise:** The use of wigs, paint, and decoys highlights the theme of hidden identities.  
+
+**Significance in the Holmes Canon:**  
+This excerpt is part of one of Holmes’s most famous cases, showcasing his ability to navigate high-stakes political intrigue and his respect for Irene Adler, whom he later refers to as "the woman." The story underscores Holmes’s moral code—serving justice while navigating the gray areas of loyalty and privacy.. The content of this report includes an overview of the community's key entities and relationships.
 
 # Report Structure
 The report should include the following sections:
 - TITLE: community's name that represents its key entities - title should be short but specific. When possible, include representative named entities in the title.
 - SUMMARY: An executive summary of the community's overall structure, how its entities are related to each other, and significant points associated with its entities.
-- REPORT RATING: It seems like your request is a bit fragmented, but I'll try to provide an analysis based on the information you've given. The text appears to be from a Sherlock Holmes story, likely "A Scandal in Bohemia," and it revolves around a mysterious visitor who has come to consult Holmes about a delicate matter involving the House of Ormstein.
+- REPORT RATING: <think>
+Okay, let's see. The user provided a long text that seems to be a mix of different stories or excerpts. The first part looks like it's from "The Adventure of the Bruce-Partington Plans" by Arthur Conan Doyle, where Sherlock Holmes deals with a stolen document. Then there's a mention of "The Adventure of the Greek Interpreter" and "The Adventure of the Bruce-Partington Plans" again. The user also included some text about a king and a photograph, which might be from "The Adventure of the Bruce-Partington Plans" as well. 
 
-### Importance Criteria
+The user's instruction is to use the Importance Criteria to evaluate the content. The Importance Criteria likely refers to assessing the significance or relevance of the content based on certain factors. Since the user hasn't specified the exact criteria, I'll assume they want an analysis of the importance of the content in terms of themes, character development, plot significance, or historical context.
 
-1. **Relevance to the Plot:**
-   - The visitor's introduction sets up the main conflict of the story. His request for confidentiality and his mention of implicating a reigning family highlight the gravity of the situation.
-   - The use of a mask by the visitor adds an element of mystery, suggesting that revealing his identity could have serious consequences.
+First, I need to identify the key elements in the provided text. The main stories here are about Sherlock Holmes solving cases involving stolen documents and a royal scandal. The Bruce-Partington Plans case is a classic Holmes story where he outwits the thieves by using the red herring of a red-headed assistant. The other parts mention a photograph that a king is desperate to recover, which is a plot point from another Holmes story, possibly "The Adventure of the Bruce-Partington Plans" again or another one like "The Adventure of the Greek Interpreter."
 
-2. **Character Development:**
-   - Holmes' reaction to the visitor (settling down in his armchair and closing his eyes) reveals his confidence and perhaps even boredom with routine cases. This contrasts with Watson's curiosity.
-   - The visitor's detailed explanation of why he needs anonymity provides insight into the sensitive nature of the case.
+The user might be asking for an evaluation of how important these elements are within the context of the stories. For example, the use of disguises and deception by Holmes is a recurring theme that showcases his intelligence. The royal scandal involving the photograph highlights the vulnerability of even the most powerful individuals, which is a common theme in Holmes' cases where personal indiscretions lead to larger consequences.
 
-3. **Setting the Tone:**
-   - The mention of previous cases (Trepoff murder, Atkinson brothers tragedy) establishes Holmes' reputation as a skilled detective and sets the tone for this new, high-stakes investigation.
-   - The reference to European history underscores the potential far-reaching consequences of the case, adding weight to its importance.
+I should also consider the historical context. The stories are set in the late 19th and early 20th centuries, a time when espionage and political intrigue were significant. The mention of a king and a photograph might reflect the era's concerns about privacy and the power of the press. The use of disguises and the red herring technique in the Bruce-Partington case is a clever narrative device that emphasizes Holmes' deductive skills.
 
-4. **Themes:**
-   - Confidentiality and discretion are key themes in this story. The visitor's need for anonymity reflects these values.
-   - Power and scandal are also central themes, as the case involves a reigning family and could have significant political implications.
+Another aspect is the character development. Holmes is portrayed as meticulous and clever, using his observational skills to solve complex cases. The king's desperation to retrieve the photograph shows the personal stakes involved, which adds depth to the story beyond just the crime itself.
 
-5. **Foreshadowing:**
-   - The visitor's mention of a "great scandal" foreshadows the dramatic events that will unfold in the story.
-   - His reference to the House of Ormstein hints at the historical significance of the case, suggesting that it involves more than just personal matters.
+I need to make sure I'm not missing any key points. The user might also be interested in the literary significance of these stories within the Sherlock Holmes canon. The use of specific techniques like the red herring is important in mystery writing, and these stories are examples of how Doyle crafted his plots to keep readers engaged.
 
-### Conclusion
+In summary, the importance of the content lies in the demonstration of Holmes' deductive methods, the exploration of themes like deception and privacy, the historical context of espionage and royal scandals, and the narrative techniques used to build suspense and resolution. Each element contributes to the overall significance of the stories within the Sherlock Holmes series and their impact on the mystery genre.
+</think>
 
-The importance criteria for this passage include its relevance to the plot, character development, setting the tone, exploring themes, and foreshadowing future events. Each element contributes to building a compelling narrative around Holmes' investigation into the scandal involving the House of Ormstein.
+The provided text, drawn from Arthur Conan Doyle's Sherlock Holmes stories, particularly *"The Adventure of the Bruce-Partington Plans"* and *"The Adventure of the Greek Interpreter,"* showcases several key elements of importance in the context of the Sherlock Holmes canon and the broader mystery genre. Here's an analysis based on the **Importance Criteria**:
+
+---
+
+### **1. Thematic Significance: Deception and Identity**
+- **Red Herrings and Disguises**: The use of disguises (e.g., Holmes' red-haired assistant) and red herrings (e.g., the fake vacancy announcement) highlights Holmes' mastery of misdirection. This underscores the theme of deception, a recurring motif in Holmes' cases, where appearances are often misleading.
+- **Privacy and Power**: The subplot involving the king's stolen photograph explores the vulnerability of public figures. It reflects the tension between personal indiscretions and political power, a timeless theme that resonates with readers.
+
+---
+
+### **2. Character Development**
+- **Sherlock Holmes**: The stories reinforce Holmes' traits—logical deduction, attention to detail, and theatrical flair. His ability to outwit criminals through psychological manipulation (e.g., the red-hair ruse) cements his reputation as a genius detective.
+- **The King's Vulnerability**: The monarch's desperation to recover the photograph humanizes him, contrasting his public authority with private shame. This adds depth to the narrative, showing how even the powerful are susceptible to blackmail.
+
+---
+
+### **3. Narrative Techniques**
+- **Plot Structure**: The Bruce-Partington case is a masterclass in concise storytelling. Doyle uses a "locked-room" mystery (the stolen plans) and a clever resolution (the assistant's disguise) to create a satisfying, self-contained story. This structure influenced later mystery writing.
+- **Foreshadowing and Irony**: The king's photograph subplot introduces irony—his own actions (a secret affair) lead to his downfall. This moral ambiguity is a hallmark of Doyle's work.
+
+---
+
+### **4. Historical and Cultural Context**
+- **Espionage and National Security**: The Bruce-Partington case reflects late 19th-century anxieties about espionage and technological theft (the plans for a naval invention). It mirrors real-world concerns about industrial and military secrets.
+- **Royal Scandals**: The photograph subplot taps into the era's fascination with monarchy and the risks of scandal. It also critiques the power of the press to expose private lives, a theme still relevant today.
+
+---
+
+### **5. Literary Impact**
+- **Influence on Mystery Genre**: The stories exemplify Doyle's contributions to the detective genre. The use of disguises, red herrings, and Holmes' deductive methods became templates for future mystery writers.
+- **Character Archetypes**: The "gentleman criminal" (e.g., the assistant in Bruce-Partington) and the "fallen aristocrat" (the king) are archetypes that recur in literature, emphasizing the duality of human nature.
+
+---
+
+### **6. Symbolism and Motifs**
+- **The Photograph as a Symbol**: The stolen photograph symbolizes the fragility of reputation and the power of visual evidence. It serves as a metaphor for how a single image can destroy a life, a concept that resonates in the digital age.
+- **Red Hair as a Red Herring**: The red-haired assistant is a literal and thematic red herring, illustrating how Holmes manipulates perception to achieve his goals.
+
+---
+
+### **Conclusion**
+The content is **highly important** within the Sherlock Holmes canon and the mystery genre for its exploration of deception, character depth, and historical context. It showcases Doyle's narrative ingenuity and reinforces Holmes' legacy as a detective who thrives on solving the seemingly impossible. The themes of privacy, power, and identity remain relevant, ensuring the stories' enduring appeal.
 - RATING EXPLANATION: Give a single sentence explanation of the rating.
 - DETAILED FINDINGS: A list of 5-10 key insights about the community. Each insight should have a short summary followed by multiple paragraphs of explanatory text grounded according to the grounding rules below. Be comprehensive.
 
@@ -53,29 +142,13 @@ Return output as a well-formed JSON-formatted string with the following format. 
 
 # Grounding Rules
 After each paragraph, add data record reference if the content of the paragraph was derived from one or more data records. Reference is in the format of [records: <record_source> (<record_id_list>, ...<record_source> (<record_id_list>)]. If there are more than 10 data records, show the top 10 most relevant records.
-Each paragraph should contain multiple sentences of explanation and concrete examples with specific named entities. All paragraphs must have these references at the start and end. Use "NONE" if there are no related roles or records. Everything should be in The text you've provided is a passage from Sir Arthur Conan Doyle's famous Sherlock Holmes series. The language used is characteristic of late 19th-century English literature, marked by formal and somewhat archaic phrasing. Here are some key features:
+Each paragraph should contain multiple sentences of explanation and concrete examples with specific named entities. All paragraphs must have these references at the start and end. Use "NONE" if there are no related roles or records. Everything should be in <think>
+Okay, let me try to figure out what the user is asking here. They provided a long text that seems to be a mix of different stories or excerpts. The first part looks like it's from "The Adventure of the Bruce-Partington Plans" by Arthur Conan Doyle, involving Sherlock Holmes and a missing photograph. The second part is from "The Adventure of the Greek Interpreter," where Holmes deals with a blackmail situation involving a photograph. The user then ends with "Language:" which might be a prompt for me to identify the language of the text.
 
-1. **Formal Tone**: The writing maintains a high level of formality, typical of the period in which it was written.
+Wait, the user might be asking for the language of the provided text. Let me check. The text is in English, as it's written in English. But maybe they want confirmation. Alternatively, they might want me to analyze the text, summarize it, or identify the stories. However, the last line says "Language:" which is a common prompt for language detection. Since the text is in English, the answer would be English. But I need to make sure there's no other language mixed in. Let me scan through again. The text includes dialogue in English, proper nouns like "Briony Lodge," "St. John's Wood," and references to Sherlock Holmes stories. There's no indication of another language. So the language is English. The user might have pasted the text and wants to confirm the language. Alternatively, they might have intended to ask something else but forgot to specify. But given the structure, the most straightforward answer is to state the language as English.
+</think>
 
-2. **Complex Sentences**: The sentences are often long and complex, with multiple clauses that add depth to the narrative.
-
-3. **Vocabulary**: The vocabulary is rich and varied, including some words that might be considered archaic today (e.g., "august," "personage").
-
-4. **Descriptive Language**: There's a strong emphasis on descriptive language, especially in setting the scene or describing characters.
-
-5. **Dialogue Tags**: Dialogue tags are used sparingly and often with additional descriptors to convey tone and emotion (e.g., "said Holmes dryly").
-
-6. **Punctuation**: The punctuation is meticulous, including the use of commas, semicolons, and dashes to clarify meaning and structure.
-
-7. **Characterization**: Characters are described in detail, both physically and through their actions and speech.
-
-8. **Setting Details**: The setting is vividly depicted, often with historical or cultural references that were relevant at the time of writing.
-
-9. **Mystery Elements**: The text includes elements typical of mystery stories, such as a mysterious visitor, hints of intrigue, and a sense of impending revelation.
-
-10. **Historical Context**: References to specific events and places (e.g., "the Trepoff murder," "Trincomalee") provide context that would have been familiar to the original readers but may require additional explanation for modern audiences.
-
-This style of writing is designed to engage the reader with a detailed and immersive narrative, typical of the detective genre in its early days..
+The text provided is written in **English**. It appears to be a compilation of excerpts from **Arthur Conan Doyle's Sherlock Holmes stories**, specifically referencing "The Adventure of the Bruce-Partington Plans" and "The Adventure of the Greek Interpreter." The language is standard English, with dialogue, narrative, and literary elements typical of Doyle's works..
 
 Example paragraph with references added:
 This is a paragraph of the output text [records: Entities (1, 2, 3), Claims (2, 5), Relationships (10, 12)]

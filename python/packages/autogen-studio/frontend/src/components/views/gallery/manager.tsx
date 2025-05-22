@@ -37,10 +37,36 @@ export const GalleryManager: React.FC = () => {
 
     try {
       setIsLoading(true);
+      console.log("Calling galleryAPI.listGalleries for user:", user.id);
       const data = await galleryAPI.listGalleries(user.id);
-      setGalleries(data);
-      if (!currentGallery && data.length > 0) {
-        setCurrentGallery(data[0]);
+      console.log("Gallery data received:", data);
+      
+      // If there are no galleries, create a default one
+      if (data.length === 0) {
+        console.log("No galleries found, creating a default one");
+        try {
+          // Import the default gallery JSON
+          const defaultGalleryJson = require('./default_gallery.json');
+          console.log("Loaded default gallery template:", defaultGalleryJson);
+          
+          // Create the gallery
+          const newGallery = await galleryAPI.createGallery({
+            config: defaultGalleryJson
+          }, user.id);
+          
+          console.log("Created default gallery:", newGallery);
+          setGalleries([newGallery]);
+          setCurrentGallery(newGallery);
+        } catch (error) {
+          console.error("Error creating default gallery:", error);
+          messageApi.error("Failed to create default gallery");
+        }
+      } else {
+        setGalleries(data);
+        if (!currentGallery && data.length > 0) {
+          console.log("Setting current gallery to first gallery in list:", data[0]);
+          setCurrentGallery(data[0]);
+        }
       }
     } catch (error) {
       console.error("Error fetching galleries:", error);
@@ -51,6 +77,7 @@ export const GalleryManager: React.FC = () => {
   }, [user?.id, currentGallery, messageApi]);
 
   useEffect(() => {
+    console.log("Fetching galleries...");
     fetchGalleries();
   }, [fetchGalleries]);
 

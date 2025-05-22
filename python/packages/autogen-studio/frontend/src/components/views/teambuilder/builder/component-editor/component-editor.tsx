@@ -8,12 +8,14 @@ import {
   isModelComponent,
   isToolComponent,
   isTerminationComponent,
+  isWorkbenchComponent,
 } from "../../../../types/guards";
 import { AgentFields } from "./fields/agent-fields";
 import { ModelFields } from "./fields/model-fields";
 import { TeamFields } from "./fields/team-fields";
 import { ToolFields } from "./fields/tool-fields";
 import { TerminationFields } from "./fields/termination-fields";
+import { WorkbenchFields } from "./fields/workbench-fields";
 import debounce from "lodash.debounce";
 import { MonacoEditor } from "../../../monaco";
 import { ComponentTestResult, validationAPI } from "../../api";
@@ -289,6 +291,14 @@ export const ComponentEditor: React.FC<ComponentEditorProps> = ({
           component={currentComponent}
           onChange={handleComponentUpdate}
           onNavigate={handleNavigate}
+        />
+      );
+    }
+    if (isWorkbenchComponent(currentComponent)) {
+      return (
+        <WorkbenchFields
+          component={currentComponent}
+          onChange={handleComponentUpdate}
         />
       );
     }

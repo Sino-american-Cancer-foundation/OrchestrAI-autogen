@@ -5,13 +5,8 @@ import {
   Component,
   ComponentConfig,
   Import,
-  FunctionToolConfig,
-  StdioMcpToolAdapterConfig,
-  SseMcpToolAdapterConfig,
-  StdioServerParams,
-  SseServerParams,
 } from "../../../../../types/datamodel";
-import { isFunctionTool, isStdioMcpTool, isSseMcpTool } from "../../../../../types/guards";
+import { isFunctionTool } from "../../../../../types/guards";
 import { MonacoEditor } from "../../../../monaco";
 import DetailGroup from "../detailgroup";
 
@@ -28,14 +23,17 @@ interface ImportState {
   imports: string;
 }
 
-const FunctionToolFields: React.FC<{
-  component: Component<FunctionToolConfig>;
-  onChange: (updates: Partial<Component<ComponentConfig>>) => void;
-}> = ({ component, onChange }) => {
-  // Existing function tool fields implementation
+export const ToolFields: React.FC<ToolFieldsProps> = ({
+  component,
+  onChange,
+}) => {
+  if (!isFunctionTool(component)) return null;
+
   const editorRef = useRef(null);
   const [showAddImport, setShowAddImport] = useState(false);
-  const [importType, setImportType] = useState<"direct" | "fromModule">("direct");
+  const [importType, setImportType] = useState<"direct" | "fromModule">(
+    "direct"
+  );
   const [directImport, setDirectImport] = useState("");
   const [moduleImport, setModuleImport] = useState<ImportState>({
     module: "",
@@ -110,7 +108,7 @@ const FunctionToolFields: React.FC<{
       <DetailGroup title="Component Details">
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-primary">Name</span>
+            <span className="text-sm font-medium text-gray-700">Name</span>
             <Input
               value={component.label || ""}
               onChange={(e) => handleComponentUpdate({ label: e.target.value })}
@@ -120,7 +118,9 @@ const FunctionToolFields: React.FC<{
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-primary">Description</span>
+            <span className="text-sm font-medium text-gray-700">
+              Description
+            </span>
             <TextArea
               value={component.description || ""}
               onChange={(e) =>
@@ -137,9 +137,11 @@ const FunctionToolFields: React.FC<{
       <DetailGroup title="Configuration">
         <div className="space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-primary">Function Name</span>
+            <span className="text-sm font-medium text-gray-700">
+              Function Name
+            </span>
             <Input
-              value={component.config.name}
+              value={component.config.name || ""}
               onChange={(e) =>
                 handleComponentUpdate({
                   config: { ...component.config, name: e.target.value },
@@ -151,7 +153,9 @@ const FunctionToolFields: React.FC<{
           </label>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium text-primary">Global Imports</span>
+            <span className="text-sm font-medium text-gray-700">
+              Global Imports
+            </span>
             <div className="flex flex-wrap gap-2 mt-2">
               {(component.config.global_imports || []).map((imp, index) => (
                 <div
@@ -246,10 +250,12 @@ const FunctionToolFields: React.FC<{
           </div>
 
           <label className="block">
-            <span className="text-sm font-medium text-primary">Source Code</span>
+            <span className="text-sm font-medium text-gray-700">
+              Source Code
+            </span>
             <div className="mt-1 h-96">
               <MonacoEditor
-                value={component.config.source_code}
+                value={component.config.source_code || ""}
                 editorRef={editorRef}
                 language="python"
                 onChange={(value) =>
@@ -262,11 +268,11 @@ const FunctionToolFields: React.FC<{
           </label>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-primary">
+            <span className="text-sm font-medium text-gray-700">
               Has Cancellation Support
             </span>
             <Switch
-              checked={component.config.has_cancellation_support}
+              checked={component.config.has_cancellation_support || false}
               onChange={(checked) =>
                 handleComponentUpdate({
                   config: {
@@ -281,306 +287,6 @@ const FunctionToolFields: React.FC<{
       </DetailGroup>
     </div>
   );
-};
-
-const MCPToolFields: React.FC<{
-  component: Component<StdioMcpToolAdapterConfig | SseMcpToolAdapterConfig>;
-  onChange: (updates: Partial<Component<ComponentConfig>>) => void;
-}> = ({ component, onChange }) => {
-  const handleComponentUpdate = useCallback(
-    (updates: Partial<Component<ComponentConfig>>) => {
-      onChange({
-        ...component,
-        ...updates,
-        config: {
-          ...component.config,
-          ...(updates.config || {}),
-        },
-      });
-    },
-    [component, onChange]
-  );
-
-  // Cast server params to their specific types
-  const isStdioMCP = isStdioMcpTool(component);
-  const stdioParams = isStdioMCP ? (component.config.server_params as StdioServerParams) : null;
-  const sseParams = !isStdioMCP ? (component.config.server_params as SseServerParams) : null;
-
-  return (
-    <div className="space-y-6">
-      <DetailGroup title="Component Details">
-        <div className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-primary">Name</span>
-            <Input
-              value={component.label || ""}
-              onChange={(e) => handleComponentUpdate({ label: e.target.value })}
-              placeholder="Tool name"
-              className="mt-1"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-primary">Description</span>
-            <TextArea
-              value={component.description || ""}
-              onChange={(e) =>
-                handleComponentUpdate({ description: e.target.value })
-              }
-              placeholder="Tool description"
-              rows={4}
-              className="mt-1"
-            />
-          </label>
-        </div>
-      </DetailGroup>
-
-      <DetailGroup title="Server Configuration">
-        <div className="space-y-4">
-          {/* Tool Name field */}
-          <label className="block">
-            <span className="text-sm font-medium text-primary">Tool Name</span>
-            <Input
-              value={component.config.name}
-              onChange={(e) =>
-                handleComponentUpdate({
-                  config: { ...component.config, name: e.target.value },
-                })
-              }
-              placeholder="Tool name"
-              className="mt-1"
-            />
-          </label>
-
-          {/* Stdio MCP Fields */}
-          {isStdioMCP ? (
-            <div className="space-y-4">
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Command</span>
-                <Input
-                  value={stdioParams?.command || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...stdioParams,
-                          command: e.target.value,
-                        },
-                      },
-                    })
-                  }
-                  placeholder="Command to execute"
-                  className="mt-1"
-                />
-              </label>
-
-              {/* Arguments field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Arguments (one per line)</span>
-                <TextArea
-                  value={stdioParams?.args?.join("\n") || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...stdioParams,
-                          args: e.target.value.split("\n").filter(arg => arg.trim() !== ""),
-                        },
-                      },
-                    })
-                  }
-                  placeholder="Command line arguments"
-                  rows={3}
-                  className="mt-1"
-                />
-              </label>
-
-              {/* Encoding field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Encoding</span>
-                <Input
-                  value={stdioParams?.encoding || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...stdioParams,
-                          encoding: e.target.value || undefined,
-                        },
-                      },
-                    })
-                  }
-                  placeholder="Text encoding (e.g., utf-8)"
-                  className="mt-1"
-                />
-              </label>
-
-              {/* Error Handler field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Error Handler</span>
-                <Input
-                  value={stdioParams?.encoding_error_handler || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...stdioParams,
-                          encoding_error_handler: e.target.value || undefined,
-                        },
-                      },
-                    })
-                  }
-                  placeholder="Encoding error handler (e.g., strict, ignore)"
-                  className="mt-1"
-                />
-              </label>
-            </div>
-          ) : (
-            /* SSE MCP Fields */
-            <div className="space-y-4">
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Server URL</span>
-                <Input
-                  value={sseParams?.url || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...sseParams,
-                          url: e.target.value,
-                        } as SseServerParams,
-                      },
-                    })
-                  }
-                  placeholder="SSE server URL"
-                  className="mt-1"
-                />
-              </label>
-
-              {/* Headers field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Headers (JSON)</span>
-                <TextArea
-                  value={sseParams?.headers ? JSON.stringify(sseParams.headers, null, 2) : ""}
-                  onChange={(e) => {
-                    try {
-                      const headers = e.target.value ? JSON.parse(e.target.value) : null;
-                      handleComponentUpdate({
-                        config: {
-                          ...component.config,
-                          server_params: {
-                            ...sseParams,
-                            headers,
-                          } as SseServerParams,
-                        },
-                      });
-                    } catch (err) {
-                      // Invalid JSON, don't update
-                    }
-                  }}
-                  placeholder="HTTP headers as JSON object"
-                  rows={4}
-                  className="mt-1"
-                />
-              </label>
-
-              {/* Timeout field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">Timeout (seconds)</span>
-                <Input
-                  type="number"
-                  value={sseParams?.timeout || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...sseParams,
-                          timeout: parseInt(e.target.value, 10) || undefined,
-                        } as SseServerParams,
-                      },
-                    })
-                  }
-                  placeholder="Request timeout"
-                  className="mt-1"
-                />
-              </label>
-
-              {/* SSE Read Timeout field */}
-              <label className="block">
-                <span className="text-sm font-medium text-primary">SSE Read Timeout (seconds)</span>
-                <Input
-                  type="number"
-                  value={sseParams?.sse_read_timeout || ""}
-                  onChange={(e) =>
-                    handleComponentUpdate({
-                      config: {
-                        ...component.config,
-                        server_params: {
-                          ...sseParams,
-                          sse_read_timeout: parseInt(e.target.value, 10) || undefined,
-                        } as SseServerParams,
-                      },
-                    })
-                  }
-                  placeholder="SSE read timeout"
-                  className="mt-1"
-                />
-              </label>
-            </div>
-          )}
-        </div>
-      </DetailGroup>
-
-      {/* Tool Schema section */}
-      <DetailGroup title="Tool Schema">
-        <div className="space-y-4">
-          <label className="block">
-            <span className="text-sm font-medium text-primary">Input Schema</span>
-            <TextArea
-              value={JSON.stringify(component.config.tool.inputSchema || {}, null, 2)}
-              onChange={(e) => {
-                try {
-                  const inputSchema = JSON.parse(e.target.value);
-                  handleComponentUpdate({
-                    config: {
-                      ...component.config,
-                      tool: {
-                        ...component.config.tool,
-                        inputSchema,
-                      },
-                    },
-                  });
-                } catch (err) {
-                  // Invalid JSON, don't update
-                }
-              }}
-              placeholder="Tool input schema as JSON"
-              rows={6}
-              className="mt-1"
-            />
-          </label>
-        </div>
-      </DetailGroup>
-    </div>
-  );
-};
-
-export const ToolFields: React.FC<ToolFieldsProps> = ({ component, onChange }) => {
-  if (isFunctionTool(component)) {
-    return <FunctionToolFields component={component} onChange={onChange} />;
-  }
-
-  if (isStdioMcpTool(component) || isSseMcpTool(component)) {
-    return <MCPToolFields component={component} onChange={onChange} />;
-  }
-
-  return null;
 };
 
 export default React.memo(ToolFields);
