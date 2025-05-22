@@ -17,6 +17,7 @@ services:
     command: sleep infinity 
     ports:
       - "8081:8081"
+      - "8089:8089"
     # Uncomment the next four lines if you will use a ptrace-based debuggers like C++, Go, and Rust.
     # cap_add:
     #  - SYS_PTRACE
