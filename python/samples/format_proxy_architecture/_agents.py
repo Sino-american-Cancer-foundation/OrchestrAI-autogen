@@ -17,13 +17,15 @@ from autogen_core.models import (
     UserMessage as LLMUserMessage,
     SystemMessage, ChatCompletionClient
 )
-from autogen_ext.tools.mcp import McpWorkbench
 
-from _types import (
+from .extended_mcp_workbench.extended_mcp_workbench import ExtendedMcpWorkbench
+
+# Corrected imports to be relative when _agents is imported as part of a package
+from ._types import (
     MessageChunk, UserMessage, AssistantMessage, CallRequest,
     UIAgentConfig
 )
-from _utils import is_call_id
+from ._utils import is_call_id
 
 ### THIS COULD BE ANY THRID-PARTY AGENT/TEAM ###
 class DomainAgent(RoutedAgent):
@@ -87,7 +89,7 @@ class FormatProxyAgent(RoutedAgent):
     def __init__(
         self,
         description: str,
-        workbench: McpWorkbench,
+        workbench: ExtendedMcpWorkbench,
         ui_config: UIAgentConfig
     ) -> None:
         super().__init__(description=description)
@@ -400,32 +402,86 @@ class FormatProxyAgent(RoutedAgent):
         """Load prompts from MCP for this call."""
         self.call_prompts[call_id] = {}
         
-        # Load instruction prompt if specified
-        if hasattr(request, 'instruction_prompt_id') and request.instruction_prompt_id:
-            result = await self.workbench.call_tool(
-                "prompt_get",
-                arguments={"id": request.instruction_prompt_id},
-                cancellation_token=CancellationToken()
-            )
-            print(f"Result from prompt_get: {result}")
-            if not result.is_error:
-                data = json.loads(result.to_text())
-                if data.get("status") == "success":
-                    self.call_prompts[call_id]["instruction"] = data.get("content", "")
-                    print(f"Loaded instruction prompt for call {call_id}")
-        
-        # Load patient info prompt if specified
-        if hasattr(request, 'patient_info_prompt_id') and request.patient_info_prompt_id:
-            result = await self.workbench.call_tool(
-                "prompt_get",
-                arguments={"id": request.patient_info_prompt_id},
-                cancellation_token=CancellationToken()
-            )
-            if not result.is_error:
-                data = json.loads(result.to_text())
-                if data.get("status") == "success":
-                    self.call_prompts[call_id]["patient_info"] = data.get("content", "")
-                    print(f"Loaded patient info prompt for call {call_id}")
+        try:
+            # First get patient info if specified
+            if hasattr(request, 'patient_info_prompt_id') and request.patient_info_prompt_id:
+                try:
+                    patient_info_resource = await self.workbench.get_resource(
+                        uri=f"patient://{request.patient_info_prompt_id}"
+                    )
+                    patient_info = None # Initialize
+                    if isinstance(patient_info_resource, dict) and \
+                       patient_info_resource.get("contents") and \
+                       isinstance(patient_info_resource["contents"], list) and \
+                       len(patient_info_resource["contents"]) > 0 and \
+                       isinstance(patient_info_resource["contents"][0], dict) and \
+                       patient_info_resource["contents"][0].get("text"):
+                        
+                        resource_text = patient_info_resource["contents"][0]["text"]
+                        try:
+                            resource_json = json.loads(resource_text)
+                            # The actual patient data is nested further
+                            patient_info = resource_json.get("content") 
+                        except json.JSONDecodeError as e:
+                            print(f"Error decoding patient info resource text: {e}")
+                    
+                    if patient_info and isinstance(patient_info, dict): # Ensure it's a dict now
+                        self.call_prompts[call_id]["patient_info"] = patient_info
+                        print(f"Loaded patient info for call {call_id}: {str(patient_info)[:100]}...")
+                    else:
+                        print(f"Warning: Patient info resource '{request.patient_info_prompt_id}' did not yield expected content. Found: {patient_info_resource}")
+                        # Removed the old print from before the fix
+                except Exception as e:
+                    print(f"Error loading patient info: {str(e)}")
+                    import traceback
+                    traceback.print_exc() # More detailed error
+            
+            # Get eligibility check prompt if specified
+            if hasattr(request, 'instruction_prompt_id') and request.instruction_prompt_id:
+                try:
+                    prompt_arguments = {} # type: Dict[str, str]
+                    if patient_info and isinstance(patient_info, dict) and "content" in patient_info and isinstance(patient_info["content"], str):
+                        prompt_arguments["patient_info"] = patient_info["content"] # Pass the actual content string
+                    # If patient_info_content is not available or not a string, prompt_arguments remains empty.
+                    # The server-side @mcp.prompt will use its default if its patient_info arg is None.
+
+                    instruction_prompt_response = await self.workbench.get_prompt(
+                        name="eligibility_check",
+                        arguments=prompt_arguments if prompt_arguments else None # Pass None if no specific patient_info string was extracted
+                    )
+                    instruction_text = None # Initialize
+                    if isinstance(instruction_prompt_response, dict) and \
+                       instruction_prompt_response.get("messages") and \
+                       isinstance(instruction_prompt_response["messages"], list) and \
+                       len(instruction_prompt_response["messages"]) > 0 and \
+                       isinstance(instruction_prompt_response["messages"][0], dict) and \
+                       instruction_prompt_response["messages"][0].get("content") and \
+                       isinstance(instruction_prompt_response["messages"][0]["content"], dict) and \
+                       instruction_prompt_response["messages"][0]["content"].get("text"):
+                        
+                        prompt_text_json = instruction_prompt_response["messages"][0]["content"]["text"]
+                        try:
+                            prompt_json = json.loads(prompt_text_json)
+                            # The actual prompt string is nested
+                            instruction_text = prompt_json.get("content")
+                        except json.JSONDecodeError as e:
+                            print(f"Error decoding instruction prompt text: {e}")
+
+                    if instruction_text and isinstance(instruction_text, str): # Ensure it's a string
+                        self.call_prompts[call_id]["instruction"] = instruction_text
+                        print(f"Loaded instruction prompt for call {call_id}: {str(instruction_text)[:100]}...")
+                    else:
+                        print(f"Warning: Instruction prompt 'eligibility_check' did not yield expected content. Found: {instruction_prompt_response}")
+                        # Removed the old print from before the fix
+                except Exception as e:
+                    print(f"Error loading instruction prompt: {str(e)}")
+                    import traceback
+                    traceback.print_exc() # More detailed error
+            
+        except Exception as e:
+            print(f"Error in _load_prompts_for_call: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     def _compose_prompt(self, transcript: str, call_id: str) -> str:
         """Compose a full prompt including instructions and patient info."""
@@ -439,7 +495,7 @@ class FormatProxyAgent(RoutedAgent):
             
         # Add patient info if available
         if "patient_info" in prompts:
-            composed += f"PATIENT INFORMATION:\n{prompts['patient_info']}\n\n"
+            composed += f"PATIENT INFORMATION:\n{json.dumps(prompts['patient_info'], indent=2)}\n\n"
             
         # Add the actual transcript
         composed += f"CALLER SAID:\n{transcript}"

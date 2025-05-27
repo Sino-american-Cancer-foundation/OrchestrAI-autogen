@@ -2,9 +2,10 @@ import asyncio
 import logging
 import warnings
 
-from _agents import GroupChatManager
-from _types import AppConfig, CallRequest, UserMessage, AssistantMessage, MessageChunk
-from _utils import get_serializers, load_config, set_all_log_levels
+# Corrected imports to be relative when run_orchestrator is executed as a module
+from ._agents import GroupChatManager
+from ._types import AppConfig, CallRequest, UserMessage, AssistantMessage, MessageChunk
+from ._utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import TypeSubscription, DefaultTopicId
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime

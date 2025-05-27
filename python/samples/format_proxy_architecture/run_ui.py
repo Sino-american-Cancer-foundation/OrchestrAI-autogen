@@ -3,9 +3,12 @@ import logging
 import warnings
 
 import chainlit as cl  # This requires installing chainlit with pip
-from _agents import UIAgent, MessageChunk
-from _types import AppConfig, UserMessage, AssistantMessage
-from _utils import get_serializers, load_config, set_all_log_levels
+# Changed to absolute imports from the perspective of the 'python' directory
+# This is to be used with PYTHONPATH or when chainlit is run from a directory
+# that allows this resolution (e.g., the root 'OrchestrAI-autogen' with python/ on PYTHONPATH)
+from samples.format_proxy_architecture._agents import UIAgent, MessageChunk
+from samples.format_proxy_architecture._types import AppConfig, UserMessage, AssistantMessage
+from samples.format_proxy_architecture._utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import TypeSubscription
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from chainlit import Message

@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import warnings
 
-from _agents import FormatProxyAgent
-from _types import AppConfig, CallRequest, UserMessage, AssistantMessage, MessageChunk
-from _utils import get_serializers, load_config, set_all_log_levels
+from ._agents import FormatProxyAgent
+from ._types import AppConfig, CallRequest, UserMessage, AssistantMessage, MessageChunk
+from ._utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import TypeSubscription
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
-from autogen_ext.tools.mcp import McpWorkbench, SseServerParams
+from .extended_mcp_workbench.extended_mcp_workbench import ExtendedMcpWorkbench
+from autogen_ext.tools.mcp import SseServerParams
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -25,9 +28,40 @@ async def main(config: AppConfig):
     Console().print(Markdown("Starting **`Format Proxy Agent`**"))
     await fpa_runtime.start()
     
-    # Initialize MCP Workbench
-    workbench = McpWorkbench(SseServerParams(url="http://localhost:8931/sse"))
+    # Initialize Extended MCP Workbench
+    workbench = ExtendedMcpWorkbench(SseServerParams(url="http://localhost:8931/sse"))
     await workbench.start()
+    
+    # List all available capabilities
+    print("\n=== MCP Server Capabilities ===")
+
+    # List tools
+    tools = await workbench.list_tools()
+    print("\nAvailable Tools:")
+    for tool in tools:
+        print(f"- {tool['name']}: {tool['description']}")
+
+    # List prompts
+    try:
+        prompts = await workbench.list_prompts()
+        print("\nAvailable Prompts:")
+        for prompt in prompts:
+            print(f"- {prompt['name']}: {prompt['description']}")
+    except Exception as e:
+        print(f"\nError listing prompts: {str(e)}")
+
+    # List resources
+    try:
+        resources = await workbench.list_resources()
+        print("\nAvailable Resources:")
+        for resource in resources:
+            # Use .get for robustness and prefer 'uri' or 'name' as key
+            resource_key = resource.get('uri', resource.get('name', 'Unknown Resource'))
+            print(f"- {resource_key}: {resource.get('description', '')}")
+    except Exception as e:
+        print(f"\nError listing resources: {str(e)}")
+
+    print("\n===========================\n")
     
     # Register FormatProxyAgent
     fpa_agent_type = await FormatProxyAgent.register(

@@ -2,9 +2,10 @@ import asyncio
 import logging
 import warnings
 
-from _agents import DomainAgent
-from _types import AppConfig, UserMessage, AssistantMessage, MessageChunk
-from _utils import get_serializers, load_config, set_all_log_levels
+# Corrected imports to be relative when run_domain_agent is executed as a module
+from ._agents import DomainAgent
+from ._types import AppConfig, UserMessage, AssistantMessage, MessageChunk
+from ._utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import TypeSubscription
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime

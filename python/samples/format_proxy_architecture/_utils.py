@@ -5,7 +5,7 @@ from typing import Any, Iterable, Type, List
 import uuid
 
 from autogen_core import MessageSerializer, try_get_known_serializers_for_type
-from _types import AppConfig
+from ._types import AppConfig
 
 
 def load_config(file_path: str = os.path.join(os.path.dirname(__file__), "config.yaml")) -> AppConfig:
