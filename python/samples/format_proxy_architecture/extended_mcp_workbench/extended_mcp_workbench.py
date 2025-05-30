@@ -112,13 +112,12 @@ class ExtendedMcpWorkbench(McpWorkbench):
         """Return a list of available resources exposed by the MCP server."""
         try:
             raw = await self._resource_session.list_resources()
-            # ``raw`` is expected to be a ``ListResourcesResult`` (or simple list).
             if isinstance(raw, ListResourcesResult):
-                resources = raw.resources  # type: ignore[attr-defined]
+                resources = raw.resources
             else:
-                resources = raw  # Fall-back – assume it is already a list-like structure.
+                resources = raw
             return [self._normalise_resource(r) for r in resources]
-        except Exception as e:  # pragma: no cover – generic safeguard
+        except Exception as e:
             raise RuntimeError(f"Failed to list resources: {e}") from e
 
     async def get_resource(self, uri: str) -> Mapping[str, Any]:
@@ -126,7 +125,7 @@ class ExtendedMcpWorkbench(McpWorkbench):
         try:
             raw = await self._resource_session.get_resource(uri=uri)
             return self._normalise_resource(raw)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             raise RuntimeError(f"Failed to get resource '{uri}': {e}") from e
         
     async def list_prompts(self) -> List[Mapping[str, Any]]:
@@ -134,11 +133,11 @@ class ExtendedMcpWorkbench(McpWorkbench):
         try:
             raw = await self._resource_session.list_prompts()
             if isinstance(raw, ListPromptsResult):
-                prompts = raw.prompts  # type: ignore[attr-defined]
+                prompts = raw.prompts
             else:
                 prompts = raw
             return [self._normalise_prompt(p) for p in prompts]
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             raise RuntimeError(f"Failed to list prompts: {e}") from e
 
     async def get_prompt(self, name: str, arguments: Optional[Mapping[str, Any]] | None = None) -> Mapping[str, Any]:
@@ -146,7 +145,7 @@ class ExtendedMcpWorkbench(McpWorkbench):
         try:
             raw = await self._resource_session.get_prompt(name=name, arguments=arguments or {})
             return self._normalise_prompt(raw)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             raise RuntimeError(f"Failed to get prompt '{name}': {e}") from e
 
     @staticmethod
