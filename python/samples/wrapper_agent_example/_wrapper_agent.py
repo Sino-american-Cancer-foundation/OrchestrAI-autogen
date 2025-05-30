@@ -110,6 +110,7 @@ class WrapperAgent(RoutedAgent):
     async def _handle_websocket_flow(self, message: UserMessage, ctx: MessageContext) -> AssistantMessage:
         """Handle WebSocket conversation flow"""
         session_id = str(uuid.uuid4())
+        ws_connection: Optional[websockets.WebSocketClientProtocol] = None # Initialize
         
         try:
             # Extract phone number (simplified - in production use better parsing)
@@ -157,14 +158,17 @@ class WrapperAgent(RoutedAgent):
                 session_id=session_id,
                 call_sid=call_sid,
                 websocket_url=websocket_url,
-                original_request=message.content
+                original_request=message.content,
+                is_active=True # Explicitly set active on creation
             )
             self.active_websocket_sessions[session_id] = session
             self.session_contexts[session_id] = message.content
             
             # Connect to WebSocket
+            print(f"Connecting to WebSocket URL: {websocket_url} for session {session_id}")
             ws_connection = await websockets.connect(websocket_url)
             self.websocket_connections[session_id] = ws_connection
+            print(f"WebSocket connection established for session {session_id}, type: {type(ws_connection)}")
             
             await self._publish_to_ui(
                 "WrapperAgent",
@@ -179,59 +183,96 @@ class WrapperAgent(RoutedAgent):
                 source="wrapper"
             )
             
-        except Exception as e:
-            error_msg = f"Error in WebSocket flow: {str(e)}"
+        except websockets.exceptions.WebSocketException as e_ws:
+            error_msg = f"WebSocket connection failed for session {session_id}: {str(e_ws)}"
             print(error_msg)
             await self._publish_to_ui("WrapperAgent", error_msg)
+            if session_id in self.active_websocket_sessions:
+                self.active_websocket_sessions[session_id].is_active = False
+            await self._cleanup_session(session_id) # Ensure cleanup on connection failure
+            return AssistantMessage(content=error_msg, source="wrapper")
+        except Exception as e:
+            error_msg = f"Error in WebSocket flow for session {session_id}: {str(e)}"
+            print(error_msg)
+            await self._publish_to_ui("WrapperAgent", error_msg)
+            if session_id in self.active_websocket_sessions:
+                self.active_websocket_sessions[session_id].is_active = False
+            await self._cleanup_session(session_id) # Ensure cleanup on other errors
             return AssistantMessage(content=error_msg, source="wrapper")
     
     async def _process_websocket_session(self, session_id: str) -> None:
         """Process messages for a WebSocket session"""
-        if session_id not in self.websocket_connections:
+        ws = self.websocket_connections.get(session_id)
+        session = self.active_websocket_sessions.get(session_id)
+
+        if not session:
+            print(f"Session {session_id} not found at start of _process_websocket_session. Aborting.")
+            await self._cleanup_session(session_id) # Cleanup ws if it exists
             return
         
-        ws = self.websocket_connections[session_id]
-        session = self.active_websocket_sessions[session_id]
+        if not ws:
+            print(f"WebSocket connection {session_id} not found for active session. Aborting.")
+            session.is_active = False # Mark session inactive
+            await self._cleanup_session(session_id)
+            return
         
+        print(f"Starting to process WebSocket session {session_id}. Session active: {session.is_active}")
         try:
-            while session.is_active:
-                # Receive message
+            while session.is_active: # Loop based on custom active flag
                 try:
-                    message = await ws.recv()
-                    data = json.loads(message)
-                except websockets.exceptions.ConnectionClosed:
-                    print(f"WebSocket closed for session {session_id}")
-                    break
-                
-                msg_type = data.get('type')
-                
-                if msg_type == "speech_segment":
-                    await self._process_websocket_message(data, session_id)
+                    message_str = await ws.recv()
+                    data = json.loads(message_str)
                     
-                elif msg_type == "call_started":
-                    stream_sid = data.get('data', {}).get('stream_sid', 'unknown')
-                    await self._publish_to_ui(
-                        f"Call ({session_id[:8]})",
-                        f"Call started - Stream SID: {stream_sid}"
-                    )
+                    msg_type = data.get('type')
                     
-                elif msg_type == "call_ended":
-                    eligibility = data.get('data', {}).get('eligibility', 'unknown')
-                    await self._publish_to_ui(
-                        f"Call ({session_id[:8]})",
-                        f"Call ended - Eligibility: {eligibility}"
-                    )
-                    session.is_active = False
-                    
-                    # Generate summary
-                    await self._generate_conversation_summary(session_id)
+                    if msg_type == "speech_segment":
+                        await self._process_websocket_message(data, session_id)
+                        
+                    elif msg_type == "call_started":
+                        stream_sid = data.get('data', {}).get('stream_sid', 'unknown')
+                        await self._publish_to_ui(
+                            f"Call ({session_id[:8]})",
+                            f"Call started - Stream SID: {stream_sid}"
+                        )
+                        
+                    elif msg_type == "call_ended":
+                        eligibility = data.get('data', {}).get('eligibility', 'unknown')
+                        await self._publish_to_ui(
+                            f"Call ({session_id[:8]})",
+                            f"Call ended - Eligibility: {eligibility}"
+                        )
+                        session.is_active = False # Mark inactive on call_ended
+                        
+                        # Generate summary before cleanup
+                        await self._generate_conversation_summary(session_id)
+                        # No longer break here, cleanup is handled by finally and outer loop condition
+                        
+                except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e_closed:
+                    print(f"WebSocket connection closed for session {session_id}: {type(e_closed).__name__} - {e_closed}")
+                    session.is_active = False # Crucial: set session inactive
+                    # Loop will terminate due to session.is_active being false
+                except json.JSONDecodeError:
+                    print(f"Invalid JSON received for session {session_id}")
+                    continue
+                except Exception as e:
+                    print(f"Error processing WebSocket message for session {session_id}: {str(e)}")
+                    session.is_active = False # Mark inactive on other errors within the loop
+                    # Loop will terminate
+            
+            print(f"Exited WebSocket processing loop for session {session_id}. Session active: {session.is_active}")
                     
         except Exception as e:
-            print(f"Error in WebSocket session {session_id}: {str(e)}")
+            print(f"Outer error in WebSocket session {session_id}: {str(e)}")
+            if session: # Check if session still exists
+                session.is_active = False # Mark inactive on outer errors
             import traceback
             traceback.print_exc()
         finally:
-            # Cleanup
+            print(f"Performing final cleanup for session {session_id}.")
+            # Ensure session is marked inactive if not already
+            if session and session.is_active:
+                 print(f"Warning: Session {session_id} was still marked active in finally block. Forcing inactive.")
+                 session.is_active = False
             await self._cleanup_session(session_id)
     
     async def _process_websocket_message(self, ws_message: dict, session_id: str) -> None:
@@ -333,21 +374,41 @@ class WrapperAgent(RoutedAgent):
             import traceback
             traceback.print_exc()
     
-    async def _route_response(self, response: str, context_id: str) -> None:
-        """Route response to appropriate destination"""
-        if context_id in self.websocket_connections:
-            # Send to WebSocket
-            ws = self.websocket_connections[context_id]
+    async def _route_response(self, response: str, session_id: str) -> None:
+        """Route AI response to appropriate destination"""
+        ws = self.websocket_connections.get(session_id)
+        session = self.active_websocket_sessions.get(session_id)
+
+        if not session:
+            print(f"Cannot route response: Session {session_id} not found.")
+            return
+
+        if not session.is_active:
+            print(f"Cannot route response: Session {session_id} is inactive.")
+            return
+            
+        if not ws:
+            print(f"Cannot route response: WebSocket for session {session_id} not found though session is active.")
+            session.is_active = False # Mark session inactive as ws is missing
+            await self._cleanup_session(session_id)
+            return
+                
+        try:
+            print(f"Routing AI response to WebSocket for session {session_id}")
             await ws.send(json.dumps({
                 "type": "text_response",
                 "data": {
                     "text": response
                 }
             }))
-            print(f"Sent response to WebSocket for session {context_id}")
-        else:
-            # If no WebSocket, send to UI (already done in calling function)
-            pass
+        except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e_closed:
+            print(f"WebSocket connection closed while sending for session {session_id}: {type(e_closed).__name__} - {e_closed}")
+            session.is_active = False # Mark session inactive
+            # Cleanup will be handled by the main processing loop's finally block or next iteration
+        except Exception as e:
+            print(f"Error routing response for session {session_id}: {str(e)}")
+            session.is_active = False # Mark session inactive
+            # Cleanup will be handled by the main processing loop's finally block or next iteration
     
     async def _generate_conversation_summary(self, session_id: str) -> None:
         """Generate summary of conversation"""
@@ -386,21 +447,44 @@ class WrapperAgent(RoutedAgent):
     
     async def _cleanup_session(self, session_id: str) -> None:
         """Clean up session resources"""
-        # Close WebSocket
-        if session_id in self.websocket_connections:
-            ws = self.websocket_connections[session_id]
-            await ws.close()
-            del self.websocket_connections[session_id]
+        print(f"Initiating cleanup for session {session_id}")
+        ws = self.websocket_connections.get(session_id)
+        if ws:
+            try:
+                print(f"Attempting to close WebSocket for session {session_id}")
+                await ws.close()
+                print(f"WebSocket closed for session {session_id}")
+            except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK):
+                print(f"WebSocket already closed for session {session_id} during cleanup.")
+            except AttributeError as ae:
+                 print(f"AttributeError during ws.close() for session {session_id} (type: {type(ws)}): {ae}")
+            except Exception as e_close:
+                 print(f"Exception during ws.close() for session {session_id} (type: {type(ws)}): {e_close}")
+            finally:
+                 # Remove from dict after attempting close
+                if session_id in self.websocket_connections:
+                    del self.websocket_connections[session_id]
+        else:
+            print(f"No WebSocket connection found in dict for session {session_id} during cleanup.")
         
-        # Remove session data
-        if session_id in self.active_websocket_sessions:
-            del self.active_websocket_sessions[session_id]
-        
+        active_session = self.active_websocket_sessions.get(session_id)
+        if active_session:
+            active_session.is_active = False # Ensure marked as inactive
+            if session_id in self.active_websocket_sessions: # Re-check before del
+                 del self.active_websocket_sessions[session_id]
+            print(f"Active session entry removed for {session_id}")
+        else:
+            print(f"No active_session entry found for {session_id} during cleanup.")
+            
         if session_id in self.conversation_histories:
             del self.conversation_histories[session_id]
-        
+            print(f"Conversation history removed for {session_id}")
+            
         if session_id in self.session_contexts:
             del self.session_contexts[session_id]
+            print(f"Session context removed for {session_id}")
+            
+        print(f"Session {session_id} cleanup process completed.")
     
     async def _publish_to_ui(self, source: str, content: str) -> None:
         """Helper to publish messages to UI"""

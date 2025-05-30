@@ -83,7 +83,7 @@ async def start_chat():
     ).send()
 
 @cl.on_message
-async def on_message(message: str):
+async def on_message(message: cl.Message):
     """Handle user messages from chainlit UI."""
     global ui_runtime
     
@@ -95,6 +95,6 @@ async def on_message(message: str):
     
     # Send message to wrapper agent
     await ui_runtime.publish_message(
-        UserMessage(content=message, source="User"),
+        UserMessage(content=message.content, source="User"),
         DefaultTopicId(type=config.wrapper_agent.topic_type),
     ) 
