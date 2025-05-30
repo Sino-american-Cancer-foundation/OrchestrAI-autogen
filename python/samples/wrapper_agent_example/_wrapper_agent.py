@@ -329,7 +329,7 @@ class WrapperAgent(RoutedAgent):
                 for turn in self.conversation_histories[session_id][-5:]:  # Last 5 turns
                     context += f"{turn['role']}: {turn['content']}\n"
                 context += "\n"
-            context += f"Caller just said: {transcript}\n"
+            context += f"Callee just said: {transcript}\n"
             context += "Please provide a helpful response:"
             
             # Get response from AI agent
