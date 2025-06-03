@@ -81,4 +81,5 @@ class AppConfig(BaseModel):
     host: HostConfig
     wrapper_agent: WrapperAgentConfig
     ui_agent: UIAgentConfig
-    client_config: ClientConfig 
+    client_config: ClientConfig
+    client_model_config: Dict[str, Any] = {}

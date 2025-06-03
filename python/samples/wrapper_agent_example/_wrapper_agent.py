@@ -2,11 +2,18 @@ import asyncio
 import json
 import uuid
 import websockets
+import httpx
+import re
 from typing import Dict, List, Optional, Any
 
 from autogen_core import (
     AgentId, DefaultTopicId, MessageContext, RoutedAgent, 
     message_handler, CancellationToken
+)
+from autogen_core.models import (
+    AssistantMessage as LLMAssistantMessage,
+    UserMessage as LLMUserMessage,
+    SystemMessage, ChatCompletionClient
 )
 from autogen_ext.tools.mcp import McpWorkbench
 
@@ -23,17 +30,36 @@ class WrapperAgent(RoutedAgent):
         self,
         description: str,
         workbench: McpWorkbench,
-        ui_config: UIAgentConfig
+        ui_config: UIAgentConfig,
+        model_client: Optional[ChatCompletionClient] = None
     ) -> None:
         super().__init__(description=description)
         self.workbench = workbench
         self._ui_config = ui_config
+        
+        # Initialize model client
+        if model_client:
+            self._model_client = model_client
+        else:
+            raise ValueError("Model_client must be provided")
+        
+        # Initialize system message
+        self._system_message = SystemMessage(
+            content="You are a helpful AI assistant tasked with summarizing phone conversations. Please provide concise summaries including key points and outcomes."
+        )
         
         # State management
         self.active_websocket_sessions: Dict[str, WebSocketSession] = {}
         self.websocket_connections: Dict[str, websockets.WebSocketClientProtocol] = {}
         self.conversation_histories: Dict[str, List[Dict[str, str]]] = {}
         self.session_contexts: Dict[str, str] = {}
+        # New history state for memory
+        self.agent_history: List[Dict[str, Any]] = []
+    
+    @property
+    def model_client(self) -> ChatCompletionClient:
+        """Get the model client used by this agent."""
+        return self._model_client
     
     @message_handler
     async def handle_user_request(self, message: UserMessage, ctx: MessageContext) -> Optional[AssistantMessage]:
@@ -60,17 +86,29 @@ class WrapperAgent(RoutedAgent):
     async def _handle_single_response_flow(self, message: UserMessage, ctx: MessageContext) -> AssistantMessage:
         """Handle single request → single response flow"""
         try:
+            # Add message to history
+            history_entry = {
+                "type": "single_response",
+                "input": message.content,
+                "response": None,
+                "timestamp": str(uuid.uuid4())  # Using UUID as timestamp for now
+            }
+            self.agent_history.append(history_entry)
+            
             # Send to UI that we're processing
             await self._publish_to_ui(
                 source="WrapperAgent",
                 content=f"Processing your request..."
             )
             
+            # Build context with history
+            context = self._build_context_with_history(message.content)
+            
             # Call AI agent MCP tool
             result = await self.workbench.call_tool(
                 "ask_ai_agent",
                 arguments={
-                    "question": message.content
+                    "question": context
                 },
                 cancellation_token=ctx.cancellation_token
             )
@@ -83,23 +121,94 @@ class WrapperAgent(RoutedAgent):
             # Extract response from the result
             response_text = result.result[0].content if result.result and hasattr(result.result[0], 'content') else ""
             
-            # Parse the JSON response
             try:
                 response_data = json.loads(response_text)
-                if response_data.get("status") == "success":
-                    ai_response = response_data.get("response", "No response from AI")
-                    model_used = response_data.get("model", "unknown")
-                    print(f"AI response using {model_used}: {ai_response[:100]}...")
+                
+                if response_data.get("status") == "streaming_url_generated":
+                    stream_url = response_data.get("stream_url")
+                    stream_id = response_data.get("stream_id")
+                    
+                    if not stream_url:
+                        error_msg = "No streaming URL provided"
+                        await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                        return AssistantMessage(content=error_msg, source="wrapper")
+                    
+                    print(f"Connecting to streaming URL")
+                    accumulated_response = ""  # Track complete response
+                    
+                    # Connect to streaming endpoint
+                    async with httpx.AsyncClient(timeout=None) as stream_client:
+                        async with stream_client.stream("GET", stream_url, headers={"Accept": "text/event-stream"}) as sse_response:
+                            if sse_response.status_code != 200:
+                                error_msg = f"Streaming connection failed (Status {sse_response.status_code})"
+                                await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                                return AssistantMessage(content=error_msg, source="wrapper")
+                            
+                            event_name = None
+                            event_data_lines = []
+                            buffer = ""  # Buffer for incomplete lines
+                            
+                            async for line_bytes in sse_response.aiter_bytes():
+                                # Decode and add to buffer
+                                buffer += line_bytes.decode('utf-8')
+                                
+                                # Process complete lines from buffer
+                                while '\n' in buffer:
+                                    line, buffer = buffer.split('\n', 1)
+                                    line = line.strip()
+                                    
+                                    if line.startswith("event:"):
+                                        event_name = line.split("event:", 1)[1].strip()
+                                    elif line.startswith("data:"):
+                                        data_line = line.split("data:", 1)[1].strip()
+                                        event_data_lines.append(data_line)
+                                    elif not line and event_name and event_data_lines:  # Empty line = end of event
+                                        try:
+                                            full_event_data = "".join(event_data_lines)
+                                            data_json = json.loads(full_event_data)
+                                            
+                                            if event_name == "chunk":
+                                                chunk_text = data_json.get("text_chunk", "")
+                                                accumulated_response += chunk_text
+                                                
+                                            elif event_name == "error":
+                                                error_msg = f"Streaming error: {data_json.get('error', 'Unknown error')}"
+                                                await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                                                return AssistantMessage(content=error_msg, source="wrapper")
+                                                
+                                            elif event_name == "completed":                                                
+                                                # Send complete response to UI
+                                                await self._publish_to_ui(
+                                                    "AI Agent",
+                                                    accumulated_response,
+                                                    is_streaming=False
+                                                )
+                                                
+                                                # Update history with response
+                                                history_entry["response"] = accumulated_response
+                                                
+                                                return AssistantMessage(content=accumulated_response, source="wrapper")
+                                                
+                                        except json.JSONDecodeError as e:
+                                            print(f"Error parsing streaming event: {e}")
+                                        
+                                        # Reset for next event
+                                        event_name = None
+                                        event_data_lines = []
+                                        
                 else:
-                    ai_response = f"Error: {response_data.get('message', 'Unknown error')}"
-            except json.JSONDecodeError:
-                # If not JSON, use the raw text
-                ai_response = response_text
-            
-            # Send to UI
-            await self._publish_to_ui("AI Agent", ai_response)
-            
-            return AssistantMessage(content=ai_response, source="wrapper")
+                    error_msg = f"Unexpected response status: {response_data.get('status')}"
+                    await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                    return AssistantMessage(content=error_msg, source="wrapper")
+                    
+            except json.JSONDecodeError as e:
+                error_msg = f"Error parsing AI response: {e}"
+                await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                return AssistantMessage(content=error_msg, source="wrapper")
+            except Exception as e:
+                error_msg = f"Error in streaming process: {e}"
+                await self._publish_to_ui("WrapperAgent", f"Error: {error_msg}")
+                return AssistantMessage(content=error_msg, source="wrapper")
             
         except Exception as e:
             error_msg = f"Error in single response flow: {str(e)}"
@@ -107,12 +216,43 @@ class WrapperAgent(RoutedAgent):
             await self._publish_to_ui("WrapperAgent", error_msg)
             return AssistantMessage(content=error_msg, source="wrapper")
     
+    def _build_context_with_history(self, current_input: str) -> str:
+        """Build context string including relevant history"""
+        context = []
+        
+        # Add recent history (last 5 interactions)
+        if self.agent_history:
+            context.append("Interactions history:")
+            for entry in self.agent_history:
+                # print(entry)
+                if entry["response"]:  # Only include completed interactions
+                    context.append(f"User: {entry['input']}")
+                    context.append(f"Assistant: {entry['response']}\n")
+                else: # if no history, just add the current input
+                    context.append(f"User: {current_input}")
+        
+        # Add current input
+        context.append(f"Current question: {current_input}")
+        context.append("\nPlease answer current question based on the rules and information you have:")
+        
+        return "\n".join(context)
+    
     async def _handle_websocket_flow(self, message: UserMessage, ctx: MessageContext) -> AssistantMessage:
         """Handle WebSocket conversation flow"""
         session_id = str(uuid.uuid4())
         ws_connection: Optional[websockets.WebSocketClientProtocol] = None # Initialize
         
         try:
+            # Add message to history
+            history_entry = {
+                "type": "websocket_conversation",
+                "input": message.content,
+                "response": None,  # Will be filled with summary later
+                "session_id": session_id,
+                "timestamp": str(uuid.uuid4())
+            }
+            self.agent_history.append(history_entry)
+            
             # Extract phone number (simplified - in production use better parsing)
             to_number = "+12132841509"  # Default/mock number
             
@@ -224,6 +364,7 @@ class WrapperAgent(RoutedAgent):
                     data = json.loads(message_str)
                     
                     msg_type = data.get('type')
+                    print(f"Received message type: {msg_type}")
                     
                     if msg_type == "speech_segment":
                         await self._process_websocket_message(data, session_id)
@@ -237,10 +378,18 @@ class WrapperAgent(RoutedAgent):
                         
                     elif msg_type == "call_ended":
                         eligibility = data.get('data', {}).get('eligibility', 'unknown')
+                        # Publish eligibility result to UI
                         await self._publish_to_ui(
                             f"Call ({session_id[:8]})",
                             f"Call ended - Eligibility: {eligibility}"
                         )
+                        
+                        # Add eligibility check result to conversation history
+                        if session_id in self.conversation_histories:
+                            self.conversation_histories[session_id].append({
+                                "role": "system",
+                                "content": f"Eligibility check result: {eligibility}"
+                            })
                         session.is_active = False # Mark inactive on call_ended
                         
                         # Generate summary before cleanup
@@ -256,6 +405,8 @@ class WrapperAgent(RoutedAgent):
                     continue
                 except Exception as e:
                     print(f"Error processing WebSocket message for session {session_id}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     session.is_active = False # Mark inactive on other errors within the loop
                     # Loop will terminate
             
@@ -275,6 +426,10 @@ class WrapperAgent(RoutedAgent):
                  session.is_active = False
             await self._cleanup_session(session_id)
     
+    def _detect_sentence_end(self, text: str) -> bool:
+        """Detect if text ends with sentence-ending punctuation."""
+        return bool(re.search(r'[,.!?]\s*$', text))
+
     async def _process_websocket_message(self, ws_message: dict, session_id: str) -> None:
         """Process a single WebSocket message"""
         try:
@@ -322,15 +477,59 @@ class WrapperAgent(RoutedAgent):
                 "content": transcript
             })
             
-            # Build context for AI agent
-            context = f"Context: You are handling a phone call about: {self.session_contexts.get(session_id, 'healthcare eligibility verification')}\n\n"
-            if self.conversation_histories[session_id]:
-                context += "Previous conversation:\n"
-                for turn in self.conversation_histories[session_id][-5:]:  # Last 5 turns
-                    context += f"{turn['role']}: {turn['content']}\n"
-                context += "\n"
-            context += f"Callee just said: {transcript}\n"
-            context += "Please provide a helpful response:"
+            # Build context for AI agent with history
+            context = f"""\n**ROLE:** You are Cindy, and AI biller bot, and now you are the caller representing your patients, helping them contacting customer service to **ask about eligibility** for a medical plan. You are initiating the call and requesting assistance. Use the **Response Guide** below to determine the situation and respond appropriately.
+                            ---
+
+                            ### **RESPONSE GUIDE**
+
+                            #### **1. Determine the Current Context**
+
+                            * **Eligibility Result Confirmed:** You have received the eligibility outcome.
+                            * **Automated System (IVR/Menu):** You're interacting with a phone menu and must use keypad input.
+                            * **Human Representative:** You're speaking with a real person who can assist you.
+
+                            ---
+
+                            #### **2. Reply Formats (Based on the Context)**
+
+                            * **Eligibility Result Confirmed**
+
+                            * Eligible → `END_CALL: 1`
+                            * Not eligible → `END_CALL: 0`
+
+                            * **Automated System (IVR/Menu)**
+
+                            * Use only DTMF keypad input:
+
+                                * Example (single digit): `DTMF: 1`
+                                * Example with pauses (`w` = 0.5s): `DTMF: 1w2w3`
+                                * Example DOB entry (MM/DD/YYYY):
+
+                                * 11/01/1992 → `DTMF: 1w1w0w1w1w9w9w2w#`
+                                * 08/14/2002 → `DTMF: 0w8w1w4w2w0w0w2w#`
+
+                            * **Human Representative**
+
+                            * Speak naturally and professionally.
+                            * Keep responses brief and clear.
+                            * Use hyphens in numeric IDs:
+
+                                * e.g., “The policy number is 1-2-3-4-5-6-7-8-9.”
+
+                            ---
+
+                            #### **3. Important Rules**
+
+                            * **If Eligibility Result is Confirmed** → Use ONLY `END_CALL: 0` or `END_CALL: 1` — no other text.
+                            * **If speaking to an Automated System** → Use ONLY DTMF input — no natural language.
+                            * **If speaking to a Human Representative** → Do NOT use DTMF.
+                            * **Do NOT ask follow-up questions in your response.**
+
+                            ---"""
+            
+            # Add current question to context
+            context += f"Current question: {transcript}"
             
             # Get response from AI agent
             ai_result = await self.workbench.call_tool(
@@ -345,36 +544,129 @@ class WrapperAgent(RoutedAgent):
                 print(f"AI agent error for session {session_id}")
                 return
             
-            # Parse response
+            # Parse initial response to get streaming URL
             response_text = ai_result.result[0].content if ai_result.result and hasattr(ai_result.result[0], 'content') else ""
-            response_data = json.loads(response_text)
-            
-            if response_data.get("status") != "success":
-                print(f"AI agent failed: {response_data.get('message', 'Unknown error')}")
+            try:
+                response_data = json.loads(response_text)
+                
+                if response_data.get("status") == "streaming_url_generated":
+                    stream_url = response_data.get("stream_url")
+                    stream_id = response_data.get("stream_id")
+                    
+                    if not stream_url:
+                        print(f"No streaming URL provided for session {session_id}")
+                        return
+                        
+                    print(f"Connecting to streaming URL for session {session_id}")
+                    accumulated_response = ""  # Track complete response
+                    current_sentence = ""  # Track current sentence being built
+                    
+                    # Connect to streaming endpoint
+                    async with httpx.AsyncClient(timeout=None) as stream_client:
+                        async with stream_client.stream("GET", stream_url, headers={"Accept": "text/event-stream"}) as sse_response:
+                            if sse_response.status_code != 200:
+                                print(f"Streaming connection failed (Status {sse_response.status_code})")
+                                return
+                                
+                            event_name = None
+                            event_data_lines = []
+                            buffer = ""  # Buffer for incomplete lines
+                            
+                            async for line_bytes in sse_response.aiter_bytes():
+                                # Decode and add to buffer
+                                buffer += line_bytes.decode('utf-8')
+                                
+                                # Process complete lines from buffer
+                                while '\n' in buffer:
+                                    line, buffer = buffer.split('\n', 1)
+                                    line = line.strip()
+                                    
+                                    if line.startswith("event:"):
+                                        event_name = line.split("event:", 1)[1].strip()
+                                    elif line.startswith("data:"):
+                                        data_line = line.split("data:", 1)[1].strip()
+                                        event_data_lines.append(data_line)
+                                    elif not line and event_name and event_data_lines:  # Empty line = end of event
+                                        try:
+                                            full_event_data = "".join(event_data_lines)
+                                            data_json = json.loads(full_event_data)
+                                            
+                                            if event_name == "chunk":
+                                                chunk_text = data_json.get("text_chunk", "")
+                                                accumulated_response += chunk_text
+                                                current_sentence += chunk_text
+                                                
+                                                # Check if we have a complete sentence
+                                                if self._detect_sentence_end(current_sentence):
+                                                    # Send the complete sentence
+                                                    await self._route_response(
+                                                        current_sentence.strip(),
+                                                        accumulated_response,
+                                                        session_id,
+                                                        is_partial=True
+                                                    )
+                                                    current_sentence = ""  # Reset for next sentence
+                                                
+                                            elif event_name == "error":
+                                                print(f"Streaming error: {data_json.get('error', 'Unknown error')}")
+                                                break
+                                                
+                                            elif event_name == "completed":
+                                                # Send any remaining text as final sentence
+                                                if current_sentence.strip():
+                                                    await self._route_response(
+                                                        current_sentence.strip(),
+                                                        accumulated_response,
+                                                        session_id,
+                                                        is_partial=True
+                                                    )
+                                                
+                                                # Send final complete response
+                                                await self._route_response(
+                                                    accumulated_response,
+                                                    accumulated_response,
+                                                    session_id,
+                                                    is_partial=False
+                                                )
+                                                
+                                                # Update conversation history with complete response
+                                                self.conversation_histories[session_id].append({
+                                                    "role": "assistant",
+                                                    "content": accumulated_response
+                                                })
+                                                
+                                                # Send to UI
+                                                await self._publish_to_ui(
+                                                    f"Agent ({session_id[:8]})",
+                                                    accumulated_response
+                                                )
+                                                break
+                                                
+                                        except json.JSONDecodeError as e:
+                                            print(f"Error parsing streaming event: {e}")
+                                        
+                                        # Reset for next event
+                                        event_name = None
+                                        event_data_lines = []
+                                        
+                else:
+                    print(f"Unexpected response status: {response_data.get('status')}")
+                    return
+                    
+            except json.JSONDecodeError as e:
+                print(f"Error parsing AI response: {e}")
                 return
-            
-            ai_response = response_data.get("response", "I understand. How can I help you further?")
-            
-            print(f"🤖 Response: {ai_response[:50]}...")
-            
-            # Update conversation history
-            self.conversation_histories[session_id].append({
-                "role": "assistant",
-                "content": ai_response
-            })
-            
-            # Send to UI
-            await self._publish_to_ui(f"Agent ({session_id[:8]})", ai_response)
-            
-            # Send back to WebSocket
-            await self._route_response(ai_response, session_id)
-            
+            except Exception as e:
+                print(f"Error in streaming process: {e}")
+                return
+                
         except Exception as e:
             print(f"Error processing WebSocket message: {str(e)}")
             import traceback
             traceback.print_exc()
     
-    async def _route_response(self, response: str, session_id: str) -> None:
+    # TODO: The accumulated_response part could be removed in the future, here it is to make the MCP tool streaming reponse work
+    async def _route_response(self, response: str, accumulated_response: str, session_id: str, is_partial: bool = False) -> None:
         """Route AI response to appropriate destination"""
         ws = self.websocket_connections.get(session_id)
         session = self.active_websocket_sessions.get(session_id)
@@ -394,13 +686,17 @@ class WrapperAgent(RoutedAgent):
             return
                 
         try:
-            print(f"Routing AI response to WebSocket for session {session_id}")
+            # print(f"Routing {'partial' if is_partial else 'complete'} AI response to WebSocket for session {session_id}")
+            
+            message_type = "partial_response" if is_partial else "text_response"
             await ws.send(json.dumps({
-                "type": "text_response",
+                "type": message_type,
                 "data": {
-                    "text": response
+                    "text": response,
+                    "accumulated_text": accumulated_response
                 }
             }))
+            
         except (websockets.exceptions.ConnectionClosed, websockets.exceptions.ConnectionClosedError, websockets.exceptions.ConnectionClosedOK) as e_closed:
             print(f"WebSocket connection closed while sending for session {session_id}: {type(e_closed).__name__} - {e_closed}")
             session.is_active = False # Mark session inactive
@@ -420,30 +716,54 @@ class WrapperAgent(RoutedAgent):
             return
         
         conversation = self.conversation_histories[session_id]
-        summary_prompt = f"Please provide a concise summary of this phone call conversation, including key points and outcomes:\n\n{json.dumps(conversation, indent=2)}"
+        
+        # Create messages for the model
+        messages = [
+            self._system_message,
+            LLMUserMessage(
+                content=f"Please summarize this conversation:\n{json.dumps(conversation, indent=2)}",
+                source="user"
+            )
+        ]
         
         try:
-            summary_result = await self.workbench.call_tool(
-                "ask_ai_agent",
-                arguments={
-                    "question": summary_prompt
-                },
+            # Get summary directly from model
+            print(f"Generating summary for session {session_id}")
+            completion = await self.model_client.create(
+                messages=messages,
                 cancellation_token=CancellationToken()
             )
             
-            if not summary_result.is_error:
-                result_text = summary_result.result[0].content if summary_result.result and hasattr(summary_result.result[0], 'content') else ""
-                result_data = json.loads(result_text)
+            # Extract content
+            assert isinstance(completion.content, str)
+            summary = completion.content
+            print(f"Summary generated: {summary}")
+            
+            if summary:
+                await self._publish_to_ui(
+                    f"Call Summary ({session_id[:8]})",
+                    f"📝 **CALL SUMMARY**\n\n{summary}"
+                )
                 
-                if result_data.get("status") == "success":
-                    summary = result_data.get("response", "Unable to generate summary")
-                    
-                    await self._publish_to_ui(
-                        f"Call Summary ({session_id[:8]})",
-                        f"📝 **CALL SUMMARY**\n\n{summary}"
-                    )
+                # Update history with summary
+                for entry in self.agent_history:
+                    if entry["type"] == "websocket_conversation" and entry["session_id"] == session_id:
+                        entry["response"] = summary
+                        break
+            else:
+                await self._publish_to_ui(
+                    f"Call Summary ({session_id[:8]})",
+                    "Unable to generate summary"
+                )
+                
         except Exception as e:
             print(f"Error generating summary: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            await self._publish_to_ui(
+                f"Call Summary ({session_id[:8]})",
+                f"Error generating summary: {str(e)}"
+            )
     
     async def _cleanup_session(self, session_id: str) -> None:
         """Clean up session resources"""
@@ -486,16 +806,15 @@ class WrapperAgent(RoutedAgent):
             
         print(f"Session {session_id} cleanup process completed.")
     
-    async def _publish_to_ui(self, source: str, content: str) -> None:
+    async def _publish_to_ui(self, source: str, content: str, is_streaming: bool = False) -> None:
         """Helper to publish messages to UI"""
         message_id = str(uuid.uuid4())
         
-        # Stream the message
-        tokens = content.split()
-        for token in tokens:
+        if is_streaming:
+            # For streaming, send the entire sentence as one chunk
             chunk = MessageChunk(
                 message_id=message_id,
-                text=token + " ",
+                text=content + " ",  # Add space after sentence
                 author=source,
                 finished=False
             )
@@ -503,7 +822,21 @@ class WrapperAgent(RoutedAgent):
                 chunk,
                 DefaultTopicId(type=self._ui_config.topic_type)
             )
-            await asyncio.sleep(0.05)  # Small delay for streaming effect
+        else:
+            # For non-streaming, split into tokens and stream with delay
+            tokens = content.split()
+            for token in tokens:
+                chunk = MessageChunk(
+                    message_id=message_id,
+                    text=token + " ",
+                    author=source,
+                    finished=False
+                )
+                await self.publish_message(
+                    chunk,
+                    DefaultTopicId(type=self._ui_config.topic_type)
+                )
+                await asyncio.sleep(0.05)  # Small delay for streaming effect
         
         # Send finished marker
         await self.publish_message(
@@ -515,3 +848,8 @@ class WrapperAgent(RoutedAgent):
             ),
             DefaultTopicId(type=self._ui_config.topic_type)
         ) 
+
+    async def close(self) -> None:
+        """Close the agent and its resources."""
+        await super().close()
+        await self._model_client.close() 

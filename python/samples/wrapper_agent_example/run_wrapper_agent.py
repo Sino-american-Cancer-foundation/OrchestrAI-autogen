@@ -7,6 +7,7 @@ from ._types import AppConfig, UserMessage, AssistantMessage, MessageChunk
 from ._utils import get_serializers, load_config, set_all_log_levels
 from autogen_core import TypeSubscription
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_ext.tools.mcp import McpWorkbench, SseServerParams
 from rich.console import Console
 from rich.markdown import Markdown
@@ -24,6 +25,9 @@ async def main(config: AppConfig):
     # Start runtime
     Console().print(Markdown("Starting **`Wrapper Agent`**"))
     await wrapper_runtime.start()
+
+    # Initialize model client
+    model_client = OpenAIChatCompletionClient(**config.client_model_config)
     
     # Initialize MCP Workbench
     workbench = McpWorkbench(
@@ -56,6 +60,7 @@ async def main(config: AppConfig):
             description=config.wrapper_agent.description,
             workbench=workbench,
             ui_config=config.ui_agent,
+            model_client=model_client,
         ),
     )
     
