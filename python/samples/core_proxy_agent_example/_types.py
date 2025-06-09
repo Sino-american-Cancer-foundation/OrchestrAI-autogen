@@ -27,6 +27,14 @@ class RequestToSpeak(BaseModel):
         return "RequestToSpeak"
 
 
+class ConversationFinished(BaseModel):
+    """Notification that the conversation has been completed"""
+    reason: str
+    
+    def __str__(self) -> str:
+        return f"ConversationFinished: {self.reason}"
+
+
 class MessageChunk(BaseModel):
     """UI message chunk for streaming responses"""
     message_id: str
@@ -44,12 +52,13 @@ class PatientData(BaseModel):
     name: str
     age: int
     gender: str
-    phone: str
+    date_of_birth: str
+    physician: str
+    npi: str
+    callback_number: str
     medical_history: List[str]
     current_medications: List[str]
     insurance_info: Dict[str, str]
-    recent_visits: List[Dict[str, str]]
-    emergency_contact: Dict[str, str]
 
 
 # Configuration models
@@ -81,7 +90,7 @@ class TwilioProxyAgentConfig(ChatAgentConfig):
 
 
 class MedicalDataAgentConfig(ChatAgentConfig):
-    search_delay_seconds: float
+    pass
 
 
 class UIAgentConfig(BaseModel):

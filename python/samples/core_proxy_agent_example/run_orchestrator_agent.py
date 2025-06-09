@@ -3,11 +3,11 @@ import logging
 
 try:
     from ._agents import OrchestratorAgent
-    from ._types import GroupChatMessage, RequestToSpeak, MessageChunk, AppConfig
+    from ._types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig
     from ._utils import load_config, set_all_log_levels, get_serializers
 except ImportError:
     from _agents import OrchestratorAgent
-    from _types import GroupChatMessage, RequestToSpeak, MessageChunk, AppConfig
+    from _types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig
     from _utils import load_config, set_all_log_levels, get_serializers
 
 from autogen_core import TypeSubscription
@@ -23,7 +23,7 @@ async def main(config: AppConfig):
     """Start the orchestrator agent runtime following GroupChatManager pattern."""
     # Initialize runtime
     orchestrator_runtime = GrpcWorkerAgentRuntime(host_address=config.host.address)
-    orchestrator_runtime.add_message_serializer(get_serializers([RequestToSpeak, GroupChatMessage, MessageChunk]))
+    orchestrator_runtime.add_message_serializer(get_serializers([RequestToSpeak, GroupChatMessage, MessageChunk, ConversationFinished]))
     
     await asyncio.sleep(1)
     Console().print(Markdown("Starting **`Orchestrator Agent`**"))

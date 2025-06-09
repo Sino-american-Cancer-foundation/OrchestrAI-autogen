@@ -52,6 +52,7 @@ This implementation now follows the **correct distributed group chat pattern** t
   - MCP tool integration for calls
   - WebSocket server for audio (simulated)
   - Mode switching (INACTIVE → ACTIVE)
+  - **Graceful call termination** when conversation finishes
 - **Pattern**: BaseGroupChatAgent with enhanced phone functionality
 
 ### **MedicalDataAgent**
@@ -85,6 +86,13 @@ class GroupChatMessage(BaseModel):
 ```python
 class RequestToSpeak(BaseModel):
     pass  # Simple trigger message
+```
+
+### **ConversationFinished**
+
+```python
+class ConversationFinished(BaseModel):
+    reason: str  # Reason for conversation completion
 ```
 
 ### **MessageChunk**
@@ -174,6 +182,10 @@ python run_ui.py
 
 6. **Conversation continues** until orchestrator decides to finish
 
+7. **OrchestratorAgent** → Broadcasts `ConversationFinished` message to all agents
+
+8. **TwilioProxyAgent** → Receives notification → Sends `end_call` to active WebSocket sessions → Gracefully terminates phone calls
+
 ## **🔧 Key Fixes Implemented**
 
 ### **❌ Previous Issues**
@@ -193,10 +205,36 @@ python run_ui.py
 ## **🎯 Features Preserved**
 
 - ✅ **TwilioProxyAgent** phone call detection & WebSocket integration
+- ✅ **Graceful call termination** when conversation completes
 - ✅ **MedicalDataAgent** patient data lookup with realistic delay
 - ✅ **Chainlit UI** with streaming message chunks
 - ✅ **MCP tool integration** for external phone calls
 - ✅ **Healthcare domain logic** with patient data management
+
+## **🔚 Conversation Termination Flow**
+
+The system now includes **graceful conversation termination** with automatic call cleanup:
+
+### **When Orchestrator Decides "FINISH"**
+
+1. **OrchestratorAgent** determines conversation is complete (LLM returns "FINISH: {reason}")
+2. **Parses dynamic finish reason** from LLM response instead of using generic message
+3. **Publishes contextual finish message to UI** with specific accomplishments
+4. **NEW**: Broadcasts `ConversationFinished` message to all participant agents
+5. **TwilioProxyAgent** receives notification and:
+   - Identifies all active phone call sessions
+   - Sends `end_call` WebSocket message to each active session
+   - WebSocket server responds with `call_ended` message
+   - Agent processes `call_ended` and cleans up session resources
+   - Switches back to INACTIVE mode when no sessions remain
+
+### **Benefits**
+
+- ✅ **No hanging calls** - External participants are properly disconnected
+- ✅ **Dynamic finish messages** - Contextual completion summaries instead of generic text
+- ✅ **Clean resource management** - WebSocket sessions are gracefully closed
+- ✅ **Proper state transitions** - TwilioProxyAgent returns to INACTIVE mode
+- ✅ **Extensible pattern** - Other agents can also respond to ConversationFinished
 
 ## **📊 Architecture Validation**
 
@@ -207,6 +245,7 @@ The system now follows the **proven distributed group chat pattern**:
 3. **Correct subscriptions** - Dual subscriptions for history + control
 4. **Type safety** - Proper LLMMessage structure throughout
 5. **Scalable design** - Easy to add new agents following patterns
+6. **Graceful termination** - Proper cleanup when conversations end
 
 ## **🔗 Related Examples**
 

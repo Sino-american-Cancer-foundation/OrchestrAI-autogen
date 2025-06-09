@@ -6,11 +6,11 @@ import chainlit as cl
 
 try:
     from ._agents import UIAgent
-    from ._types import GroupChatMessage, MessageChunk, AppConfig
+    from ._types import GroupChatMessage, MessageChunk, ConversationFinished, AppConfig
     from ._utils import load_config, set_all_log_levels, get_serializers
 except ImportError:
     from _agents import UIAgent
-    from _types import GroupChatMessage, MessageChunk, AppConfig
+    from _types import GroupChatMessage, MessageChunk, ConversationFinished, AppConfig
     from _utils import load_config, set_all_log_levels, get_serializers
 
 from autogen_core import DefaultTopicId, TypeSubscription
@@ -56,7 +56,7 @@ async def start_chat():
     
     # Connect to gRPC host
     runtime = GrpcWorkerAgentRuntime(host_address=config.host.address)
-    runtime.add_message_serializer(get_serializers([GroupChatMessage, MessageChunk]))
+    runtime.add_message_serializer(get_serializers([GroupChatMessage, MessageChunk, ConversationFinished]))
     
     Console().print("Starting **`UI Agent`**")
     await runtime.start()
@@ -76,7 +76,7 @@ async def start_chat():
     Console().print("✅ UI Agent connected and ready")
     
     await cl.Message(
-        content="**Healthcare Assistant System** is ready! 🏥\n\nYou can:\n- Ask about patient information\n- Request phone calls to external participants\n- Get medical data and reports\n\nTry: *I need to reach John Smith at 555-0123 about his recent diabetes follow-up visit.*",
+        content="**Assistant System** is ready! 🏥\n\nYou can:\n- Ask about patient information\n- Request phone calls to external participants\n- Get medical data and reports\n\nTry: *I need to reach John Smith at 555-0123 about his recent diabetes follow-up visit.*",
         author="System"
     ).send()
 

@@ -29,6 +29,17 @@ def load_config() -> AppConfig:
         if key in os.environ and "azure_model_config" in config_dict:
             config_dict["azure_model_config"][key.lower()] = os.environ[key]
 
+    # Load phone call instruction file for TwilioProxyAgent system message
+    if "proxy_agent" in config_dict:
+        phone_instruction_path = Path(__file__).parent / "prompts" / "phone_call_instruction.txt"
+        try:
+            with open(phone_instruction_path, "r") as f:
+                phone_call_instruction = f.read()
+            config_dict["proxy_agent"]["system_message"] = phone_call_instruction
+            print(f"✅ Loaded phone call instruction from {phone_instruction_path}")
+        except FileNotFoundError:
+            print(f"⚠️  Warning: {phone_instruction_path} not found, using default system message")
+
     return AppConfig(**config_dict)
 
 

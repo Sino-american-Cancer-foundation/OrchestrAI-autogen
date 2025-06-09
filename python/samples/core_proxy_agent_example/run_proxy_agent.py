@@ -3,11 +3,11 @@ import logging
 
 try:
     from ._agents import TwilioProxyAgent
-    from ._types import GroupChatMessage, RequestToSpeak, MessageChunk, AppConfig, AgentMode
+    from ._types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig, AgentMode
     from ._utils import load_config, set_all_log_levels, get_serializers
 except ImportError:
     from _agents import TwilioProxyAgent
-    from _types import GroupChatMessage, RequestToSpeak, MessageChunk, AppConfig, AgentMode
+    from _types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig, AgentMode
     from _utils import load_config, set_all_log_levels, get_serializers
 
 from autogen_core import TypeSubscription
@@ -24,7 +24,7 @@ async def main(config: AppConfig):
     """Start the proxy agent runtime following BaseGroupChatAgent pattern."""
     # Initialize runtime
     proxy_agent_runtime = GrpcWorkerAgentRuntime(host_address=config.host.address)
-    proxy_agent_runtime.add_message_serializer(get_serializers([RequestToSpeak, GroupChatMessage, MessageChunk]))
+    proxy_agent_runtime.add_message_serializer(get_serializers([RequestToSpeak, GroupChatMessage, MessageChunk, ConversationFinished]))
     
     await asyncio.sleep(3)
     Console().print(Markdown("Starting **`Proxy Agent`**"))
