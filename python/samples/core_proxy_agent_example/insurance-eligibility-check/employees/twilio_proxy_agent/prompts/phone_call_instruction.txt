@@ -32,4 +32,4 @@ Follow the response guide below to determine the context and reply format.
 
 * **Automated** → Only DTMF, no other text.
 * **Human** → Never use DTMF.
-* **NEVER ASK FOLLOW UP QUESTIONS**
+* **NEVER ASK FOLLOW UP QUESTIONS** 

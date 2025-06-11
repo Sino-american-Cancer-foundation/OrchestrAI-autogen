@@ -4,15 +4,10 @@ from typing import Any, Dict, List, Union, Optional
 
 import chainlit as cl
 
-try:
-    from ._agents import UIAgent
-    from ._types import GroupChatMessage, MessageChunk, ConversationFinished, AppConfig
-    from ._utils import load_config, set_all_log_levels, get_serializers
-except ImportError:
-    from _agents import UIAgent
-    from _types import GroupChatMessage, MessageChunk, ConversationFinished, AppConfig
-    from _utils import load_config, set_all_log_levels, get_serializers
-
+from facilities.core import (
+    UIAgent, GroupChatMessage, MessageChunk, ConversationFinished, AppConfig,
+    load_config, set_all_log_levels, get_serializers
+)
 from autogen_core import DefaultTopicId, TypeSubscription
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from autogen_core.models import UserMessage

@@ -1,15 +1,11 @@
 import asyncio
 import logging
 
-try:
-    from ._agents import OrchestratorAgent
-    from ._types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig
-    from ._utils import load_config, set_all_log_levels, get_serializers
-except ImportError:
-    from _agents import OrchestratorAgent
-    from _types import GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig
-    from _utils import load_config, set_all_log_levels, get_serializers
-
+from departments.orchestrator import OrchestratorAgent
+from facilities.core import (
+    GroupChatMessage, RequestToSpeak, MessageChunk, ConversationFinished, AppConfig,
+    load_config, set_all_log_levels, get_serializers
+)
 from autogen_core import TypeSubscription
 from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from autogen_ext.models.openai import OpenAIChatCompletionClient
