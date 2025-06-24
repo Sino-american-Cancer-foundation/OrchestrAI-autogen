@@ -1,0 +1,182 @@
+## Design Overview
+
+### Core Concept
+Replace the multi-agent orchestration pattern with a single **WrapperAgent** that uses MCP tools for all operations, including domain agent interactions. This creates a cleaner separation of concerns where the Wrapper handles routing/transformation logic while domain expertise is encapsulated in MCP tools.
+
+## Updated Architecture
+
+### Components to **KEEP**:
+1. **Host Runtime** - No changes needed
+2. **UIAgent** - No changes needed  
+3. **MCP Server** - Enhanced with domain agent tool
+
+### Components to **REPLACE**:
+- **GroupChatManager + FormatProxyAgent** → **Single WrapperAgent**
+- **DomainAgent** → **Domain Agent MCP Tool** (in MCP server)
+
+### Components to **REMOVE**:
+- Separate domain agent runtime
+- Direct agent-to-agent messaging
+- Prompt/resource loading logic (handled internally by domain agent tool)
+
+## Detailed Design Plan
+
+### 1. Enhanced MCP Server
+**New Tool to Add:**
+```
+@mcp.tool(name="ask_domain_agent")
+async def ask_domain_agent(question: str, context: str = "", conversation_history: list = None) -> Dict[str, Any]
+```
+
+**Features:**
+- Encapsulates the healthcare domain knowledge (loads from domain_knowledge.txt)
+- Maintains internal conversation state if needed
+- Handles prompt composition internally
+- Returns structured responses with metadata
+
+**Updated Tools:**
+- Keep existing `make_call`, `transcribe_audio` 
+- Keep the new `ask_ai_agent` as fallback/general purpose
+
+### 2. New WrapperAgent
+
+**Core Responsibilities:**
+- **Message Interception**: All user requests go through Wrapper first
+- **Flow Detection**: Analyze incoming requests to determine flow type
+- **WebSocket Management**: Handle WebSocket lifecycle and message routing
+- **Response Routing**: Decide whether responses go to WebSocket or user client
+- **Conversation Tracking**: Maintain chat history for WebSocket sessions
+- **Summary Generation**: Create final summaries when conversations end
+
+**Key Methods:**
+```python
+@message_handler
+async def handle_user_request(self, message: UserMessage, ctx: MessageContext)
+
+async def _detect_flow_type(self, content: str) -> FlowType  # SINGLE_RESPONSE | WEBSOCKET_CONVERSATION
+
+async def _handle_single_response_flow(self, message: UserMessage, ctx: MessageContext)
+
+async def _handle_websocket_flow(self, message: UserMessage, ctx: MessageContext)
+
+async def _process_websocket_message(self, ws_message: dict, session_id: str)
+
+async def _generate_conversation_summary(self, session_id: str)
+```
+
+**State Management:**
+- `active_websocket_sessions: Dict[str, WebSocketSession]`
+- `conversation_histories: Dict[str, List[Dict]]`
+- `session_contexts: Dict[str, str]` (original request context)
+
+### 3. Workflow Changes
+
+#### **Flow Type A: Single Request → Single Response**
+```
+User Request → WrapperAgent → ask_domain_agent MCP tool → Domain Response → User
+```
+
+**Steps:**
+1. WrapperAgent receives user request
+2. Detects single response flow (no "call" keywords)
+3. Calls `ask_domain_agent` MCP tool with user query
+4. Returns domain agent response directly to user via UI
+
+#### **Flow Type B: WebSocket Conversation → Summary**
+```
+User Request → WrapperAgent → make_call MCP tool → WebSocket Session → 
+[Message Loop: WebSocket → transcribe_audio → ask_domain_agent → WebSocket] → 
+Session End → Summary → User
+```
+
+**Steps:**
+1. WrapperAgent receives call request
+2. Detects WebSocket flow (contains "call" keywords)
+3. Calls `make_call` MCP tool to initiate call
+4. Establishes WebSocket connection and stores session info
+5. **Message Loop** (until session ends):
+   - Receive audio from WebSocket
+   - Call `transcribe_audio` MCP tool
+   - Call `ask_domain_agent` MCP tool with transcript + conversation history
+   - Send domain response back to WebSocket
+   - Update conversation history
+6. On session end, call `ask_domain_agent` for summary generation
+7. Send final summary to user via UI
+
+### 4. Decision Logic for Response Routing
+
+**Rule**: If WrapperAgent has an active WebSocket session for the current context, route domain agent responses back to WebSocket. Otherwise, route to user client.
+
+**Implementation:**
+```python
+async def _route_response(self, response: str, context_id: str):
+    if context_id in self.active_websocket_sessions:
+        # Send to WebSocket
+        await self._send_to_websocket(response, context_id)
+    else:
+        # Send to user via UI
+        await self._send_to_ui(response)
+```
+
+### 5. Configuration Updates
+
+**Simplified config.yaml:**
+```yaml
+host:
+  hostname: "localhost"
+  port: 50060
+
+wrapper_agent:
+  topic_type: "wrapper_requests"
+  description: "Universal wrapper agent for format transformation and routing"
+
+ui_agent:
+  topic_type: "ui_events"
+  artificial_stream_delay_seconds:
+    min: 0.05
+    max: 0.1
+
+client_config:
+  # MCP server connection details
+  mcp_server_url: "http://localhost:8931/sse"
+```
+
+### 6. Runtime Structure
+
+**New Runtime Scripts:**
+- `run_host.py` (unchanged)
+- `run_wrapper_agent.py` (replaces run_orchestrator.py and run_format_proxy.py)
+- `run_ui.py` (unchanged)
+- `run_domain_agent.py` → **REMOVED** (functionality moved to MCP server)
+
+**Simplified run.sh:**
+```bash
+# Only 3 runtimes instead of 5
+tmux pane 0: run_host.py
+tmux pane 1: run_ui.py  
+tmux pane 2: run_wrapper_agent.py
+```
+
+### 7. Benefits of This Design
+
+**Simplified Architecture:**
+- Single point of orchestration (WrapperAgent)
+- Unified tool interface (everything through MCP)
+- Cleaner separation of concerns
+
+**Enhanced Flexibility:**
+- Easy to add new domain agents as MCP tools
+- WebSocket handling logic centralized
+- Flow detection can be enhanced with ML models
+
+**Better Maintainability:**
+- Fewer inter-agent dependencies
+- Domain logic encapsulated in MCP tools
+- Stateless domain agents with Wrapper managing state
+
+**Preserved Functionality:**
+- Same end-user experience as FormatProxyArchitecture
+- Healthcare eligibility checking workflow intact
+- Real-time conversation handling maintained
+
+This design achieves your goal of making the architecture more flexible and agent-driven while maintaining the same workflow results. The Wrapper becomes the single intelligent orchestrator, and all domain expertise is cleanly encapsulated in MCP tools.

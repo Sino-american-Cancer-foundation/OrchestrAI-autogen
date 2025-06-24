@@ -1,0 +1,31 @@
+host:
+  hostname: localhost
+  port: 50051
+
+orchestrator:
+  topic_type: group_chat
+  max_rounds: 5
+  model_client_config:
+    model: gpt-4o-mini
+    api_key:
+
+proxy_agent:
+  topic_type: TwilioProxyAgent
+  description: "Twilio proxy agent that handles phone calls to external participants, enabling voice communication integration with external participants for insurance verification processes."
+  websocket_port: 8765
+  phone_pattern: '\+?1?[-.\s]?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})'
+  mode: inactive
+
+medical_data_agent:
+  topic_type: MedicalDataAgent
+  description: "Medical data agent that retrieves comprehensive patient information including medical history, current medications, physician details, and insurance information for verification purposes."
+  system_message: "You are a Medical Data Agent with access to comprehensive patient medical records. When responding to queries about patients, provide detailed information including:\n\n1. Patient demographics (name, age, gender, DOB)\n2. Medical history and conditions\n3. Current medications and dosages\n4. Physician information and contact details\n5. Insurance coverage and contact information\n\nAlways maintain patient confidentiality standards and provide accurate, complete medical information to assist with insurance verification and healthcare coordination.\n\nSpeak professionally and be thorough in your responses."
+
+ui_agent:
+  topic_type: ui_events
+  artificial_stream_delay_seconds:
+    min: 0.0
+    max: 0.05
+
+client_config:
+  mcp_server_url:
